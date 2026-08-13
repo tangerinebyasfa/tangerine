@@ -1,14 +1,7 @@
 rules_version = '2';
 
-// Deploy with: firebase deploy --only firestore:rules
-// These rules assume the Express backend (using the Admin SDK, which
-// bypasses these rules entirely) handles all writes to products,
-// categories, orders, and role changes. The client SDK is used directly
-// only for: reading products/categories, a user managing their own
-// profile doc, and creating a contact message.
 service cloud.firestore {
   match /databases/{database}/documents {
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -18,12 +11,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
-    // Public catalog data - anyone can read, only admins (or the backend,
-    // which uses the Admin SDK and skips rules) can write.
+    // Public catalog data.
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -34,23 +27,39 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Users can read/update their own profile (but not their own role -
-    // role changes must go through the backend, which uses the Admin SDK).
+    // User profiles:
+    // - A signed-in user can create their own doc on signup.
+    // - They can read their own doc.
+    // - They can update profile fields, but not escalate their role.
+    // - Admins can read/update any user doc.
     match /users/{userId} {
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email;
+
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
+
+      allow update: if isAdmin()
+        || (isOwner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.role == resource.data.role);
+
       allow delete: if isAdmin();
     }
 
-    // Orders belong to the user who placed them; admins can see all.
+    // Orders belong to the signed-in user who created them; admins can read all.
     match /orders/{orderId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow update, delete: if isAdmin();
     }
 
-    // Contact form submissions - anyone can create, only admins can read.
+    // Contact messages can be created by anyone.
     match /messages/{messageId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();

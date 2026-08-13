@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../lib/api";
+import { db } from "../../lib/firebase";
+import { doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import AuthGuard from "../../components/auth/AuthGuard";
 import PageHeader from "../../components/ui/PageHeader";
 import Input from "../../components/ui/Input";
@@ -30,11 +31,34 @@ function ProfileForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.updateMe({ ...form });
+      if (!db) throw new Error("Firebase is not configured yet.");
+
+      await updateDoc(doc(db, "users", user.uid), {
+        ...form,
+        updatedAt: serverTimestamp(),
+      });
       await refreshProfile();
       toast.success("Profile updated");
     } catch (err) {
-      toast.error(err.message || "Could not update profile");
+      try {
+        if (!db) throw err;
+
+        await setDoc(
+          doc(db, "users", user.uid),
+          {
+            ...form,
+            uid: user.uid,
+            email: user.email,
+            role: profile?.role || "customer",
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+        await refreshProfile();
+        toast.success("Profile updated");
+      } catch (fallbackErr) {
+        toast.error(fallbackErr.message || err.message || "Could not update profile");
+      }
     } finally {
       setLoading(false);
     }

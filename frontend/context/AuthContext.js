@@ -73,45 +73,49 @@ export function AuthProvider({ children }) {
 
   // Creates or refreshes the user profile through the backend so we don't
   // depend on Firestore client write rules during signup.
-  async function syncUserProfile(firebaseUser) {
+async function syncUserProfile(firebaseUser) {
     const payload = {
       displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "",
       photoURL: firebaseUser.photoURL || null,
     };
 
-    try {
-      await api.syncUser(payload);
-      return;
-    } catch (err) {
-      console.error("Backend user sync failed, falling back to Firestore:", err);
-    }
-
     if (!db) throw new Error("Firebase is not configured yet.");
 
     const ref = fsDoc(db, "users", firebaseUser.uid);
     const snap = await fsGetDoc(ref);
+    const existing = snap.exists() ? snap.data() : {};
 
-    if (!snap.exists()) {
-      await fsSetDoc(ref, {
+    await fsSetDoc(
+      ref,
+      {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: payload.displayName,
         photoURL: payload.photoURL,
-        role: "customer",
-        createdAt: fsServerTimestamp(),
-      });
-    }
+        role: existing.role || "customer",
+        createdAt: existing.createdAt || fsServerTimestamp(),
+      },
+      { merge: true }
+    );
+
+    api.syncUser(payload).catch((err) => {
+      console.warn("Backend user sync skipped:", err.message);
+    });
   }
 
   async function loadProfile() {
+    if (db && user) {
+      const ref = fsDoc(db, "users", user.uid);
+      const snap = await fsGetDoc(ref);
+      if (snap.exists()) {
+        return { id: snap.id, ...snap.data() };
+      }
+    }
+
     try {
       return await api.getMe();
     } catch (err) {
-      if (!db || !user) return null;
-
-      const ref = fsDoc(db, "users", user.uid);
-      const snap = await fsGetDoc(ref);
-      return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+      return null;
     }
   }
 
