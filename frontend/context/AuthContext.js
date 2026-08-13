@@ -9,7 +9,8 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { auth, googleProvider, db, firebaseReady, doc, getDoc, setDoc, serverTimestamp } from "../lib/firebase";
+import { auth, googleProvider, db, firebaseReady } from "../lib/firebase";
+import { doc as fsDoc, getDoc as fsGetDoc, setDoc as fsSetDoc, serverTimestamp as fsServerTimestamp } from "firebase/firestore";
 import { api } from "../lib/api";
 
 const AuthContext = createContext(null);
@@ -87,17 +88,17 @@ export function AuthProvider({ children }) {
 
     if (!db) throw new Error("Firebase is not configured yet.");
 
-    const ref = doc(db, "users", firebaseUser.uid);
-    const snap = await getDoc(ref);
+    const ref = fsDoc(db, "users", firebaseUser.uid);
+    const snap = await fsGetDoc(ref);
 
     if (!snap.exists()) {
-      await setDoc(ref, {
+      await fsSetDoc(ref, {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: payload.displayName,
         photoURL: payload.photoURL,
         role: "customer",
-        createdAt: serverTimestamp(),
+        createdAt: fsServerTimestamp(),
       });
     }
   }
@@ -108,8 +109,8 @@ export function AuthProvider({ children }) {
     } catch (err) {
       if (!db || !user) return null;
 
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
+      const ref = fsDoc(db, "users", user.uid);
+      const snap = await fsGetDoc(ref);
       return snap.exists() ? { id: snap.id, ...snap.data() } : null;
     }
   }
