@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 106, 0, 0.08), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(255, 106, 0, 0.05), transparent 24%);
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  ::selection {
+    @apply bg-tangerine text-paper;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-tangerine text-paper px-6 py-3 text-sm tracking-widest uppercase hover:bg-ink transition-colors duration-200;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border border-ink text-ink px-6 py-3 text-sm tracking-widest uppercase hover:bg-tangerine hover:text-paper transition-colors duration-200;
+  }
+  .input-field {
+    @apply w-full border border-ink/20 bg-paper px-4 py-3 text-sm focus:outline-none focus:border-tangerine transition-colors;
+  }
+  .eyebrow {
+    @apply text-xs tracking-widest2 uppercase text-tangerine font-medium;
+  }
+  .section-heading {
+    @apply font-display text-3xl md:text-4xl text-ink;
+  }
+}
