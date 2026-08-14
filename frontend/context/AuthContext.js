@@ -10,7 +10,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, googleProvider, db, firebaseReady } from "../lib/firebase";
-import { doc as fsDoc, getDoc as fsGetDoc, setDoc as fsSetDoc, serverTimestamp as fsServerTimestamp } from "firebase/firestore";
+import { doc as fsDoc, getDoc as fsGetDoc, setDoc as fsSetDoc, serverTimestamp as fsServerTimestamp, onSnapshot as fsOnSnapshot } from "firebase/firestore";
 import { api } from "../lib/api";
 
 const AuthContext = createContext(null);
@@ -28,6 +28,8 @@ export function AuthProvider({ children }) {
 
     let active = true;
 
+    let profileUnsub = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!active) return;
       setUser(firebaseUser);
@@ -35,14 +37,29 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         try {
           await syncUserProfile(firebaseUser);
+          // Start a realtime listener on the user's profile so role changes
+          // made by admins are reflected immediately in the UI (e.g. admin nav).
+          const ref = fsDoc(db, "users", firebaseUser.uid);
+          profileUnsub = fsOnSnapshot(ref, (snap) => {
+            if (!active) return;
+            if (snap.exists()) setProfile({ id: snap.id, ...snap.data() });
+            else setProfile(null);
+          });
+          // Also attempt an initial load in case onSnapshot takes a moment.
           const profileData = await loadProfile();
-          if (active) setProfile(profileData);
+          if (active && profileData) setProfile(profileData);
         } catch (err) {
           console.error(err);
           if (active) setProfile(null);
         }
       } else {
         setProfile(null);
+        if (profileUnsub) {
+          try {
+            profileUnsub();
+          } catch (e) {}
+          profileUnsub = null;
+        }
       }
 
       if (active) setLoading(false);
