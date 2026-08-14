@@ -75,14 +75,19 @@ export default function Navbar() {
                 <ChevronDown className="h-4 w-4" strokeWidth={2} />
               </button>
             ) : (
-              <Link
-                href="/signin"
-                className="flex items-center gap-2 text-ink hover:text-tangerine transition-colors"
-                aria-label="Sign in"
-              >
-                <LogIn className="h-5 w-5" strokeWidth={2} />
-                <span className="text-xs tracking-widest uppercase">Sign In</span>
-              </Link>
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/signin"
+                  className="flex items-center gap-2 text-ink hover:text-tangerine transition-colors"
+                  aria-label="Sign in"
+                >
+                  <LogIn className="h-5 w-5" strokeWidth={2} />
+                  <span className="text-xs tracking-widest uppercase">Sign In</span>
+                </Link>
+                <Link href="/signup" className="text-xs tracking-widest uppercase text-ink/70 hover:text-burgundy">
+                  Sign Up
+                </Link>
+              </div>
             )}
 
             {user && userMenuOpen && (
@@ -146,10 +151,15 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <Link href="/signin" className="flex items-center gap-2 text-sm uppercase tracking-widest">
-              <LogIn className="h-4 w-4" strokeWidth={2} />
-              Sign In
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/signin" className="flex items-center gap-2 text-sm uppercase tracking-widest">
+                <LogIn className="h-4 w-4" strokeWidth={2} />
+                Sign In
+              </Link>
+              <Link href="/signup" className="text-sm uppercase tracking-widest">
+                Sign Up
+              </Link>
+            </div>
           )}
         </div>
       )}

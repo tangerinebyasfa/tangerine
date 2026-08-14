@@ -137,6 +137,9 @@ async function syncUserProfile(firebaseUser) {
   async function signInWithEmail(email, password) {
     if (!auth) throw new Error("Firebase is not configured yet.");
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    // Ensure a Firestore user doc exists after signing in
+    await syncUserProfile(cred.user);
+    setProfile(await loadProfile());
     return cred.user;
   }
 
