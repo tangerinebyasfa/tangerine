@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const productsRoutes = require("./routes/products");
 const categoriesRoutes = require("./routes/categories");
+const subcategoriesRoutes = require("./routes/subcategories");
 const ordersRoutes = require("./routes/orders");
 const usersRoutes = require("./routes/users");
 
@@ -18,6 +19,7 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
+app.use("/api/subcategories", subcategoriesRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/users", usersRoutes);
 

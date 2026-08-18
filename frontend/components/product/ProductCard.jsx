@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Heart, ShoppingBag } from "lucide-react";
+import { normalizeImageUrl } from "../../lib/image";
+import { formatINR } from "../../lib/currency";
 
 export default function ProductCard({ product }) {
-  const image = product.images?.[0] || "/placeholder-product.svg";
+  const image = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
 
   return (
     <Link href={`/product/${product.id}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-sand">
+      <div className="relative aspect-[4/5] overflow-hidden bg-paper">
         <Image
           src={image}
           alt={product.name}
@@ -18,25 +21,41 @@ export default function ProductCard({ product }) {
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {onSale && (
-          <span className="absolute top-3 left-3 bg-burgundy text-paper text-[10px] tracking-widest uppercase px-2 py-1">
+          <span className="absolute top-0 left-0 bg-tangerine text-paper text-[10px] tracking-widest uppercase px-3 py-1.5">
             Sale
           </span>
         )}
+        <button
+          type="button"
+          aria-label="Add to wishlist"
+          className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center text-ink transition-colors hover:text-tangerine"
+        >
+          <Heart className="h-4 w-4" strokeWidth={1.8} />
+        </button>
+        <button
+          type="button"
+          aria-label="Quick add to bag"
+          className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-tangerine hover:text-paper"
+        >
+          <ShoppingBag className="h-4 w-4" strokeWidth={1.8} />
+        </button>
       </div>
-      <div className="mt-3 flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-sm text-ink group-hover:text-burgundy transition-colors">
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-[13px] leading-5 uppercase tracking-[0.12em] text-ink group-hover:text-tangerine transition-colors truncate">
             {product.name}
           </h3>
           {product.categorySlug && (
-            <p className="text-xs text-ink/50 mt-1 capitalize">{product.categorySlug}</p>
+            <p className="text-[11px] tracking-[0.08em] text-ink/55 mt-1 capitalize">
+              {product.categorySlug}
+            </p>
           )}
         </div>
         <div className="text-right shrink-0">
-          <p className="text-sm text-ink">${Number(product.price).toFixed(2)}</p>
+          <p className="text-[13px] tracking-[0.04em] text-ink leading-5">{formatINR(product.price)}</p>
           {onSale && (
-            <p className="text-xs text-ink/40 line-through">
-              ${Number(product.compareAtPrice).toFixed(2)}
+            <p className="text-[11px] text-ink/40 line-through leading-4">
+              {formatINR(product.compareAtPrice)}
             </p>
           )}
         </div>

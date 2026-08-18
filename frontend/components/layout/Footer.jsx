@@ -5,7 +5,6 @@ export default function Footer() {
     <footer className="bg-ink text-paper mt-24">
       <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
         <div>
-          <h3 className="font-display text-2xl">Tangerine</h3>
           <p className="text-paper/60 text-sm mt-3 max-w-xs">
             Considered clothing, cut for the way people actually move through their days.
           </p>
@@ -36,7 +35,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-paper/10 py-6 text-center text-xs text-paper/40">
-        © {new Date().getFullYear()} Tangerine. All rights reserved.
+        &copy; {new Date().getFullYear()} All rights reserved.
       </div>
     </footer>
   );

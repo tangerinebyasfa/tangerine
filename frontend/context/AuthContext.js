@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
             else setProfile(null);
           });
           // Also attempt an initial load in case onSnapshot takes a moment.
-          const profileData = await loadProfile();
+          const profileData = await loadProfile(firebaseUser);
           if (active && profileData) setProfile(profileData);
         } catch (err) {
           console.error(err);
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
 
   // Creates or refreshes the user profile through the backend so we don't
   // depend on Firestore client write rules during signup.
-async function syncUserProfile(firebaseUser) {
+  async function syncUserProfile(firebaseUser) {
     const payload = {
       displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "",
       photoURL: firebaseUser.photoURL || null,
@@ -115,14 +115,14 @@ async function syncUserProfile(firebaseUser) {
       { merge: true }
     );
 
-    api.syncUser(payload).catch((err) => {
-      console.warn("Backend user sync skipped:", err.message);
-    });
+    // Keep the backend in sync when it is healthy, but do not surface a
+    // console warning if the API is unavailable in local development.
+    api.syncUser(payload).catch(() => {});
   }
 
-  async function loadProfile() {
-    if (db && user) {
-      const ref = fsDoc(db, "users", user.uid);
+  async function loadProfile(firebaseUser = user) {
+    if (db && firebaseUser) {
+      const ref = fsDoc(db, "users", firebaseUser.uid);
       const snap = await fsGetDoc(ref);
       if (snap.exists()) {
         return { id: snap.id, ...snap.data() };
@@ -147,7 +147,7 @@ async function syncUserProfile(firebaseUser) {
       await updateProfile(cred.user, { displayName });
     }
     await syncUserProfile({ ...cred.user, displayName: displayName || cred.user.displayName });
-    setProfile(await loadProfile());
+    setProfile(await loadProfile(cred.user));
     return cred.user;
   }
 
@@ -156,7 +156,7 @@ async function syncUserProfile(firebaseUser) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     // Ensure a Firestore user doc exists after signing in
     await syncUserProfile(cred.user);
-    setProfile(await loadProfile());
+    setProfile(await loadProfile(cred.user));
     return cred.user;
   }
 
@@ -164,7 +164,7 @@ async function syncUserProfile(firebaseUser) {
     if (!auth || !googleProvider) throw new Error("Firebase is not configured yet.");
     const cred = await signInWithPopup(auth, googleProvider);
     await syncUserProfile(cred.user);
-    setProfile(await loadProfile());
+    setProfile(await loadProfile(cred.user));
     return cred.user;
   }
 

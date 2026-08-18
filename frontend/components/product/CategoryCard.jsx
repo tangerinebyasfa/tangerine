@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { normalizeImageUrl } from "../../lib/image";
 
 export default function CategoryCard({ category }) {
-  const image = category.image || "/placeholder-category.svg";
+  const image = normalizeImageUrl(category.image) || "/placeholder-category.svg";
 
   return (
     <Link href={`/products/${category.slug}`} className="group relative block overflow-hidden">

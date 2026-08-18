@@ -5,6 +5,7 @@ import { api } from "../../lib/api";
 import AuthGuard from "../../components/auth/AuthGuard";
 import PageHeader from "../../components/ui/PageHeader";
 import Spinner from "../../components/ui/Spinner";
+import { formatINR } from "../../lib/currency";
 
 const statusColors = {
   pending: "bg-sand text-ink",
@@ -59,14 +60,14 @@ function OrdersList() {
                       {item.name} × {item.quantity}
                       {item.size ? ` (Size ${item.size})` : ""}
                     </span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>{formatINR(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
 
               <div className="flex justify-between text-base font-medium mt-4 pt-4 border-t border-ink/10">
                 <span>Total</span>
-                <span>${Number(order.total).toFixed(2)}</span>
+                <span>{formatINR(order.total)}</span>
               </div>
             </div>
           ))}

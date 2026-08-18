@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { normalizeImageUrl } from "../lib/image";
 
 const CartContext = createContext(null);
 const STORAGE_KEY = "fashion-cart";
@@ -42,7 +43,7 @@ export function CartProvider({ children }) {
           productId: product.id,
           name: product.name,
           price: product.price,
-          image: product.images?.[0] || null,
+          image: normalizeImageUrl(product.images?.[0]),
           size: size || null,
           color: color || null,
           quantity,

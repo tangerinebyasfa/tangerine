@@ -10,6 +10,7 @@ import AuthGuard from "../../components/auth/AuthGuard";
 import PageHeader from "../../components/ui/PageHeader";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import { formatINR } from "../../lib/currency";
 
 const SHIPPING_FLAT_RATE = 8;
 
@@ -138,22 +139,22 @@ function CheckoutForm() {
             {items.map((item) => (
               <div key={item.lineId} className="flex justify-between text-sm">
                 <span className="text-ink/70">{item.name} × {item.quantity}</span>
-                <span>${(item.price * item.quantity).toFixed(2)}</span>
+                <span>{formatINR(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
           <div className="border-t border-ink/10 pt-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{formatINR(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Shipping</span>
-              <span>${shipping.toFixed(2)}</span>
+              <span>{formatINR(shipping)}</span>
             </div>
             <div className="flex justify-between text-base font-medium pt-2">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{formatINR(total)}</span>
             </div>
           </div>
           <Button type="submit" loading={loading} className="w-full mt-6">

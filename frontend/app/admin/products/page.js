@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../lib/api";
 import Spinner from "../../../components/ui/Spinner";
 import Button from "../../../components/ui/Button";
+import { formatINR } from "../../../lib/currency";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -56,6 +57,7 @@ export default function AdminProductsPage() {
             <thead>
               <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">
                 <th className="py-3 pr-4">Name</th>
+                <th className="py-3 pr-4">Type</th>
                 <th className="py-3 pr-4">Category</th>
                 <th className="py-3 pr-4">Price</th>
                 <th className="py-3 pr-4">Stock</th>
@@ -67,8 +69,9 @@ export default function AdminProductsPage() {
               {products.map((p) => (
                 <tr key={p.id}>
                   <td className="py-3 pr-4">{p.name}</td>
+                  <td className="py-3 pr-4 capitalize text-ink/60">{p.productType || p.categoryParentType || "—"}</td>
                   <td className="py-3 pr-4 capitalize">{p.categorySlug || "—"}</td>
-                  <td className="py-3 pr-4">${Number(p.price).toFixed(2)}</td>
+                  <td className="py-3 pr-4">{formatINR(p.price)}</td>
                   <td className="py-3 pr-4">{p.stock}</td>
                   <td className="py-3 pr-4">{p.featured ? "Yes" : "No"}</td>
                   <td className="py-3 pr-4 text-right space-x-4 whitespace-nowrap">

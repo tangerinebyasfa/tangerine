@@ -52,6 +52,11 @@ export const api = {
   createCategory: (body) => request("/categories", { method: "POST", body, authRequired: true }),
   updateCategory: (id, body) => request(`/categories/${id}`, { method: "PUT", body, authRequired: true }),
   deleteCategory: (id) => request(`/categories/${id}`, { method: "DELETE", authRequired: true }),
+  getSubcategories: () => request("/subcategories"),
+  getSubcategory: (idOrSlug) => request(`/subcategories/${idOrSlug}`),
+  createSubcategory: (body) => request("/subcategories", { method: "POST", body, authRequired: true }),
+  updateSubcategory: (id, body) => request(`/subcategories/${id}`, { method: "PUT", body, authRequired: true }),
+  deleteSubcategory: (id) => request(`/subcategories/${id}`, { method: "DELETE", authRequired: true }),
 
   // Orders
   createOrder: (body) => request("/orders", { method: "POST", body, authRequired: true }),

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useCart } from "../../context/CartContext";
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
+import { normalizeImageUrl } from "../../lib/image";
+import { formatINR } from "../../lib/currency";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
@@ -24,14 +26,17 @@ export default function CartPage() {
             {items.map((item) => (
               <div key={item.lineId} className="flex gap-4 py-6">
                 <div className="relative w-24 h-28 bg-sand shrink-0">
-                  {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" />}
+                  {(() => {
+                    const image = normalizeImageUrl(item.image);
+                    return image ? <Image src={image} alt={item.name} fill className="object-cover" /> : null;
+                  })()}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm">{item.name}</p>
                   <p className="text-xs text-ink/50 mt-1">
                     {item.size ? `Size ${item.size}` : ""} {item.color ? `· ${item.color}` : ""}
                   </p>
-                  <p className="text-sm mt-1">${item.price.toFixed(2)}</p>
+                  <p className="text-sm mt-1">{formatINR(item.price)}</p>
                   <div className="flex items-center gap-3 mt-3">
                     <button
                       className="w-7 h-7 border border-ink/20 text-sm"
@@ -62,7 +67,7 @@ export default function CartPage() {
             <h3 className="font-display text-xl mb-4">Order Summary</h3>
             <div className="flex justify-between text-sm mb-2">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{formatINR(subtotal)}</span>
             </div>
             <p className="text-xs text-ink/50 mb-6">Shipping and taxes calculated at checkout.</p>
             <Link href="/checkout" className="btn-primary w-full block text-center">

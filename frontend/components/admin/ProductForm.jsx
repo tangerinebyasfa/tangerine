@@ -7,11 +7,21 @@ import { api } from "../../lib/api";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 
+const PRODUCT_TYPES = [
+  { value: "accessories", label: "Accessories" },
+  { value: "clothes", label: "Clothes" },
+  { value: "footwear", label: "Footwear" },
+];
+
 const emptyForm = {
   name: "",
   description: "",
+  materials: "",
+  washCare: "",
+  deliveryInfo: "",
   price: "",
   compareAtPrice: "",
+  productType: "",
   categoryId: "",
   stock: "",
   images: "",
@@ -27,7 +37,7 @@ export default function ProductForm({ initialProduct = null }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.getCategories().then(setCategories).catch(console.error);
+    api.getSubcategories().then(setCategories).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -35,8 +45,12 @@ export default function ProductForm({ initialProduct = null }) {
       setForm({
         name: initialProduct.name || "",
         description: initialProduct.description || "",
+        materials: initialProduct.materials || "",
+        washCare: initialProduct.washCare || "",
+        deliveryInfo: initialProduct.deliveryInfo || "",
         price: initialProduct.price ?? "",
         compareAtPrice: initialProduct.compareAtPrice ?? "",
+        productType: initialProduct.productType || initialProduct.categoryParentType || "",
         categoryId: initialProduct.categoryId || "",
         stock: initialProduct.stock ?? "",
         images: (initialProduct.images || []).join(", "),
@@ -47,6 +61,20 @@ export default function ProductForm({ initialProduct = null }) {
     }
   }, [initialProduct]);
 
+  useEffect(() => {
+    if (!initialProduct || !categories.length || form.productType) return;
+
+    const matchingCategory = categories.find((c) => c.id === initialProduct.categoryId);
+    if (matchingCategory?.parentType) {
+      setForm((current) => ({
+        ...current,
+        productType: matchingCategory.parentType,
+      }));
+    }
+  }, [categories, form.productType, initialProduct]);
+
+  const availableSubcategories = categories.filter((category) => category.parentType === form.productType);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -55,10 +83,15 @@ export default function ProductForm({ initialProduct = null }) {
       const payload = {
         name: form.name,
         description: form.description,
+        materials: form.materials,
+        washCare: form.washCare,
+        deliveryInfo: form.deliveryInfo,
         price: Number(form.price),
         compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
+        productType: form.productType,
         categoryId: form.categoryId,
         categorySlug: category?.slug || null,
+        categoryParentType: category?.parentType || form.productType || null,
         stock: Number(form.stock) || 0,
         images: form.images.split(",").map((s) => s.trim()).filter(Boolean),
         sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
@@ -95,10 +128,28 @@ export default function ProductForm({ initialProduct = null }) {
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
       />
+      <Input
+        label="Materials"
+        textarea
+        value={form.materials}
+        onChange={(e) => setForm({ ...form, materials: e.target.value })}
+      />
+      <Input
+        label="Wash Care"
+        textarea
+        value={form.washCare}
+        onChange={(e) => setForm({ ...form, washCare: e.target.value })}
+      />
+      <Input
+        label="Delivery & Returns"
+        textarea
+        value={form.deliveryInfo}
+        onChange={(e) => setForm({ ...form, deliveryInfo: e.target.value })}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Price ($)"
+          label="Price (₹)"
           type="number"
           step="0.01"
           required
@@ -106,7 +157,7 @@ export default function ProductForm({ initialProduct = null }) {
           onChange={(e) => setForm({ ...form, price: e.target.value })}
         />
         <Input
-          label="Compare-at Price ($) — optional"
+          label="Compare-at Price (₹) — optional"
           type="number"
           step="0.01"
           value={form.compareAtPrice}
@@ -115,19 +166,53 @@ export default function ProductForm({ initialProduct = null }) {
       </div>
 
       <label className="block mb-4">
-        <span className="block text-xs tracking-widest uppercase text-ink/60 mb-2">Category</span>
+        <span className="block text-xs tracking-widest uppercase text-ink/60 mb-2">Product Type</span>
+        <select
+          required
+          value={form.productType}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              productType: e.target.value,
+              categoryId: "",
+            })
+          }
+          className="input-field"
+        >
+          <option value="">Select a product type</option>
+          {PRODUCT_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="block mb-4">
+        <span className="block text-xs tracking-widest uppercase text-ink/60 mb-2">Subtype</span>
         <select
           required
           value={form.categoryId}
           onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
           className="input-field"
+          disabled={!form.productType}
         >
-          <option value="">Select a category</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+          <option value="">
+            {form.productType ? "Select a subtype" : "Select a product type first"}
+          </option>
+          {availableSubcategories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </label>
+
+      {form.productType && availableSubcategories.length === 0 && (
+        <p className="text-xs text-ink/50 -mt-2 mb-4">
+          No subtypes found for this type yet. Add them in the Categories admin page.
+        </p>
+      )}
 
       <Input
         label="Stock Quantity"

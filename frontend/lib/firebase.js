@@ -2,7 +2,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
 import {
   getFirestore,
   collection,
@@ -26,35 +25,30 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
 };
 
-const hasFirebaseConfig = Object.values(firebaseConfig).every(
-  (value) => typeof value === "string" && value.trim().length > 0
+const requiredFirebaseConfigKeys = [
+  "apiKey",
+  "authDomain",
+  "projectId",
+  "storageBucket",
+  "messagingSenderId",
+  "appId",
+];
+
+const hasFirebaseConfig = requiredFirebaseConfigKeys.every(
+  (key) => typeof firebaseConfig[key] === "string" && firebaseConfig[key].trim().length > 0
 );
 
 // Avoid re-initializing the app on hot reloads. If the env file is not set up
 // yet, keep the module importable so the app can still build and render.
 const app = hasFirebaseConfig ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
-let analytics = null;
-
-if (typeof window !== "undefined" && app && firebaseConfig.measurementId) {
-  // Initialize analytics only in the browser and when measurementId is provided.
-  // Use analyticsIsSupported to avoid errors in some browsers/environments.
-  analyticsIsSupported()
-    .then((supported) => {
-      if (supported) analytics = getAnalytics(app);
-    })
-    .catch(() => {
-      analytics = null;
-    });
-}
 
 export const firebaseReady = !!app;
 export const auth = app ? getAuth(app) : null;
 export const googleProvider = app ? new GoogleAuthProvider() : null;
 export const db = app ? getFirestore(app) : null;
-export { analytics };
 
 export {
   collection,

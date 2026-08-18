@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../../context/CartContext";
+import { normalizeImageUrl } from "../../lib/image";
+import { formatINR } from "../../lib/currency";
 
 export default function CartDrawer() {
   const { items, isDrawerOpen, setDrawerOpen, updateQuantity, removeItem, subtotal } = useCart();
@@ -36,16 +38,17 @@ export default function CartDrawer() {
           {items.map((item) => (
             <div key={item.lineId} className="flex gap-4">
               <div className="relative w-20 h-24 bg-sand shrink-0">
-                {item.image && (
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
-                )}
+                {(() => {
+                  const image = normalizeImageUrl(item.image);
+                  return image ? <Image src={image} alt={item.name} fill className="object-cover" /> : null;
+                })()}
               </div>
               <div className="flex-1">
                 <p className="text-sm">{item.name}</p>
                 <p className="text-xs text-ink/50 mt-1">
                   {item.size ? `Size ${item.size}` : ""} {item.color ? `· ${item.color}` : ""}
                 </p>
-                <p className="text-sm mt-1">${item.price.toFixed(2)}</p>
+                <p className="text-sm mt-1">{formatINR(item.price)}</p>
 
                 <div className="flex items-center gap-3 mt-2">
                   <button
@@ -77,7 +80,7 @@ export default function CartDrawer() {
           <div className="border-t border-ink/10 px-6 py-6 space-y-4">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{formatINR(subtotal)}</span>
             </div>
             <p className="text-xs text-ink/50">Shipping and taxes calculated at checkout.</p>
             <Link

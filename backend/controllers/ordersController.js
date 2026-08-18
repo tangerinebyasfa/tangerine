@@ -2,6 +2,11 @@ const { db, admin } = require("../config/firebaseAdmin");
 
 const ordersRef = db.collection("orders");
 
+const getTimestamp = () =>
+  admin?.firestore?.FieldValue?.serverTimestamp
+    ? admin.firestore.FieldValue.serverTimestamp()
+    : new Date().toISOString();
+
 // POST /api/orders (authenticated user creates an order from their cart)
 exports.createOrder = async (req, res) => {
   try {
@@ -21,7 +26,7 @@ exports.createOrder = async (req, res) => {
       shipping: Number(shipping) || 0,
       total: Number(total) || 0,
       status: "pending",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: getTimestamp(),
     };
 
     const docRef = await ordersRef.add(newOrder);
@@ -72,7 +77,7 @@ exports.updateOrderStatus = async (req, res) => {
     const doc = await docRef.get();
     if (!doc.exists) return res.status(404).json({ error: "Order not found" });
 
-    await docRef.update({ status, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    await docRef.update({ status, updatedAt: getTimestamp() });
     const updated = await docRef.get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err) {

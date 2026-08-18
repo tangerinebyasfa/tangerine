@@ -5,6 +5,7 @@ import { CartProvider } from "../context/CartContext";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import CartDrawer from "../components/cart/CartDrawer";
+import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { Toaster } from "react-hot-toast";
 
 const fraunces = Fraunces({
@@ -22,6 +23,9 @@ const inter = Inter({
 
 export const metadata = {
   title: "Tangerine | Considered Clothing",
+  icons: {
+    icon: "/images/favicon.png",
+  },
   description: "A fashion house for clothing that moves with you — shop new arrivals, curated edits, and timeless staples.",
 };
 
@@ -36,6 +40,7 @@ export default function RootLayout({ children }) {
             <main className="min-h-[70vh]">{children}</main>
             <Footer />
             <Toaster position="bottom-right" />
+            <ScrollToTopButton />
           </CartProvider>
         </AuthProvider>
       </body>

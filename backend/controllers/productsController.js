@@ -2,6 +2,11 @@ const { db, admin } = require("../config/firebaseAdmin");
 
 const productsRef = db.collection("products");
 
+const getTimestamp = () =>
+  admin?.firestore?.FieldValue?.serverTimestamp
+    ? admin.firestore.FieldValue.serverTimestamp()
+    : new Date().toISOString();
+
 function normalizeList(value) {
   if (Array.isArray(value)) {
     return value.map((item) => String(item).trim()).filter(Boolean);
@@ -14,21 +19,35 @@ function normalizeList(value) {
   return [];
 }
 
+function normalizeText(value) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
 // GET /api/products?category=dresses&limit=20
 exports.getProducts = async (req, res) => {
   try {
-    const { category, featured } = req.query;
-    let query = productsRef;
-
-    if (category) {
-      query = query.where("categorySlug", "==", category);
-    }
-    if (featured === "true") {
-      query = query.where("featured", "==", true);
-    }
-
-    const snapshot = await query.orderBy("createdAt", "desc").get();
-    const products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const { category, featured, type } = req.query;
+    const snapshot = await productsRef.get();
+    const products = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((product) => {
+        if (category && product.categorySlug !== category) {
+          return false;
+        }
+        if (type && (product.categoryParentType || product.productType) !== type) {
+          return false;
+        }
+        if (featured === "true" && !product.featured) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+        const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
     res.json(products);
   } catch (err) {
     console.error(err);
@@ -54,10 +73,15 @@ exports.createProduct = async (req, res) => {
     const {
       name,
       description,
+      materials,
+      washCare,
+      deliveryInfo,
       price,
       compareAtPrice,
+      productType,
       categoryId,
       categorySlug,
+      categoryParentType,
       images,
       sizes,
       colors,
@@ -65,24 +89,29 @@ exports.createProduct = async (req, res) => {
       featured,
     } = req.body;
 
-    if (!name || !price || !categoryId) {
-      return res.status(400).json({ error: "name, price and categoryId are required" });
+    if (!name || !price || !categoryId || !productType) {
+      return res.status(400).json({ error: "name, price, productType and categoryId are required" });
     }
 
     const newProduct = {
       name,
       description: description || "",
+      materials: normalizeText(materials),
+      washCare: normalizeText(washCare),
+      deliveryInfo: normalizeText(deliveryInfo),
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
+      productType,
       categoryId,
       categorySlug: categorySlug || null,
+      categoryParentType: categoryParentType || productType,
       images: normalizeList(images),
       sizes: normalizeList(sizes),
       colors: normalizeList(colors),
       stock: typeof stock === "number" ? stock : 0,
       featured: !!featured,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: getTimestamp(),
+      updatedAt: getTimestamp(),
     };
 
     const docRef = await productsRef.add(newProduct);
@@ -102,7 +131,7 @@ exports.updateProduct = async (req, res) => {
 
     const updates = {
       ...req.body,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: getTimestamp(),
     };
     delete updates.id;
     delete updates.createdAt;
@@ -110,6 +139,12 @@ exports.updateProduct = async (req, res) => {
     if ("images" in updates) updates.images = normalizeList(updates.images);
     if ("sizes" in updates) updates.sizes = normalizeList(updates.sizes);
     if ("colors" in updates) updates.colors = normalizeList(updates.colors);
+    if ("materials" in updates) updates.materials = normalizeText(updates.materials);
+    if ("washCare" in updates) updates.washCare = normalizeText(updates.washCare);
+    if ("deliveryInfo" in updates) updates.deliveryInfo = normalizeText(updates.deliveryInfo);
+    if ("categoryParentType" in updates && !updates.categoryParentType && updates.productType) {
+      updates.categoryParentType = updates.productType;
+    }
 
     await docRef.update(updates);
     const updated = await docRef.get();

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import Spinner from "../../components/ui/Spinner";
+import { formatINR } from "../../lib/currency";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -34,7 +35,7 @@ export default function AdminDashboard() {
     { label: "Products", value: stats.products },
     { label: "Categories", value: stats.categories },
     { label: "Orders", value: stats.orders },
-    { label: "Revenue", value: `$${stats.revenue.toFixed(2)}` },
+    { label: "Revenue", value: formatINR(stats.revenue) },
   ];
 
   return (
