@@ -57,6 +57,7 @@ export default function AdminProductsPage() {
             <thead>
               <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">
                 <th className="py-3 pr-4">Name</th>
+                <th className="py-3 pr-4">Code</th>
                 <th className="py-3 pr-4">Type</th>
                 <th className="py-3 pr-4">Category</th>
                 <th className="py-3 pr-4">Price</th>
@@ -69,6 +70,7 @@ export default function AdminProductsPage() {
               {products.map((p) => (
                 <tr key={p.id}>
                   <td className="py-3 pr-4">{p.name}</td>
+                  <td className="py-3 pr-4 font-mono text-xs text-ink/60">{p.internalCode || "—"}</td>
                   <td className="py-3 pr-4 capitalize text-ink/60">{p.productType || p.categoryParentType || "—"}</td>
                   <td className="py-3 pr-4 capitalize">{p.categorySlug || "—"}</td>
                   <td className="py-3 pr-4">{formatINR(p.price)}</td>

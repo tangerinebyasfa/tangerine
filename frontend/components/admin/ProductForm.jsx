@@ -17,6 +17,7 @@ const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
 
 const emptyForm = {
   name: "",
+  internalCode: "",
   description: "",
   sizeGuide: "",
   additionalInfo: [{ label: "", value: "" }],
@@ -49,6 +50,7 @@ export default function ProductForm({ initialProduct = null }) {
     if (initialProduct) {
       setForm({
         name: initialProduct.name || "",
+        internalCode: initialProduct.internalCode || "",
         description: initialProduct.description || "",
         sizeGuide: initialProduct.sizeGuide || "",
         additionalInfo:
@@ -143,6 +145,7 @@ export default function ProductForm({ initialProduct = null }) {
       const category = categories.find((c) => c.id === form.categoryId);
       const payload = {
         name: form.name,
+        internalCode: form.internalCode,
         description: form.description,
         sizeGuide: form.sizeGuide,
         additionalInfo: form.additionalInfo
@@ -191,6 +194,18 @@ export default function ProductForm({ initialProduct = null }) {
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
       />
+      <Input
+        label="Product Code"
+        required
+        value={form.internalCode}
+        onChange={(e) =>
+          setForm({ ...form, internalCode: e.target.value.toUpperCase().replace(/\s+/g, "") })
+        }
+        placeholder="e.g. TP-2026-001"
+      />
+      <p className="-mt-2 mb-4 text-xs text-ink/45">
+        Admin-only identifier. This will be saved in the backend and hidden from the storefront.
+      </p>
       <Input
         label="Description"
         textarea

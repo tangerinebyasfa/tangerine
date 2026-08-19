@@ -24,6 +24,10 @@ function normalizeText(value) {
   return String(value).trim();
 }
 
+function normalizeCode(value) {
+  return normalizeText(value).toUpperCase().replace(/\s+/g, "");
+}
+
 function slugify(value) {
   return normalizeText(value)
     .toLowerCase()
@@ -66,6 +70,17 @@ function normalizeSizeOptions(value) {
       return { label, available: !!item.available };
     })
     .filter(Boolean);
+}
+
+async function findProductByInternalCode(internalCode, excludeId = null) {
+  const normalizedCode = normalizeCode(internalCode);
+  if (!normalizedCode) return null;
+
+  const snapshot = await productsRef.get();
+  return snapshot.docs.find((doc) => {
+    if (excludeId && doc.id === excludeId) return false;
+    return normalizeCode(doc.data()?.internalCode) === normalizedCode;
+  }) || null;
 }
 
 // GET /api/products?category=dresses&limit=20
@@ -121,6 +136,7 @@ exports.createProduct = async (req, res) => {
   try {
     const {
       name,
+      internalCode,
       description,
       sizeGuide,
       additionalInfo,
@@ -145,8 +161,19 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: "name, price, productType and categoryId are required" });
     }
 
+    const normalizedCode = normalizeCode(internalCode);
+    if (!normalizedCode) {
+      return res.status(400).json({ error: "internalCode is required" });
+    }
+
+    const duplicate = await findProductByInternalCode(normalizedCode);
+    if (duplicate) {
+      return res.status(400).json({ error: "Product code must be unique" });
+    }
+
     const newProduct = {
       name,
+      internalCode: normalizedCode,
       slug: slugify(name),
       description: description || "",
       sizeGuide: normalizeText(sizeGuide),
@@ -194,6 +221,18 @@ exports.updateProduct = async (req, res) => {
     delete updates.id;
     delete updates.createdAt;
     delete updates.sizes;
+
+    if ("internalCode" in updates) {
+      updates.internalCode = normalizeCode(updates.internalCode);
+      if (!updates.internalCode) {
+        return res.status(400).json({ error: "internalCode is required" });
+      }
+
+      const duplicate = await findProductByInternalCode(updates.internalCode, req.params.id);
+      if (duplicate) {
+        return res.status(400).json({ error: "Product code must be unique" });
+      }
+    }
 
     if ("images" in updates) updates.images = normalizeList(updates.images);
     if ("sizeOptions" in updates) {
