@@ -2,16 +2,33 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { normalizeImageUrl } from "../../lib/image";
 import { formatINR } from "../../lib/currency";
+import { useCart } from "../../context/CartContext";
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 export default function ProductCard({ product }) {
+  const { addItem } = useCart();
   const image = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
+  const href = `/product/${product.slug || slugify(product.name) || product.id}`;
+
+  function handleQuickAdd(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    addItem(product, { quantity: 1 });
+  }
 
   return (
-    <Link href={`/product/${product.id}`} className="group block">
+    <Link href={href} className="group block">
       <div className="relative aspect-[4/5] overflow-hidden bg-paper">
         <Image
           src={image}
@@ -27,14 +44,8 @@ export default function ProductCard({ product }) {
         )}
         <button
           type="button"
-          aria-label="Add to wishlist"
-          className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center text-ink transition-colors hover:text-tangerine"
-        >
-          <Heart className="h-4 w-4" strokeWidth={1.8} />
-        </button>
-        <button
-          type="button"
           aria-label="Quick add to bag"
+          onClick={handleQuickAdd}
           className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-tangerine hover:text-paper"
         >
           <ShoppingBag className="h-4 w-4" strokeWidth={1.8} />

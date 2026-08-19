@@ -116,7 +116,7 @@ export default function Navbar() {
             </Link>
             {accessoriesOpen && (
               <div
-                className="absolute left-0 top-full mt-3 w-44 bg-paper border border-ink/10 shadow-lg py-2"
+                className="absolute left-0 top-full mt-1 w-44 bg-paper border border-ink/10 shadow-lg py-2"
                 onMouseEnter={openAccessoriesMenu}
                 onMouseLeave={closeAccessoriesMenu}
               >

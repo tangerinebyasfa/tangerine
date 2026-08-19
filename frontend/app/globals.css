@@ -5,9 +5,7 @@
 @layer base {
   body {
     @apply bg-paper text-ink font-sans antialiased;
-    background-image:
-      radial-gradient(circle at top left, rgba(255, 106, 0, 0.08), transparent 28%),
-      radial-gradient(circle at bottom right, rgba(255, 106, 0, 0.05), transparent 24%);
+    background-color: #fdfdfc;
   }
   h1, h2, h3, h4 {
     @apply font-display;

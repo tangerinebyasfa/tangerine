@@ -10,6 +10,14 @@ import {
   orderBy,
 } from "firebase/firestore";
 
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -72,7 +80,14 @@ export async function getProduct(id) {
   assertDb();
 
   const snapshot = await getDoc(doc(db, "products", id));
-  return toPlainDoc(snapshot);
+  if (snapshot.exists()) return toPlainDoc(snapshot);
+
+  const slugSnapshot = await getDocs(query(collection(db, "products"), where("slug", "==", id)));
+  if (!slugSnapshot.empty) return toPlainDoc(slugSnapshot.docs[0]);
+
+  const allProducts = await getDocs(collection(db, "products"));
+  const found = allProducts.docs.find((document) => slugify(document.data()?.name) === id);
+  return found ? toPlainDoc(found) : null;
 }
 
 export async function getCategories() {

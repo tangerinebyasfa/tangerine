@@ -12,6 +12,14 @@ import {
 } from "./firebase";
 import { auth } from "./firebase";
 
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function resolveApiUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 
@@ -42,6 +50,24 @@ async function readDoc(collectionName, id) {
 
   const snapshot = await fsGetDoc(fsDoc(db, collectionName, id));
   return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+}
+
+async function readDocByField(collectionName, field, value) {
+  if (!db) throw new Error("Firebase is not configured yet.");
+
+  const snapshot = await fsGetDocs(fsQuery(collection(db, collectionName), fsWhere(field, "==", value)));
+  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+}
+
+async function readProductBySlugOrName(value) {
+  if (!db) throw new Error("Firebase is not configured yet.");
+
+  const direct = await readDocByField("products", "slug", value);
+  if (direct) return direct;
+
+  const snapshot = await fsGetDocs(collection(db, "products"));
+  const found = snapshot.docs.find((document) => slugify(document.data()?.name) === value);
+  return found ? { id: found.id, ...found.data() } : null;
 }
 
 async function readByField(collectionName, field, value) {
@@ -107,7 +133,7 @@ export const api = {
   },
   getProduct: async (id) => {
     if (db) {
-      return readDoc("products", id);
+      return (await readDoc("products", id)) || (await readProductBySlugOrName(id));
     }
 
     return request(`/products/${id}`);
