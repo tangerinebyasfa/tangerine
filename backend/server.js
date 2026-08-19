@@ -11,7 +11,30 @@ const usersRoutes = require("./routes/users");
 
 const app = express();
 
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000" }));
+const allowedOrigins = [
+  ...(process.env.CLIENT_URLS || "").split(","),
+  process.env.CLIENT_URL,
+]
+  .map((origin) => origin && origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+      const isVercelApp = /^https:\/\/.*\.vercel\.app$/i.test(origin);
+      const isAllowed = allowedOrigins.length === 0 || allowedOrigins.includes(origin);
+
+      if (isLocalhost || isVercelApp || isAllowed) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin ${origin}`));
+    },
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
