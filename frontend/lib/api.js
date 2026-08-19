@@ -2,8 +2,20 @@
 
 import { auth } from "./firebase";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:5000/api");
+function resolveApiUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+  if (process.env.NODE_ENV === "production") {
+    if (!configuredUrl) return "/api";
+
+    const isLocalhostUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i.test(configuredUrl);
+    return isLocalhostUrl ? "/api" : configuredUrl;
+  }
+
+  return configuredUrl || "http://localhost:5000/api";
+}
+
+const API_URL = resolveApiUrl();
 
 /**
  * Thin wrapper around fetch that talks to the Express backend.
