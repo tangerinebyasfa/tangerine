@@ -27,6 +27,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /subcategories/{subcategoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // User profiles:
     // - A signed-in user can create their own doc on signup.
     // - They can read their own doc.
