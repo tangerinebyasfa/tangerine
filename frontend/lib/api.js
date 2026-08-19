@@ -2,7 +2,8 @@
 
 import { auth } from "./firebase";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "production" ? "/api" : "http://localhost:5000/api");
 
 /**
  * Thin wrapper around fetch that talks to the Express backend.

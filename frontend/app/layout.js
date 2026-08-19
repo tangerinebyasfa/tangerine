@@ -24,7 +24,7 @@ const inter = Inter({
 export const metadata = {
   title: "Tangerine | Considered Clothing",
   icons: {
-    icon: "/images/favicon.png",
+    icon: "/Images/favicon.png",
   },
   description: "A fashion house for clothing that moves with you — shop new arrivals, curated edits, and timeless staples.",
 };

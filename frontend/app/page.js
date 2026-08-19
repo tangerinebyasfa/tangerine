@@ -2,18 +2,18 @@ import Image from "next/image";
 
 const homeImages = [
   {
-    desktop: "/images/homepage/1.png",
-    mobile: "/images/homepage/1mobile.png",
+    desktop: "/Images/HomePage/1.png",
+    mobile: "/Images/HomePage/1mobile.png",
     alt: "Homepage image 1",
   },
   {
-    desktop: "/images/homepage/2.png",
-    mobile: "/images/homepage/2mobile.png",
+    desktop: "/Images/HomePage/2.png",
+    mobile: "/Images/HomePage/2mobile.png",
     alt: "Homepage image 2",
   },
   {
-    desktop: "/images/homepage/3.png",
-    mobile: "/images/homepage/3mobile.png",
+    desktop: "/Images/HomePage/3.png",
+    mobile: "/Images/HomePage/3mobile.png",
     alt: "Homepage image 3",
   },
 ];

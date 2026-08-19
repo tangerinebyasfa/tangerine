@@ -83,7 +83,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center">
           <span className="sr-only">Home</span>
           <Image
-            src="/images/logo.png"
+            src="/Images/logo.png"
             alt="Tangerine"
             width={180}
             height={60}
