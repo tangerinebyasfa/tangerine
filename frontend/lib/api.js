@@ -179,6 +179,15 @@ export const api = {
 
   // Gallery
   getGalleryItems: async () => {
+    try {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        return await request("/gallery");
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV === "production") throw err;
+      console.warn("Falling back to Firestore gallery read:", err);
+    }
+
     if (!db) return [];
 
     const items = await readCollection("gallery");
