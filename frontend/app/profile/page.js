@@ -1,101 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext";
-import { db } from "../../lib/firebase";
-import { doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { api } from "../../lib/api";
 import AuthGuard from "../../components/auth/AuthGuard";
 import PageHeader from "../../components/ui/PageHeader";
-import Input from "../../components/ui/Input";
-import Button from "../../components/ui/Button";
+import Spinner from "../../components/ui/Spinner";
+import { formatINR } from "../../lib/currency";
 
-function ProfileForm() {
-  const { user, profile, refreshProfile } = useAuth();
-  const [form, setForm] = useState({
-    displayName: profile?.displayName || "",
-    phone: profile?.phone || "",
-    address: profile?.address || "",
-  });
-  const [loading, setLoading] = useState(false);
+const statusColors = {
+  pending: "bg-sand text-ink",
+  processing: "bg-sage/20 text-sage",
+  shipped: "bg-burgundy/10 text-burgundy",
+  delivered: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+};
+
+function ProfileOrders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setForm({
-      displayName: profile?.displayName || "",
-      phone: profile?.phone || "",
-      address: profile?.address || "",
-    });
-  }, [profile]);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (!db) throw new Error("Firebase is not configured yet.");
-
-      await updateDoc(doc(db, "users", user.uid), {
-        ...form,
-        updatedAt: serverTimestamp(),
-      });
-      await refreshProfile();
-      toast.success("Profile updated");
-    } catch (err) {
+    (async () => {
       try {
-        if (!db) throw err;
-
-        await setDoc(
-          doc(db, "users", user.uid),
-          {
-            ...form,
-            uid: user.uid,
-            email: user.email,
-            role: profile?.role || "customer",
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
-        await refreshProfile();
-        toast.success("Profile updated");
-      } catch (fallbackErr) {
-        toast.error(fallbackErr.message || err.message || "Could not update profile");
+        setOrders(await api.getMyOrders());
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }
+    })();
+  }, []);
+
+  if (loading) return <Spinner className="min-h-[40vh]" />;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-16">
-      <PageHeader eyebrow="Account" title="My Profile" />
+    <div className="max-w-5xl mx-auto px-6 py-16">
+      <PageHeader
+        eyebrow="Account"
+        title="My Orders"
+        description="All the orders placed from this account, in one place."
+      />
 
-      <div className="grid md:grid-cols-3 gap-12">
-        <div className="md:col-span-1">
-          <p className="text-xs tracking-widest uppercase text-ink/40 mb-2">Signed in as</p>
-          <p className="text-sm">{user.email}</p>
-          <p className="text-xs tracking-widest uppercase text-ink/40 mt-6 mb-2">Role</p>
-          <p className="text-sm capitalize">{profile?.role || "customer"}</p>
+      {orders.length === 0 ? (
+        <p className="text-ink/50 text-sm">You haven't placed any orders yet.</p>
+      ) : (
+        <div className="space-y-6">
+          {orders.map((order) => (
+            <div key={order.id} className="border border-ink/10 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div>
+                  <p className="text-xs text-ink/40">Order ID</p>
+                  <p className="text-sm">{order.id}</p>
+                </div>
+                <span
+                  className={`text-xs uppercase tracking-widest px-3 py-1 ${
+                    statusColors[order.status] || "bg-sand"
+                  }`}
+                >
+                  {order.status}
+                </span>
+              </div>
+
+              <div className="divide-y divide-ink/10">
+                {order.items?.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm py-2 gap-4">
+                    <span>
+                      {item.name} x {item.quantity}
+                      {item.size ? ` (Size ${item.size})` : ""}
+                    </span>
+                    <span>{formatINR(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-between text-base font-medium mt-4 pt-4 border-t border-ink/10">
+                <span>Total</span>
+                <span>{formatINR(order.total)}</span>
+              </div>
+            </div>
+          ))}
         </div>
-
-        <form onSubmit={handleSubmit} className="md:col-span-2 max-w-md">
-          <Input
-            label="Full Name"
-            value={form.displayName}
-            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-          />
-          <Input
-            label="Phone"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
-          <Input
-            label="Shipping Address"
-            textarea
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-          <Button type="submit" loading={loading}>Save Changes</Button>
-        </form>
-      </div>
+      )}
     </div>
   );
 }
@@ -103,7 +88,7 @@ function ProfileForm() {
 export default function ProfilePage() {
   return (
     <AuthGuard>
-      <ProfileForm />
+      <ProfileOrders />
     </AuthGuard>
   );
 }

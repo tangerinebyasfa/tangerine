@@ -201,9 +201,6 @@ export default function Navbar() {
                 <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-sand">
                   My Profile
                 </Link>
-                <Link href="/orders" className="block px-4 py-2 text-sm hover:bg-sand">
-                  My Orders
-                </Link>
                 {isAdmin && (
                   <Link href="/admin" className="block px-4 py-2 text-sm hover:bg-sand">
                     Admin Panel
@@ -279,13 +276,10 @@ export default function Navbar() {
               Admin Panel
             </Link>
           )}
-          {user ? (
+            {user ? (
             <>
               <Link href="/profile" className="text-sm uppercase tracking-widest">
                 My Profile
-              </Link>
-              <Link href="/orders" className="text-sm uppercase tracking-widest">
-                My Orders
               </Link>
               <button onClick={logout} className="text-sm uppercase tracking-widest text-left text-burgundy">
                 Sign Out

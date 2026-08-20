@@ -40,7 +40,7 @@ function CheckoutForm() {
     }
     setLoading(true);
     try {
-      const order = await api.createOrder({
+      await api.createOrder({
         items: items.map(({ productId, name, price, size, color, quantity, image }) => ({
           productId,
           name,
@@ -58,7 +58,7 @@ function CheckoutForm() {
       });
       clearCart();
       toast.success("Order placed!");
-      router.push("/orders");
+      router.push("/profile");
     } catch (err) {
       toast.error(err.message || "Could not place order");
     } finally {
@@ -120,7 +120,10 @@ function CheckoutForm() {
               { value: "cod", label: "Cash on Delivery" },
               { value: "card", label: "Credit / Debit Card" },
             ].map((opt) => (
-              <label key={opt.value} className="flex items-center gap-3 text-sm border border-ink/20 px-4 py-3 cursor-pointer">
+              <label
+                key={opt.value}
+                className="flex items-center gap-3 text-sm border border-ink/20 px-4 py-3 cursor-pointer"
+              >
                 <input
                   type="radio"
                   name="payment"
@@ -138,7 +141,9 @@ function CheckoutForm() {
           <div className="space-y-2 mb-4 max-h-64 overflow-y-auto pr-1">
             {items.map((item) => (
               <div key={item.lineId} className="flex justify-between text-sm">
-                <span className="text-ink/70">{item.name} × {item.quantity}</span>
+                <span className="text-ink/70">
+                  {item.name} x {item.quantity}
+                </span>
                 <span>{formatINR(item.price * item.quantity)}</span>
               </div>
             ))}

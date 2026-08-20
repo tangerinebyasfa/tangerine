@@ -30,7 +30,7 @@ export default function Footer() {
           <p className="text-xs tracking-widest uppercase text-paper/40 mb-4">Account</p>
           <ul className="space-y-2 text-sm text-paper/80">
             <li><Link href="/signin">Sign In</Link></li>
-            <li><Link href="/orders">My Orders</Link></li>
+            <li><Link href="/profile">My Profile</Link></li>
           </ul>
         </div>
       </div>
