@@ -213,7 +213,7 @@ export default function AdminCategoriesPage() {
                   ))}
                 </select>
               </label>
-                  
+
               <div className="flex gap-3">
                 <Button type="submit" loading={saving}>
                   {editingId ? "Save Changes" : "Add Subtype"}
@@ -227,7 +227,7 @@ export default function AdminCategoriesPage() {
             </form>
           </div>
         </div>
-
+                
         <div className="space-y-8">
           {loading ? (
             <Spinner />

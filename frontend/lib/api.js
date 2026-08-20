@@ -178,7 +178,20 @@ export const api = {
   deleteSubcategory: (id) => request(`/subcategories/${id}`, { method: "DELETE", authRequired: true }),
 
   // Gallery
-  getGalleryItems: () => request("/gallery"),
+  getGalleryItems: async () => {
+    if (!db) return [];
+
+    const items = await readCollection("gallery");
+    return items.sort((a, b) => {
+      const aOrder = Number(a.sortOrder ?? 0);
+      const bOrder = Number(b.sortOrder ?? 0);
+      if (aOrder !== bOrder) return aOrder - bOrder;
+
+      const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+      const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  },
   createGalleryItem: (body) => request("/gallery", { method: "POST", body, authRequired: true }),
   updateGalleryItem: (id, body) => request(`/gallery/${id}`, { method: "PUT", body, authRequired: true }),
   deleteGalleryItem: (id) => request(`/gallery/${id}`, { method: "DELETE", authRequired: true }),
