@@ -177,6 +177,12 @@ export const api = {
   updateSubcategory: (id, body) => request(`/subcategories/${id}`, { method: "PUT", body, authRequired: true }),
   deleteSubcategory: (id) => request(`/subcategories/${id}`, { method: "DELETE", authRequired: true }),
 
+  // Gallery
+  getGalleryItems: () => request("/gallery"),
+  createGalleryItem: (body) => request("/gallery", { method: "POST", body, authRequired: true }),
+  updateGalleryItem: (id, body) => request(`/gallery/${id}`, { method: "PUT", body, authRequired: true }),
+  deleteGalleryItem: (id) => request(`/gallery/${id}`, { method: "DELETE", authRequired: true }),
+
   // Orders
   createOrder: (body) => request("/orders", { method: "POST", body, authRequired: true }),
   getMyOrders: () => request("/orders/mine", { authRequired: true }),

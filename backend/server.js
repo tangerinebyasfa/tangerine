@@ -8,6 +8,7 @@ const categoriesRoutes = require("./routes/categories");
 const subcategoriesRoutes = require("./routes/subcategories");
 const ordersRoutes = require("./routes/orders");
 const usersRoutes = require("./routes/users");
+const galleryRoutes = require("./routes/gallery");
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use("/api/categories", categoriesRoutes);
 app.use("/api/subcategories", subcategoriesRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/gallery", galleryRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));

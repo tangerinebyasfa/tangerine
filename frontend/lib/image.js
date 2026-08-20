@@ -2,6 +2,9 @@ const DRIVE_FILE_ID_PATTERNS = [
   /drive\.google\.com\/file\/d\/([^/]+)/i,
   /drive\.google\.com\/open\?id=([^&/]+)/i,
   /drive\.google\.com\/uc\?(?:[^#]*&)?id=([^&/]+)/i,
+  /drive\.google\.com\/thumbnail\?(?:[^#]*&)?id=([^&/]+)/i,
+  /drive\.google\.com\/uc\?export=view&id=([^&/]+)/i,
+  /drive\.google\.com\/uc\?export=download&id=([^&/]+)/i,
 ];
 
 function getDriveFileId(src) {
@@ -30,4 +33,3 @@ export function normalizeImageUrl(src) {
 
   return trimmed;
 }
-
