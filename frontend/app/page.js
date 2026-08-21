@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { api } from "../lib/api";
 import ProductCard from "../components/product/ProductCard";
@@ -82,15 +83,27 @@ export default function HomePage() {
         />
 
         {featuredProducts.length > 0 && (
-          <section className="mx-auto py-14 w-90% md:w-80%">
-            {/* <div className="flex items-end justify-between gap-4 mb-8"> */}
-              <div>
-                {/* <p className="eyebrow mb-2">Featured</p> */}
-                {/* <h2 className="font-display text-3xl md:text-4xl">Featured Products</h2> */}
+          <section className="mx-auto w-[90%] py-14 md:w-4/5">
+            <div className="mb-4 flex items-center justify-end">
+              <Link
+                href="/products/all"
+                className="inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
+              >
+                Show Now
+              </Link>
+            </div>
+
+            <div className="md:hidden -mx-[5vw] overflow-x-auto px-[5vw] pb-2">
+              <div className="flex snap-x snap-mandatory gap-4">
+                {featuredProducts.map((product) => (
+                  <div key={product.id} className="w-[72vw] shrink-0 snap-start">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
               </div>
-              {/* <p className="text-sm text-ink/50">Selected from the current edit.</p> */}
-            {/* </div> */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            </div>
+
+            <div className="hidden md:grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

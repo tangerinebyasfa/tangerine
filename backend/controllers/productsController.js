@@ -7,25 +7,33 @@ const getTimestamp = () =>
     ? admin.firestore.FieldValue.serverTimestamp()
     : new Date().toISOString();
 
-function normalizeList(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value.split(",").map((item) => item.trim()).filter(Boolean);
-  }
-
-  return [];
-}
-
 function normalizeText(value) {
   if (value === null || value === undefined) return "";
   return String(value).trim();
 }
 
-function normalizeCode(value) {
-  return normalizeText(value).toUpperCase().replace(/\s+/g, "");
+function normalizeList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeBoolean(value) {
+  return value === true || value === "true" || value === 1 || value === "1";
+}
+
+function normalizeNumber(value) {
+  if (value === "" || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function slugify(value) {
@@ -35,220 +43,140 @@ function slugify(value) {
     .replace(/(^-|-$)/g, "");
 }
 
-function matchesSlug(product, requestedSlug) {
-  return product.slug === requestedSlug || slugify(product.name) === requestedSlug;
+function normalizeAvailableAt(value) {
+  return normalizeList(value);
 }
 
-function normalizeAdditionalInfo(value) {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const label = normalizeText(item.label);
-      const detailValue = normalizeText(item.value);
-      if (!label && !detailValue) return null;
-      return { label, value: detailValue };
-    })
-    .filter(Boolean);
+function mapProduct(doc) {
+  return { id: doc.id, ...doc.data() };
 }
 
-function normalizeSizeOptions(value) {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((item) => {
-      if (typeof item === "string") {
-        const label = normalizeText(item);
-        if (!label) return null;
-        return { label, available: true };
-      }
-
-      if (!item || typeof item !== "object") return null;
-      const label = normalizeText(item.label);
-      if (!label) return null;
-      return { label, available: !!item.available };
-    })
-    .filter(Boolean);
+async function findByCode(code) {
+  if (!code) return null;
+  const snapshot = await productsRef.where("code", "==", code).limit(1).get();
+  if (snapshot.empty) return null;
+  return snapshot.docs[0];
 }
 
-async function findProductByInternalCode(internalCode, excludeId = null) {
-  const normalizedCode = normalizeCode(internalCode);
-  if (!normalizedCode) return null;
+async function findBySlugOrId(slugOrId) {
+  const byId = await productsRef.doc(slugOrId).get();
+  if (byId.exists) return byId;
 
-  const snapshot = await productsRef.get();
-  return snapshot.docs.find((doc) => {
-    if (excludeId && doc.id === excludeId) return false;
-    return normalizeCode(doc.data()?.internalCode) === normalizedCode;
-  }) || null;
+  const bySlug = await productsRef.where("slug", "==", slugOrId).limit(1).get();
+  if (!bySlug.empty) return bySlug.docs[0];
+
+  const byCode = await productsRef.where("code", "==", slugOrId).limit(1).get();
+  if (!byCode.empty) return byCode.docs[0];
+
+  return null;
 }
 
-// GET /api/products?category=dresses&limit=20
 exports.getProducts = async (req, res) => {
   try {
-    const { category, featured, type } = req.query;
-    const snapshot = await productsRef.get();
-    const products = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((product) => {
-        if (category && product.categorySlug !== category) {
-          return false;
-        }
-        if (type && (product.categoryParentType || product.productType) !== type) {
-          return false;
-        }
-        if (featured === "true" && !product.featured) {
-          return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-        const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-        return bTime - aTime;
-      });
-    res.json(products);
+    const snapshot = await productsRef.orderBy("createdAt", "desc").get();
+    res.json(snapshot.docs.map(mapProduct));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch products" });
   }
 };
 
-// GET /api/products/:id
 exports.getProductById = async (req, res) => {
   try {
-    const doc = await productsRef.doc(req.params.id).get();
-    if (doc.exists) return res.json({ id: doc.id, ...doc.data() });
+    const doc = await findBySlugOrId(req.params.id);
+    if (!doc) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
-    const snapshot = await productsRef.get();
-    const found = snapshot.docs.find((productDoc) => matchesSlug(productDoc.data() || {}, req.params.id));
-    if (found) return res.json({ id: found.id, ...found.data() });
-
-    res.status(404).json({ error: "Product not found" });
+    res.json({ id: doc.id, ...doc.data() });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch product" });
   }
 };
 
-// POST /api/products (admin only)
 exports.createProduct = async (req, res) => {
   try {
-    const {
+    const body = req.body || {};
+    const name = normalizeText(body.name);
+    if (!name) {
+      return res.status(400).json({ error: "name is required" });
+    }
+
+    const code = normalizeText(body.code) || slugify(name);
+    const existing = await findByCode(code);
+    if (existing) {
+      return res.status(409).json({ error: "Product code already exists" });
+    }
+
+    const product = {
       name,
-      internalCode,
-      description,
-      sizeGuide,
-      additionalInfo,
-      sizeOptions,
-      materials,
-      washCare,
-      deliveryInfo,
-      price,
-      compareAtPrice,
-      productType,
-      categoryId,
-      categorySlug,
-      categoryParentType,
-      images,
-      sizes,
-      colors,
-      stock,
-      featured,
-    } = req.body;
-
-    if (!name || !price || !categoryId || !productType) {
-      return res.status(400).json({ error: "name, price, productType and categoryId are required" });
-    }
-
-    const normalizedCode = normalizeCode(internalCode);
-    if (!normalizedCode) {
-      return res.status(400).json({ error: "internalCode is required" });
-    }
-
-    const duplicate = await findProductByInternalCode(normalizedCode);
-    if (duplicate) {
-      return res.status(400).json({ error: "Product code must be unique" });
-    }
-
-    const newProduct = {
-      name,
-      internalCode: normalizedCode,
-      slug: slugify(name),
-      description: description || "",
-      sizeGuide: normalizeText(sizeGuide),
-      additionalInfo: normalizeAdditionalInfo(additionalInfo),
-      sizeOptions: normalizeSizeOptions(sizeOptions),
-      sizes: normalizeSizeOptions(sizeOptions)
-        .filter((item) => item.available)
-        .map((item) => item.label),
-      materials: normalizeText(materials),
-      washCare: normalizeText(washCare),
-      deliveryInfo: normalizeText(deliveryInfo),
-      price: Number(price),
-      compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
-      productType,
-      categoryId,
-      categorySlug: categorySlug || null,
-      categoryParentType: categoryParentType || productType,
-      images: normalizeList(images),
-      colors: normalizeList(colors),
-      stock: typeof stock === "number" ? stock : 0,
-      featured: !!featured,
+      code,
+      slug: slugify(body.slug || name || code),
+      description: normalizeText(body.description),
+      additionalInfo: normalizeList(body.additionalInfo),
+      sizeOptions: normalizeList(body.sizeOptions),
+      materials: normalizeList(body.materials),
+      washCare: normalizeList(body.washCare),
+      deliveryInfo: normalizeText(body.deliveryInfo),
+      price: normalizeNumber(body.price),
+      compareAtPrice: normalizeNumber(body.compareAtPrice),
+      productType: normalizeText(body.productType),
+      subType: normalizeText(body.subType),
+      stock: normalizeNumber(body.stock),
+      images: normalizeList(body.images),
+      sizes: normalizeList(body.sizes),
+      colors: normalizeList(body.colors),
+      availableAt: normalizeAvailableAt(body.availableAt),
+      featured: normalizeBoolean(body.featured),
       createdAt: getTimestamp(),
       updatedAt: getTimestamp(),
     };
 
-    const docRef = await productsRef.add(newProduct);
-    res.status(201).json({ id: docRef.id, ...newProduct });
+    const docRef = await productsRef.add(product);
+    res.status(201).json({ id: docRef.id, ...product });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to create product" });
   }
 };
 
-// PUT /api/products/:id (admin only)
 exports.updateProduct = async (req, res) => {
   try {
     const docRef = productsRef.doc(req.params.id);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: "Product not found" });
+    const existing = await docRef.get();
+    if (!existing.exists) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
-    const updates = {
-      ...req.body,
-      updatedAt: getTimestamp(),
-    };
+    const updates = { ...(req.body || {}), updatedAt: getTimestamp() };
+
+    if ("name" in updates) {
+      updates.name = normalizeText(updates.name);
+      updates.slug = slugify(updates.slug || updates.name);
+    }
+    if ("code" in updates) {
+      updates.code = normalizeText(updates.code) || updates.slug || slugify(updates.name || "");
+    }
+    if ("description" in updates) updates.description = normalizeText(updates.description);
+    if ("additionalInfo" in updates) updates.additionalInfo = normalizeList(updates.additionalInfo);
+    if ("sizeOptions" in updates) updates.sizeOptions = normalizeList(updates.sizeOptions);
+    if ("materials" in updates) updates.materials = normalizeList(updates.materials);
+    if ("washCare" in updates) updates.washCare = normalizeList(updates.washCare);
+    if ("deliveryInfo" in updates) updates.deliveryInfo = normalizeText(updates.deliveryInfo);
+    if ("price" in updates) updates.price = normalizeNumber(updates.price);
+    if ("compareAtPrice" in updates) updates.compareAtPrice = normalizeNumber(updates.compareAtPrice);
+    if ("productType" in updates) updates.productType = normalizeText(updates.productType);
+    if ("subType" in updates) updates.subType = normalizeText(updates.subType);
+    if ("stock" in updates) updates.stock = normalizeNumber(updates.stock);
+    if ("images" in updates) updates.images = normalizeList(updates.images);
+    if ("sizes" in updates) updates.sizes = normalizeList(updates.sizes);
+    if ("colors" in updates) updates.colors = normalizeList(updates.colors);
+    if ("availableAt" in updates) updates.availableAt = normalizeAvailableAt(updates.availableAt);
+    if ("featured" in updates) updates.featured = normalizeBoolean(updates.featured);
+
     delete updates.id;
     delete updates.createdAt;
-    delete updates.sizes;
-
-    if ("internalCode" in updates) {
-      updates.internalCode = normalizeCode(updates.internalCode);
-      if (!updates.internalCode) {
-        return res.status(400).json({ error: "internalCode is required" });
-      }
-
-      const duplicate = await findProductByInternalCode(updates.internalCode, req.params.id);
-      if (duplicate) {
-        return res.status(400).json({ error: "Product code must be unique" });
-      }
-    }
-
-    if ("images" in updates) updates.images = normalizeList(updates.images);
-    if ("sizeOptions" in updates) {
-      updates.sizeOptions = normalizeSizeOptions(updates.sizeOptions);
-      updates.sizes = updates.sizeOptions.filter((item) => item.available).map((item) => item.label);
-    }
-    if ("colors" in updates) updates.colors = normalizeList(updates.colors);
-    if ("sizeGuide" in updates) updates.sizeGuide = normalizeText(updates.sizeGuide);
-    if ("additionalInfo" in updates) updates.additionalInfo = normalizeAdditionalInfo(updates.additionalInfo);
-    if ("materials" in updates) updates.materials = normalizeText(updates.materials);
-    if ("washCare" in updates) updates.washCare = normalizeText(updates.washCare);
-    if ("deliveryInfo" in updates) updates.deliveryInfo = normalizeText(updates.deliveryInfo);
-    if ("name" in updates) updates.slug = slugify(updates.name);
-    if ("categoryParentType" in updates && !updates.categoryParentType && updates.productType) {
-      updates.categoryParentType = updates.productType;
-    }
 
     await docRef.update(updates);
     const updated = await docRef.get();
@@ -259,12 +187,13 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
-// DELETE /api/products/:id (admin only)
 exports.deleteProduct = async (req, res) => {
   try {
     const docRef = productsRef.doc(req.params.id);
-    const doc = await docRef.get();
-    if (!doc.exists) return res.status(404).json({ error: "Product not found" });
+    const existing = await docRef.get();
+    if (!existing.exists) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
     await docRef.delete();
     res.json({ message: "Product deleted", id: req.params.id });

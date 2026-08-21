@@ -249,9 +249,9 @@ export default function AdminCategoriesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">
-                      <th className="py-3 px-4">Subtype</th>
+                      <th className="py-3 px-4">Subtype</th> 
                       <th className="py-3 px-4">Type</th>
-                      <th className="py-3 px-4">Slug</th>
+                      <th className="py-3 px-4">Slug</th> 
                       <th className="py-3 px-4"></th>
                     </tr>
                   </thead>
