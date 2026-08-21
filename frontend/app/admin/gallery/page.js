@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { api } from "../../../lib/api";
+import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "../../../lib/firebase";
 import Spinner from "../../../components/ui/Spinner";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
@@ -17,6 +17,18 @@ const emptyForm = {
   sortOrder: 0,
 };
 
+function sortGalleryItems(items) {
+  return [...items].sort((a, b) => {
+    const aOrder = Number(a.sortOrder ?? 0);
+    const bOrder = Number(b.sortOrder ?? 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+    const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
 export default function AdminGalleryPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +41,10 @@ export default function AdminGalleryPage() {
   async function load() {
     setLoading(true);
     try {
-      setItems(await api.getGalleryItems());
+      if (!db) throw new Error("Firebase is not configured yet.");
+      const snapshot = await getDocs(collection(db, "gallery"));
+      const nextItems = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+      setItems(sortGalleryItems(nextItems));
     } catch (err) {
       console.error(err);
       setItems([]);
@@ -43,9 +58,7 @@ export default function AdminGalleryPage() {
     load();
   }, []);
 
-  const orderedItems = useMemo(() => {
-    return [...items].sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0));
-  }, [items]);
+  const orderedItems = useMemo(() => sortGalleryItems(items), [items]);
 
   function resetForm() {
     setEditingId(null);
@@ -69,6 +82,8 @@ export default function AdminGalleryPage() {
     setSaving(true);
 
     try {
+      if (!db) throw new Error("Firebase is not configured yet.");
+
       const imageUrl = normalizeImageUrl(form.imageUrl.trim());
       if (!imageUrl) {
         throw new Error("Please paste a Google Drive or direct image link for the gallery item.");
@@ -81,13 +96,17 @@ export default function AdminGalleryPage() {
         imageUrl,
         imageAlt: form.imageAlt.trim(),
         sortOrder: Number(form.sortOrder || 0),
+        updatedAt: serverTimestamp(),
       };
 
       if (isEditing) {
-        await api.updateGalleryItem(editingId, payload);
+        await updateDoc(doc(db, "gallery", editingId), payload);
         toast.success("Gallery item updated");
       } else {
-        await api.createGalleryItem(payload);
+        await addDoc(collection(db, "gallery"), {
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
         toast.success("Gallery item added");
       }
 
@@ -104,7 +123,8 @@ export default function AdminGalleryPage() {
     if (!confirm("Delete this gallery item?")) return;
 
     try {
-      await api.deleteGalleryItem(item.id);
+      if (!db) throw new Error("Firebase is not configured yet.");
+      await deleteDoc(doc(db, "gallery", item.id));
       if (editingId === item.id) resetForm();
       toast.success("Gallery item deleted");
       await load();
@@ -126,18 +146,8 @@ export default function AdminGalleryPage() {
           <div className="border border-ink/10 p-4 bg-paper">
             <h2 className="font-display text-xl mb-4">{isEditing ? "Edit Gallery Item" : "Add Gallery Item"}</h2>
             <form onSubmit={handleSubmit}>
-              <Input
-                label="Title"
-                required
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-              />
-              <Input
-                label="Caption"
-                textarea
-                value={form.caption}
-                onChange={(e) => setForm({ ...form, caption: e.target.value })}
-              />
+              <Input label="Title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Input label="Caption" textarea value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} />
               <Input
                 label="Instagram Link"
                 type="url"
@@ -152,11 +162,7 @@ export default function AdminGalleryPage() {
                 value={form.imageUrl}
                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
               />
-              <Input
-                label="Image Alt Text"
-                value={form.imageAlt}
-                onChange={(e) => setForm({ ...form, imageAlt: e.target.value })}
-              />
+              <Input label="Image Alt Text" value={form.imageAlt} onChange={(e) => setForm({ ...form, imageAlt: e.target.value })} />
               <Input
                 label="Display Order"
                 type="number"
@@ -231,18 +237,10 @@ export default function AdminGalleryPage() {
                     </div>
                     {item.caption && <p className="mt-3 text-sm leading-6 text-ink/60">{item.caption}</p>}
                     <div className="mt-4 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(item)}
-                        className="text-xs tracking-widest uppercase text-ink/70 hover:text-burgundy"
-                      >
+                      <button type="button" onClick={() => startEdit(item)} className="text-xs tracking-widest uppercase text-ink/70 hover:text-burgundy">
                         Edit
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item)}
-                        className="text-xs tracking-widest uppercase text-burgundy hover:text-ink"
-                      >
+                      <button type="button" onClick={() => handleDelete(item)} className="text-xs tracking-widest uppercase text-burgundy hover:text-ink">
                         Delete
                       </button>
                     </div>
