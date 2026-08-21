@@ -1,18 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { getGalleryItems } from "../../lib/firestoreServer";
+import { api } from "../../lib/api";
+import Spinner from "../../components/ui/Spinner";
 import { normalizeImageUrl } from "../../lib/image";
 
-export const dynamic = "force-dynamic";
+export default function GalleryPage() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function GalleryPage() {
-  let items = [];
+  useEffect(() => {
+    let active = true;
 
-  try {
-    items = await getGalleryItems();
-  } catch (error) {
-    console.error(error);
-  }
+    (async () => {
+      try {
+        const data = await api.getGalleryItems();
+        if (active) setItems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        if (active) setItems([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-20">
@@ -44,7 +61,9 @@ export default async function GalleryPage() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {loading ? (
+        <Spinner />
+      ) : items.length === 0 ? (
         <div className="border border-ink/10 bg-paper p-10 text-center">
           <p className="font-display text-3xl">No gallery posts yet.</p>
           <p className="mt-3 text-sm text-ink/60">
