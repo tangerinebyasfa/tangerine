@@ -179,27 +179,20 @@ export const api = {
 
   // Gallery
   getGalleryItems: async () => {
-    try {
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        return await request("/gallery");
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV === "production") throw err;
-      console.warn("Falling back to Firestore gallery read:", err);
+    if (db) {
+      const items = await readCollection("gallery");
+      return items.sort((a, b) => {
+        const aOrder = Number(a.sortOrder ?? 0);
+        const bOrder = Number(b.sortOrder ?? 0);
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+        const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
     }
 
-    if (!db) return [];
-
-    const items = await readCollection("gallery");
-    return items.sort((a, b) => {
-      const aOrder = Number(a.sortOrder ?? 0);
-      const bOrder = Number(b.sortOrder ?? 0);
-      if (aOrder !== bOrder) return aOrder - bOrder;
-
-      const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-      const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-      return bTime - aTime;
-    });
+    return request("/gallery");
   },
   createGalleryItem: (body) => request("/gallery", { method: "POST", body, authRequired: true }),
   updateGalleryItem: (id, body) => request(`/gallery/${id}`, { method: "PUT", body, authRequired: true }),
