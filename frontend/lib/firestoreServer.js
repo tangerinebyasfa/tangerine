@@ -144,3 +144,20 @@ export async function getSubcategory(idOrSlug) {
   const found = snapshot.docs[0];
   return { id: found.id, ...found.data() };
 }
+
+export async function getGalleryItems() {
+  assertDb();
+
+  const snapshot = await getDocs(collection(db, "gallery"));
+  const items = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+
+  return items.sort((a, b) => {
+    const aOrder = Number(a.sortOrder ?? 0);
+    const bOrder = Number(b.sortOrder ?? 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+    const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
