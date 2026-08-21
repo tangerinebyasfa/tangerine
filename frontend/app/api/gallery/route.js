@@ -9,6 +9,12 @@ export async function GET() {
     return NextResponse.json(items);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to fetch gallery items" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Failed to fetch gallery items",
+        detail: process.env.NODE_ENV === "production" ? undefined : error.message,
+      },
+      { status: 500 }
+    );
   }
 }
