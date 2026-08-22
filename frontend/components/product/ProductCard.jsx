@@ -17,7 +17,8 @@ function slugify(value) {
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
-  const image = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
+  const primaryImage = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
+  const secondaryImage = normalizeImageUrl(product.images?.[1]);
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
   const href = `/product/${product.slug || slugify(product.name) || product.id}`;
 
@@ -30,13 +31,26 @@ export default function ProductCard({ product }) {
   return (
     <Link href={href} className="group block">
       <div className="relative aspect-[4/5] overflow-hidden bg-paper">
-        <Image
-          src={image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        <div className="absolute inset-0 flex w-[200%] transition-transform duration-700 ease-out motion-reduce:transition-none group-hover:-translate-x-1/2">
+          <div className="relative h-full w-1/2 shrink-0">
+            <Image
+              src={primaryImage}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+            />
+          </div>
+          <div className="relative h-full w-1/2 shrink-0">
+            <Image
+              src={secondaryImage || primaryImage}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+            />
+          </div>
+        </div>
         {onSale && (
           <span className="absolute top-0 left-0 bg-tangerine text-paper text-[10px] tracking-widest uppercase px-3 py-1.5">
             Sale
@@ -74,3 +88,5 @@ export default function ProductCard({ product }) {
     </Link>
   );
 }
+
+
