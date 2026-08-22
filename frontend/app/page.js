@@ -75,12 +75,14 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <HomepageImage
-          desktop={homeImages[0].desktop}
-          mobile={homeImages[0].mobile}
-          alt={homeImages[0].alt}
-          priority
-        />
+        <Link href="/product/royal-blue-lace-co-ord-set" className="block">
+          <HomepageImage
+            desktop={homeImages[0].desktop}
+            mobile={homeImages[0].mobile}
+            alt={homeImages[0].alt}
+            priority
+          />
+        </Link>
 
         {featuredProducts.length > 0 && (
           <section className="mx-auto w-[90%] py-14 md:w-4/5">
@@ -111,15 +113,25 @@ export default function HomePage() {
           </section>
         )}
 
-        {homeImages.slice(1).map((image) => (
+        <Link href="/product/bloomscape-high-low-maxi-dress" className="block">
           <HomepageImage
-            key={image.desktop}
-            desktop={image.desktop}
-            mobile={image.mobile}
-            alt={image.alt}
+            desktop={homeImages[1].desktop}
+            mobile={homeImages[1].mobile}
+            alt={homeImages[1].alt}
           />
-        ))}
+        </Link>
+
+        <Link href="/product/crimson-cascade-high-low-skirt" className="block">
+          <HomepageImage
+            desktop={homeImages[2].desktop}
+            mobile={homeImages[2].mobile}
+            alt={homeImages[2].alt}
+          />
+        </Link>
       </div>
     </div>
   );
 }
+
+
+
