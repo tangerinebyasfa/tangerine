@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
-import { getProduct, getSubcategory } from "../../../lib/firestoreServer";
+﻿import { headers } from "next/headers";
+import { getProduct, getProducts, getSubcategory } from "../../../lib/firestoreServer";
 import StructuredData from "../../../SEO/StructuredData";
 import { getRequestOrigin } from "../../../SEO/schemaUtils";
 import { createBreadcrumbSchema } from "../../../SEO/breadcrumbSchema";
@@ -29,6 +29,13 @@ export default async function ProductPage({ params }) {
   const origin = getRequestOrigin(headers());
 
   const category = product?.categorySlug ? await getSubcategory(product.categorySlug).catch(() => null) : null;
+  const relatedProducts = product?.categorySlug
+    ? toPlainValue(
+        (await getProducts({ category: product.categorySlug }))
+          .filter((item) => item?.id !== product.id && item?.slug !== product.slug)
+          .slice(0, 8)
+      )
+    : [];
 
   const schema = product
     ? [
@@ -52,7 +59,7 @@ export default async function ProductPage({ params }) {
       {schema.map((item, index) => (
         <StructuredData key={index} schema={item} />
       ))}
-      <ProductDetailClient initialProduct={product} />
+      <ProductDetailClient initialProduct={product} relatedProducts={relatedProducts} />
     </>
   );
 }
