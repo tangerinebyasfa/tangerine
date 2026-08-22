@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { api } from "../../lib/api";
 import Spinner from "../../components/ui/Spinner";
-import { normalizeImageUrl } from "../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
 export default function GalleryPage() {
   const [items, setItems] = useState([]);
@@ -133,3 +133,4 @@ export default function GalleryPage() {
     </div>
   );
 }
+

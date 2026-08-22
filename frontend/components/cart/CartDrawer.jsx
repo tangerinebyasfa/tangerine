@@ -6,7 +6,7 @@ import Image from "next/image";
 import { X, Trash2, Minus, Plus } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../lib/api";
-import { normalizeImageUrl } from "../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 import { formatINR } from "../../lib/currency";
 
 function stripHtml(value) {
@@ -104,6 +104,7 @@ export default function CartDrawer() {
                           fill
                           sizes="88px"
                           className="object-cover"
+                          unoptimized={isGoogleDriveImageUrl(item.image)}
                         />
                       ) : null}
                     </Link>
@@ -196,6 +197,7 @@ export default function CartDrawer() {
                             fill
                             sizes="160px"
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            unoptimized={isGoogleDriveImageUrl(image)}
                           />
                           {/*  */}
                         </div>

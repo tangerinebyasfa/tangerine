@@ -1,4 +1,5 @@
 import { Fraunces, Inter } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
@@ -7,6 +8,10 @@ import Footer from "../components/layout/Footer";
 import CartDrawer from "../components/cart/CartDrawer";
 import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { Toaster } from "react-hot-toast";
+import StructuredData from "../SEO/StructuredData";
+import { getRequestOrigin } from "../SEO/schemaUtils";
+import { createOrganizationSchema } from "../SEO/organizationSchema";
+import { createWebsiteSchema } from "../SEO/websiteSchema";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -30,9 +35,14 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const requestHeaders = headers();
+  const origin = getRequestOrigin(requestHeaders);
+
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
+        <StructuredData schema={createOrganizationSchema(origin)} />
+        <StructuredData schema={createWebsiteSchema(origin)} />
         <AuthProvider>
           <CartProvider>
             <Navbar />
@@ -47,5 +57,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
-

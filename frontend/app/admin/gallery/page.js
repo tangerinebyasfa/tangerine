@@ -6,7 +6,7 @@ import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimes
 import Spinner from "../../../components/ui/Spinner";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
-import { normalizeImageUrl } from "../../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
 
 const emptyForm = {
   title: "",
@@ -254,3 +254,4 @@ export default function AdminGalleryPage() {
     </div>
   );
 }
+

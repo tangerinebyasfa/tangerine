@@ -18,6 +18,10 @@ function getDriveFileId(src) {
   return null;
 }
 
+export function isGoogleDriveImageUrl(src) {
+  return typeof src === "string" && /drive\.google\.com/i.test(src);
+}
+
 export function normalizeImageUrl(src) {
   if (!src || typeof src !== "string") return null;
 
@@ -28,7 +32,8 @@ export function normalizeImageUrl(src) {
 
   const driveFileId = getDriveFileId(trimmed);
   if (driveFileId) {
-    return `https://drive.google.com/uc?export=view&id=${driveFileId}`;
+    const driveUrl = `https://drive.google.com/uc?export=view&id=${driveFileId}`;
+    return `/api/image?url=${encodeURIComponent(driveUrl)}`;
   }
 
   return trimmed;

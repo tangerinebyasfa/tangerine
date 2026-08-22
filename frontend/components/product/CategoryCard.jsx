@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { normalizeImageUrl } from "../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
 export default function CategoryCard({ category }) {
   const image = normalizeImageUrl(category.image) || "/placeholder-category.svg";
@@ -16,6 +16,7 @@ export default function CategoryCard({ category }) {
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
+          unoptimized={isGoogleDriveImageUrl(image)}
         />
         <div className="absolute inset-0 bg-ink/20 group-hover:bg-ink/35 transition-colors" />
       </div>
@@ -28,3 +29,4 @@ export default function CategoryCard({ category }) {
     </Link>
   );
 }
+

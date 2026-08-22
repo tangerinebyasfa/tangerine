@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
-import { normalizeImageUrl } from "../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 import { formatINR } from "../../lib/currency";
 import { useCart } from "../../context/CartContext";
 
@@ -39,6 +39,7 @@ export default function ProductCard({ product }) {
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
+              unoptimized={isGoogleDriveImageUrl(primaryImage)}
             />
           </div>
           <div className="relative h-full w-1/2 shrink-0">
@@ -48,6 +49,7 @@ export default function ProductCard({ product }) {
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
               className="object-cover"
+              unoptimized={isGoogleDriveImageUrl(secondaryImage || primaryImage)}
             />
           </div>
         </div>
@@ -88,5 +90,6 @@ export default function ProductCard({ product }) {
     </Link>
   );
 }
+
 
 

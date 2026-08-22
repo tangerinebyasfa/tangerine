@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { normalizeImageUrl } from "../../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 import PageHeader from "../../components/ui/PageHeader";
 
 export const metadata = { title: "About | Tangerine" };
@@ -20,6 +20,7 @@ export default function AboutPage() {
             alt="Tangerine collection"
             fill
             className="object-cover"
+            unoptimized={isGoogleDriveImageUrl("https://drive.google.com/file/d/1Vnq7R6KcCC83SSksmoJLgmQj_dK2M2n7/view?usp=sharing")}
           />
         </div>
         <div>
@@ -52,4 +53,5 @@ export default function AboutPage() {
     </div>
   );
 }
+
 

@@ -77,6 +77,21 @@ function formatAdditionalInfo(rows = []) {
     .map((row) => `${row.label || ""}${row.value ? `: ${row.value}` : ""}`.trim())
     .join("\n");
 }
+function toTextValue(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (item == null ? "" : String(item)))
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (value == null) return "";
+  return String(value);
+}
+
+function trimText(value) {
+  return toTextValue(value).trim();
+}
 
 function normalizeForm(product = null) {
   if (!product) return { ...emptyForm };
@@ -94,10 +109,10 @@ function normalizeForm(product = null) {
     categorySlug: product.categorySlug || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
     colors: Array.isArray(product.colors) ? product.colors.join(", ") : "",
-    sizeGuide: product.sizeGuide || "",
-    materials: product.materials || "",
-    washCare: product.washCare || "",
-    deliveryInfo: product.deliveryInfo || "",
+    sizeGuide: toTextValue(product.sizeGuide),
+    materials: toTextValue(product.materials),
+    washCare: toTextValue(product.washCare),
+    deliveryInfo: toTextValue(product.deliveryInfo),
     additionalInfo: formatAdditionalInfo(Array.isArray(product.additionalInfo) ? product.additionalInfo : []),
     featured: !!product.featured,
   };
@@ -172,10 +187,10 @@ export default function ProductForm({ initialProduct = null }) {
       categorySlug: form.categorySlug,
       sizes,
       colors,
-      sizeGuide: form.sizeGuide.trim(),
-      materials: form.materials.trim(),
-      washCare: form.washCare.trim(),
-      deliveryInfo: form.deliveryInfo.trim(),
+      sizeGuide: trimText(form.sizeGuide),
+      materials: trimText(form.materials),
+      washCare: trimText(form.washCare),
+      deliveryInfo: trimText(form.deliveryInfo),
       additionalInfo,
       featured: !!form.featured,
     };
@@ -458,3 +473,4 @@ export default function ProductForm({ initialProduct = null }) {
     </div>
   );
 }
+

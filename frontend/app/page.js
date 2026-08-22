@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "../lib/api";
-import { normalizeImageUrl } from "../lib/image";
+import { isGoogleDriveImageUrl, normalizeImageUrl } from "../lib/image";
 import ProductCard from "../components/product/ProductCard";
 
 const homeImages = [
@@ -165,6 +165,7 @@ export default function HomePage() {
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        unoptimized={isGoogleDriveImageUrl(image)}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
                       <div className="absolute left-4 bottom-4 md:left-6 md:bottom-6">
@@ -191,6 +192,7 @@ export default function HomePage() {
     </div>
   );
 }
+
 
 
 
