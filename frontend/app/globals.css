@@ -31,4 +31,14 @@
   .section-heading {
     @apply font-display text-3xl md:text-4xl text-ink;
   }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
+

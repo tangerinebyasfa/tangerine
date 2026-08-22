@@ -198,7 +198,7 @@ export default function ProductDetailPage() {
       {/* Gallery */}
       <div className="flex flex-col md:flex-row gap-4 md:gap-5">
         {displayImages.length > 1 && (
-          <div className="order-2 md:order-1 flex md:flex-col gap-3 md:w-20 overflow-x-auto md:overflow-visible pb-1 md:pb-0">
+          <div className="order-2 md:order-1 flex md:flex-col gap-3 md:w-20 overflow-x-auto no-scrollbar md:overflow-visible pb-1 md:pb-0">
             {displayImages.map((img, i) => (
               <button
                 key={img + i}
@@ -371,3 +371,6 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+
+

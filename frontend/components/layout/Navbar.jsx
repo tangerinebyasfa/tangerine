@@ -399,7 +399,14 @@ export default function Navbar() {
             className="flex flex-col items-center gap-1"
             aria-label="Open cart"
           >
-            <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+            <span className="relative inline-flex h-6 w-6 items-center justify-center">
+              <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+              {itemCount > 0 && (
+                <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper shadow-sm ring-2 ring-paper">
+                  {itemCount}
+                </span>
+              )}
+            </span>
             Cart
           </button>
           <button
