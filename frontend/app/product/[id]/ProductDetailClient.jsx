@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -22,6 +22,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(!initialProduct);
   const [activeImage, setActiveImage] = useState(0);
+  const [mainImageLoaded, setMainImageLoaded] = useState(false);
+  const [thumbLoaded, setThumbLoaded] = useState({});
   const [size, setSize] = useState(null);
   const [color, setColor] = useState(null);
   const [openSection, setOpenSection] = useState("");
@@ -30,6 +32,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     setProduct(initialProduct);
     setLoading(!initialProduct);
     setActiveImage(0);
+    setMainImageLoaded(false);
+    setThumbLoaded({});
     setSize(null);
     setColor(null);
     setOpenSection("");
@@ -60,6 +64,14 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
 
     return () => clearInterval(interval);
   }, [product?.images?.length]);
+
+  useEffect(() => {
+    setMainImageLoaded(false);
+  }, [activeImage]);
+
+  useEffect(() => {
+    setThumbLoaded({});
+  }, [product?.images]);
 
   if (loading) return <Spinner className="min-h-[60vh]" />;
   if (!product) {
@@ -218,7 +230,26 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                     activeImage === i ? "border-burgundy" : "border-ink/10"
                   }`}
                 >
-                  <Image src={img} alt="" fill className="object-cover" unoptimized={isGoogleDriveImageUrl(img)} />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${
+                      thumbLoaded[img] ? "opacity-0" : "opacity-100"
+                    }`}
+                  />
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    className={`object-cover transition-opacity duration-300 ${
+                      thumbLoaded[img] ? "opacity-100" : "opacity-0"
+                    }`}
+                    unoptimized={isGoogleDriveImageUrl(img)}
+                    onLoadingComplete={() =>
+                      setThumbLoaded((current) => ({
+                        ...current,
+                        [img]: true,
+                      }))
+                    }
+                  />
                 </button>
               ))}
             </div>
@@ -226,13 +257,21 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
 
           <div className="order-1 md:order-2 relative flex-1">
             <div className="relative aspect-[3/4] bg-sand overflow-hidden">
+              <div
+                className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${
+                  mainImageLoaded ? "opacity-0" : "opacity-100"
+                }`}
+              />
               <Image
                 src={displayImages[activeImage] || displayImages[0]}
                 alt={product.name}
                 fill
-                className="object-cover transition-opacity duration-300"
+                className={`object-cover transition-opacity duration-300 ${
+                  mainImageLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 priority
                 unoptimized={isGoogleDriveImageUrl(displayImages[activeImage] || displayImages[0])}
+                onLoadingComplete={() => setMainImageLoaded(true)}
               />
 
               {displayImages.length > 1 && (
@@ -401,6 +440,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     </>
   );
 }
+
 
 
 

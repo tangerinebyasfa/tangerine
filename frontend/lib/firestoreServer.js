@@ -10,13 +10,10 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import { slugify } from "./blog";
+
+
+
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -161,3 +158,35 @@ export async function getGalleryItems() {
     return bTime - aTime;
   });
 }
+export async function getBlogs() {
+  assertDb();
+
+  const snapshot = await getDocs(collection(db, "blogs"));
+  const blogs = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+
+  return blogs.sort((a, b) => {
+    const aTime = a.publishedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? new Date(a.publishedAt || a.createdAt || 0).getTime();
+    const bTime = b.publishedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? new Date(b.publishedAt || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
+export async function getBlog(idOrSlug) {
+  assertDb();
+
+  const directDoc = await getDoc(doc(db, "blogs", idOrSlug));
+  if (directDoc.exists()) return { id: directDoc.id, ...directDoc.data() };
+
+  const blogSnapshot = await getDocs(query(collection(db, "blogs"), where("slug", "==", idOrSlug)));
+  if (!blogSnapshot.empty) {
+    const found = blogSnapshot.docs[0];
+    return { id: found.id, ...found.data() };
+  }
+
+  const allBlogs = await getDocs(collection(db, "blogs"));
+  const found = allBlogs.docs.find((document) => slugify(document.data()?.title) === idOrSlug);
+  return found ? { id: found.id, ...found.data() } : null;
+}
+
+
+

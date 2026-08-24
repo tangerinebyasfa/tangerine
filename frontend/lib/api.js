@@ -11,14 +11,10 @@ import {
   orderBy as fsOrderBy,
 } from "./firebase";
 import { auth } from "./firebase";
+import { slugify } from "./blog";
 
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+
+
 
 function resolveApiUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -75,6 +71,16 @@ async function readByField(collectionName, field, value) {
 
   const snapshot = await fsGetDocs(fsQuery(collection(db, collectionName), fsWhere(field, "==", value)));
   return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+}
+async function readBlogBySlug(idOrSlug) {
+  if (!db) throw new Error("Firebase is not configured yet.");
+
+  const direct = await readDocByField("blogs", "slug", idOrSlug);
+  if (direct) return direct;
+
+  const snapshot = await fsGetDocs(collection(db, "blogs"));
+  const found = snapshot.docs.find((document) => slugify(document.data()?.title || document.data()?.name) === idOrSlug);
+  return found ? { id: found.id, ...found.data() } : null;
 }
 
 /**
@@ -204,6 +210,13 @@ export const api = {
   updateGalleryItem: (id, body) => request(`/gallery/${id}`, { method: "PUT", body, authRequired: true }),
   deleteGalleryItem: (id) => request(`/gallery/${id}`, { method: "DELETE", authRequired: true }),
 
+  // Blogs
+  getBlogs: () => request("/blogs"),
+  getBlog: (idOrSlug) => request(`/blogs/${idOrSlug}`),
+  createBlog: (body) => request("/blogs", { method: "POST", body, authRequired: true }),
+  updateBlog: (id, body) => request(`/blogs/${id}`, { method: "PUT", body, authRequired: true }),
+  deleteBlog: (id) => request(`/blogs/${id}`, { method: "DELETE", authRequired: true }),
+
   // Orders
   createOrder: (body) => request("/orders", { method: "POST", body, authRequired: true }),
   getMyOrders: () => request("/orders/mine", { authRequired: true }),
@@ -219,3 +232,7 @@ export const api = {
   updateUserRole: (id, role) =>
     request(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true }),
 };
+
+
+
+
