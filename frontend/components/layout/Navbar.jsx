@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Home, LogIn, Menu, ShoppingBag, UserRound, ChevronDown, Search, X } from "lucide-react";
+import { Home, LogIn, Menu, ShoppingBag, UserRound, ChevronDown, Search, X, Heart } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
+import { useWishlist } from "../../context/WishlistContext";
 import { api } from "../../lib/api";
 
 const navLinks = [
@@ -40,6 +41,7 @@ export default function Navbar() {
   const router = useRouter();
   const { user, profile, isAdmin, logout } = useAuth();
   const { itemCount, setDrawerOpen } = useCart();
+  const { wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [accessoriesOpen, setAccessoriesOpen] = useState(false);
@@ -189,6 +191,19 @@ export default function Navbar() {
                 </span>
               )}
             </button>
+
+            <Link
+              href="/wishlist"
+              className="relative hidden md:inline-flex text-ink hover:text-tangerine transition-colors"
+              aria-label="Open wishlist"
+            >
+              <Heart className="h-5 w-5" strokeWidth={2} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-burgundy text-paper text-[10px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <div className="relative hidden md:block">
               {user ? (
@@ -365,7 +380,7 @@ export default function Navbar() {
       )}
 
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-paper">
-        <div className="mx-auto grid max-w-md grid-cols-4 items-center gap-1 px-4 py-2 text-center text-[10px] uppercase tracking-[0.16em] text-ink/70">
+        <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1 px-4 py-2 text-center text-[10px] uppercase tracking-[0.16em] text-ink/70">
           <button
             type="button"
             onClick={() => {
@@ -408,6 +423,25 @@ export default function Navbar() {
               )}
             </span>
             Cart
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              closeMobileMenu();
+              router.push("/wishlist");
+            }}
+            className="flex flex-col items-center gap-1"
+            aria-label="Open wishlist"
+          >
+            <span className="relative inline-flex h-6 w-6 items-center justify-center">
+              <Heart className="h-5 w-5" strokeWidth={2} />
+              {wishlistCount > 0 && (
+                <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper shadow-sm ring-2 ring-paper">
+                  {wishlistCount}
+                </span>
+              )}
+            </span>
+            Wishlist
           </button>
           <button
             type="button"

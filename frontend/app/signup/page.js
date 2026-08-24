@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
+function getSafeNextPath(nextPath) {
+  return typeof nextPath === "string" && nextPath.startsWith("/") ? nextPath : "/";
+}
+
 export default function SignUpPage() {
   const { signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = getSafeNextPath(searchParams.get("next"));
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -19,8 +25,8 @@ export default function SignUpPage() {
     setLoading(true);
     try {
       await signUpWithEmail(form.email, form.password, form.name);
-      toast.success("Account created — welcome!");
-      router.push("/");
+      toast.success("Account created - welcome!");
+      router.push(nextPath);
     } catch (err) {
       toast.error(err.message.replace("Firebase: ", ""));
     } finally {
@@ -32,8 +38,8 @@ export default function SignUpPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      toast.success("Account created — welcome!");
-      router.push("/");
+      toast.success("Account created - welcome!");
+      router.push(nextPath);
     } catch (err) {
       toast.error(err.message.replace("Firebase: ", ""));
     } finally {

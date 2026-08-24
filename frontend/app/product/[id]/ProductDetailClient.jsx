@@ -11,6 +11,7 @@ import { useCart } from "../../../context/CartContext";
 import Button from "../../../components/ui/Button";
 import Spinner from "../../../components/ui/Spinner";
 import ProductCard from "../../../components/product/ProductCard";
+import WishlistButton from "../../../components/wishlist/WishlistButton";
 
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
 
@@ -377,6 +378,10 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
             >
               Buy Now
             </Button>
+          </div>
+
+          <div className="mt-3">
+            <WishlistButton product={product} mode="text" className="w-full" />
           </div>
 
           {typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 && (

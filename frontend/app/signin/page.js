@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 
+function getSafeNextPath(nextPath) {
+  return typeof nextPath === "string" && nextPath.startsWith("/") ? nextPath : "/";
+}
+
 export default function SignInPage() {
   const { signInWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = getSafeNextPath(searchParams.get("next"));
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +26,7 @@ export default function SignInPage() {
     try {
       await signInWithEmail(form.email, form.password);
       toast.success("Welcome back");
-      router.push("/");
+      router.push(nextPath);
     } catch (err) {
       toast.error(err.message.replace("Firebase: ", ""));
     } finally {
@@ -33,7 +39,7 @@ export default function SignInPage() {
     try {
       await signInWithGoogle();
       toast.success("Welcome back");
-      router.push("/");
+      router.push(nextPath);
     } catch (err) {
       toast.error(err.message.replace("Firebase: ", ""));
     } finally {

@@ -63,6 +63,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Wishlist items are private to the signed-in owner.
+    match /users/{userId}/wishlist/{productId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Orders belong to the signed-in user who created them; admins can read all.
     match /orders/{orderId} {
       allow create: if isSignedIn()

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import { CartProvider } from "../context/CartContext";
+import { WishlistProvider } from "../context/WishlistContext";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import CartDrawer from "../components/cart/CartDrawer";
@@ -44,14 +45,16 @@ export default function RootLayout({ children }) {
         <StructuredData schema={createOrganizationSchema(origin)} />
         <StructuredData schema={createWebsiteSchema(origin)} />
         <AuthProvider>
-          <CartProvider>
-            <Navbar />
-            <CartDrawer />
-            <main className="min-h-[70vh]">{children}</main>
-            <Footer />
-            <Toaster position="bottom-right" />
-            <ScrollToTopButton />
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Navbar />
+              <CartDrawer />
+              <main className="min-h-[70vh]">{children}</main>
+              <Footer />
+              <Toaster position="bottom-right" />
+              <ScrollToTopButton />
+            </CartProvider>
+          </WishlistProvider>
         </AuthProvider>
       </body>
     </html>
