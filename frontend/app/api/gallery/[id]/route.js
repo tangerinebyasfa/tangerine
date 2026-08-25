@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../lib/firebaseAdmin";
-import { proxyToBackend } from "../../../lib/serverApi";
+import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../../lib/firebaseAdmin";
+import { proxyToBackend } from "../../../../lib/serverApi";
 
 export const dynamic = "force-dynamic";
 
@@ -59,78 +59,83 @@ function formatGalleryItem(doc) {
   };
 }
 
-export async function GET(request) {
+export async function PUT(request, { params }) {
   try {
     const db = getAdminDb();
     if (!db) {
-      return proxyToBackend(request, "/gallery");
-    }
-
-    const snapshot = await db.collection("gallery").get();
-    const items = snapshot.docs
-      .map(formatGalleryItem)
-      .sort((a, b) => {
-        const aOrder = Number(a.sortOrder ?? 0);
-        const bOrder = Number(b.sortOrder ?? 0);
-        if (aOrder !== bOrder) return aOrder - bOrder;
-
-        const aTime = new Date(a.createdAt || 0).getTime();
-        const bTime = new Date(b.createdAt || 0).getTime();
-        return bTime - aTime;
-      });
-
-    return NextResponse.json(items);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch gallery items",
-        detail: process.env.NODE_ENV === "production" ? undefined : error.message,
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request) {
-  try {
-    const db = getAdminDb();
-    if (!db) {
-      return proxyToBackend(request, "/gallery");
+      return proxyToBackend(request, `/gallery/${params.id}`);
     }
 
     await requireAdminRequest(request);
 
-    const body = await request.json().catch(() => ({}));
-    const title = normalizeText(body.title);
-    const caption = normalizeText(body.caption);
-    const instagramLink = normalizeText(body.instagramLink);
-    const imageUrl = normalizeImageUrl(body.imageUrl);
-    const imageAlt = normalizeText(body.imageAlt);
-    const sortOrder = Number(body.sortOrder || 0);
-
-    if (!title || !imageUrl) {
-      return NextResponse.json({ error: "title and imageUrl are required" }, { status: 400 });
+    const id = String(params.id || "").trim();
+    if (!id) {
+      return NextResponse.json({ error: "Gallery item not found" }, { status: 404 });
     }
 
-    const payload = {
-      title,
-      caption,
-      instagramLink,
-      imageUrl,
-      imageAlt,
-      sortOrder,
-      createdAt: new Date(),
+    const ref = db.collection("gallery").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Gallery item not found" }, { status: 404 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const updates = {
+      title: normalizeText(body.title),
+      caption: normalizeText(body.caption),
+      instagramLink: normalizeText(body.instagramLink),
+      imageUrl: normalizeImageUrl(body.imageUrl),
+      imageAlt: normalizeText(body.imageAlt),
+      sortOrder: Number(body.sortOrder || 0),
       updatedAt: new Date(),
     };
 
-    const ref = await db.collection("gallery").add(payload);
-    return NextResponse.json({ id: ref.id, ...payload }, { status: 201 });
+    if (!updates.title || !updates.imageUrl) {
+      return NextResponse.json({ error: "title and imageUrl are required" }, { status: 400 });
+    }
+
+    await ref.update(updates);
+    const updated = await ref.get();
+    return NextResponse.json(formatGalleryItem(updated));
   } catch (error) {
     console.error(error);
     return NextResponse.json(
       {
-        error: "Failed to create gallery item",
+        error: "Failed to update gallery item",
+        detail: process.env.NODE_ENV === "production" ? undefined : error.message,
+      },
+      { status: error.status || 500 }
+    );
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    const db = getAdminDb();
+    if (!db) {
+      return proxyToBackend(request, `/gallery/${params.id}`);
+    }
+
+    await requireAdminRequest(request);
+
+    const id = String(params.id || "").trim();
+    if (!id) {
+      return NextResponse.json({ error: "Gallery item not found" }, { status: 404 });
+    }
+
+    const ref = db.collection("gallery").doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Gallery item not found" }, { status: 404 });
+    }
+
+    await ref.delete();
+    return NextResponse.json({ message: "Gallery item deleted", id });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      {
+        error: "Failed to delete gallery item",
         detail: process.env.NODE_ENV === "production" ? undefined : error.message,
       },
       { status: error.status || 500 }

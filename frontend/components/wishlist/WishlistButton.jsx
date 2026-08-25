@@ -70,11 +70,11 @@ export default function WishlistButton({ product, mode = "icon", className = "" 
       disabled={loading || pending}
       aria-label={active ? "Remove from wishlist" : "Add to wishlist"}
       aria-pressed={active}
-      className={`inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors disabled:cursor-not-allowed disabled:opacity-60 md:h-11 md:w-11 ${
         active ? "border-burgundy text-burgundy" : "border-black/10 text-ink/70 hover:border-burgundy hover:text-burgundy"
       } ${className}`}
     >
-      <Heart className="h-4 w-4" fill={active ? "currentColor" : "none"} strokeWidth={1.8} />
+      <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" fill={active ? "currentColor" : "none"} strokeWidth={1.8} />
     </button>
   );
 }

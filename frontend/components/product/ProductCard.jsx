@@ -65,16 +65,19 @@ export default function ProductCard({ product }) {
         </Link>
 
         <div className="absolute right-3 top-3 z-10">
-          <WishlistButton product={product} className="h-11 w-11 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)]" />
+          <WishlistButton
+            product={product}
+            className="h-9 w-9 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] md:h-11 md:w-11"
+          />
         </div>
 
         <button
           type="button"
           aria-label="Quick add to bag"
           onClick={handleQuickAdd}
-          className="absolute bottom-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine"
+          className="absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:h-10 md:w-10"
         >
-          <ShoppingBag className="h-4 w-4" strokeWidth={1.8} />
+          <ShoppingBag className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.8} />
         </button>
       </div>
 
