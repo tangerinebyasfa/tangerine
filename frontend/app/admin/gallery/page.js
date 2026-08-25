@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "../../../lib/firebase";
+import { api } from "../../../lib/api";
 import Spinner from "../../../components/ui/Spinner";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
-import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
+import { normalizeImageUrl } from "../../../lib/image";
 
 const emptyForm = {
   title: "",
@@ -41,9 +41,8 @@ export default function AdminGalleryPage() {
   async function load() {
     setLoading(true);
     try {
-      if (!db) throw new Error("Firebase is not configured yet.");
-      const snapshot = await getDocs(collection(db, "gallery"));
-      const nextItems = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+      const data = await api.getGalleryItems();
+      const nextItems = Array.isArray(data) ? data : [];
       setItems(sortGalleryItems(nextItems));
     } catch (err) {
       console.error(err);
@@ -82,8 +81,6 @@ export default function AdminGalleryPage() {
     setSaving(true);
 
     try {
-      if (!db) throw new Error("Firebase is not configured yet.");
-
       const imageUrl = normalizeImageUrl(form.imageUrl.trim());
       if (!imageUrl) {
         throw new Error("Please paste a Google Drive or direct image link for the gallery item.");
@@ -96,17 +93,13 @@ export default function AdminGalleryPage() {
         imageUrl,
         imageAlt: form.imageAlt.trim(),
         sortOrder: Number(form.sortOrder || 0),
-        updatedAt: serverTimestamp(),
       };
 
       if (isEditing) {
-        await updateDoc(doc(db, "gallery", editingId), payload);
+        await api.updateGalleryItem(editingId, payload);
         toast.success("Gallery item updated");
       } else {
-        await addDoc(collection(db, "gallery"), {
-          ...payload,
-          createdAt: serverTimestamp(),
-        });
+        await api.createGalleryItem(payload);
         toast.success("Gallery item added");
       }
 
@@ -123,8 +116,7 @@ export default function AdminGalleryPage() {
     if (!confirm("Delete this gallery item?")) return;
 
     try {
-      if (!db) throw new Error("Firebase is not configured yet.");
-      await deleteDoc(doc(db, "gallery", item.id));
+      await api.deleteGalleryItem(item.id);
       if (editingId === item.id) resetForm();
       toast.success("Gallery item deleted");
       await load();
@@ -254,4 +246,3 @@ export default function AdminGalleryPage() {
     </div>
   );
 }
-

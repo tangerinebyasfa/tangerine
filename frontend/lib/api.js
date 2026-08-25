@@ -185,22 +185,22 @@ export const api = {
 
   // Gallery
   getGalleryItems: async () => {
-    if (db) {
-      const items = await readCollection("gallery");
-      return items.sort((a, b) => {
-        const aOrder = Number(a.sortOrder ?? 0);
-        const bOrder = Number(b.sortOrder ?? 0);
-        if (aOrder !== bOrder) return aOrder - bOrder;
-
-        const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-        const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-        return bTime - aTime;
-      });
-    }
-
     try {
       return await request("/gallery");
     } catch (err) {
+      if (db) {
+        const items = await readCollection("gallery");
+        return items.sort((a, b) => {
+          const aOrder = Number(a.sortOrder ?? 0);
+          const bOrder = Number(b.sortOrder ?? 0);
+          if (aOrder !== bOrder) return aOrder - bOrder;
+
+          const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+          const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+          return bTime - aTime;
+        });
+      }
+
       if (process.env.NODE_ENV === "production") throw err;
       console.warn("Falling back to empty gallery after request failure:", err);
       return [];
@@ -232,7 +232,3 @@ export const api = {
   updateUserRole: (id, role) =>
     request(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true }),
 };
-
-
-
-
