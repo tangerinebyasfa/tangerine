@@ -225,10 +225,87 @@ export const api = {
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
 
   // Users
-  syncUser: (body) => request("/users/sync", { method: "POST", body, authRequired: true }),
-  getMe: () => request("/users/me", { authRequired: true }),
-  updateMe: (body) => request("/users/me", { method: "PUT", body, authRequired: true }),
-  getAllUsers: () => request("/users", { authRequired: true }),
-  updateUserRole: (id, role) =>
-    request(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true }),
+  syncUser: async (body) => {
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const ref = fsDoc(db, "users", user.uid);
+      const snap = await fsGetDoc(ref);
+      const existing = snap.exists() ? snap.data() : {};
+
+      const payload = {
+        uid: user.uid,
+        email: user.email,
+        displayName: body?.displayName || user.displayName || user.email?.split("@")[0] || "",
+        photoURL: body?.photoURL ?? user.photoURL ?? null,
+        role: existing.role || "customer",
+        createdAt: existing.createdAt || serverTimestamp(),
+      };
+
+      await setDoc(ref, payload, { merge: true });
+      return { id: user.uid, ...payload };
+    }
+
+    return request("/users/sync", { method: "POST", body, authRequired: true });
+  },
+  getMe: async () => {
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const snap = await fsGetDoc(fsDoc(db, "users", user.uid));
+      if (!snap.exists()) return null;
+      return { id: snap.id, ...snap.data() };
+    }
+
+    return request("/users/me", { authRequired: true });
+  },
+  updateMe: async (body) => {
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const ref = fsDoc(db, "users", user.uid);
+      await setDoc(
+        ref,
+        {
+          ...(body?.displayName && { displayName: body.displayName }),
+          ...(body?.phone && { phone: body.phone }),
+          ...(body?.address && { address: body.address }),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      const updated = await fsGetDoc(ref);
+      return { id: updated.id, ...updated.data() };
+    }
+
+    return request("/users/me", { method: "PUT", body, authRequired: true });
+  },
+  getAllUsers: async () => {
+    if (db) {
+      const snapshot = await fsGetDocs(collection(db, "users"));
+      return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+    }
+
+    return request("/users", { authRequired: true });
+  },
+  updateUserRole: async (id, role) => {
+    if (db) {
+      await setDoc(
+        fsDoc(db, "users", id),
+        {
+          role,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return { id, role };
+    }
+
+    return request(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true });
+  },
 };
