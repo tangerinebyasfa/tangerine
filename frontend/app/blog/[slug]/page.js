@@ -1,58 +1,15 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { headers } from "next/headers";
 import PageHeader from "../../../components/ui/PageHeader";
 import { createBlogExcerpt, formatBlogDate } from "../../../lib/blog";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
-import { getRequestOrigin } from "../../../SEO/schemaUtils";
+import { getBlog, getBlogs } from "../../../lib/firestoreServer";
 
 export const dynamic = "force-dynamic";
 
-function resolveBlogApiBase(origin) {
-  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
-
-  if (configured) {
-    return configured.replace(/\/$/, "");
-  }
-
-  return process.env.NODE_ENV === "production" ? `${origin}/api` : "http://localhost:5000/api";
-}
-
-function buildBlogApiUrl(origin, path) {
-  const base = resolveBlogApiBase(origin);
-
-  if (/^https?:\/\//i.test(base)) {
-    return `${base}${path}`;
-  }
-
-  return `${origin}${base.startsWith("/") ? base : `/${base}`}${path}`;
-}
-
-async function fetchBlogs(origin) {
-  const response = await fetch(buildBlogApiUrl(origin, "/blogs"), { cache: "no-store" });
-
-  if (!response.ok) {
-    throw new Error(`Failed to load blogs (${response.status})`);
-  }
-
-  return response.json();
-}
-
-async function fetchBlog(origin, slug) {
-  const response = await fetch(buildBlogApiUrl(origin, `/blogs/${slug}`), { cache: "no-store" });
-
-  if (response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error(`Failed to load blog post (${response.status})`);
-  }
-
-  return response.json();
-}
-
 export async function generateMetadata({ params }) {
-  const origin = getRequestOrigin(headers());
-  const post = await fetchBlog(origin, params.slug).catch(() => null);
+  const post = await getBlog(params.slug).catch(() => null);
 
   if (!post) {
     return {
@@ -87,12 +44,11 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogPostPage({ params }) {
-  const origin = getRequestOrigin(headers());
-  const post = await fetchBlog(origin, params.slug).catch(() => null);
+  const post = await getBlog(params.slug).catch(() => null);
 
   if (!post) notFound();
 
-  const related = await fetchBlogs(origin).catch(() => []);
+  const related = await getBlogs().catch(() => []);
   const morePosts = related.filter((item) => item.id !== post.id).slice(0, 3);
   const publishedDate = post.publishedAt || post.createdAt;
   const canonicalUrl = `/blog/${post.slug || params.slug}`;

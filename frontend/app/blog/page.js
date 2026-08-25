@@ -1,47 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { headers } from "next/headers";
 import PageHeader from "../../components/ui/PageHeader";
 import { formatBlogDate } from "../../lib/blog";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
-import { getRequestOrigin } from "../../SEO/schemaUtils";
-
-export const dynamic = "force-dynamic";
+import { getBlogs } from "../../lib/firestoreServer";
 
 export const metadata = {
   title: "Blog | Tangerine",
   description: "Style notes, brand stories, and fashion updates from Tangerine.",
 };
-
-function resolveBlogApiBase(origin) {
-  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
-
-  if (configured) {
-    return configured.replace(/\/$/, "");
-  }
-
-  return process.env.NODE_ENV === "production" ? `${origin}/api` : "http://localhost:5000/api";
-}
-
-function buildBlogApiUrl(origin, path) {
-  const base = resolveBlogApiBase(origin);
-
-  if (/^https?:\/\//i.test(base)) {
-    return `${base}${path}`;
-  }
-
-  return `${origin}${base.startsWith("/") ? base : `/${base}`}${path}`;
-}
-
-async function fetchBlogs(origin) {
-  const response = await fetch(buildBlogApiUrl(origin, "/blogs"), { cache: "no-store" });
-
-  if (!response.ok) {
-    throw new Error(`Failed to load blogs (${response.status})`);
-  }
-
-  return response.json();
-}
 
 function getBlogImage(post) {
   const imageUrl = post?.imageUrl || post?.featuredImage || post?.image || post?.thumbnail || "";
@@ -99,29 +66,18 @@ function BlogCard({ post }) {
 }
 
 export default async function BlogPage() {
-  const origin = getRequestOrigin(headers());
   let blogs = [];
   let loadError = "";
 
   try {
-    const result = await fetchBlogs(origin);
-    blogs = Array.isArray(result) ? result : result?.blogs || [];
+    const result = await getBlogs();
+    blogs = Array.isArray(result) ? result : [];
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Failed to load blog posts.";
   }
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: "Tangerine Blog",
-    description: "Style notes, brand stories, and fashion updates from Tangerine.",
-    url: `${origin}/blog`,
-  };
-
   return (
     <main className="min-h-screen bg-[#fffdfb] pb-20">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <PageHeader
           eyebrow="Journal"
@@ -130,7 +86,6 @@ export default async function BlogPage() {
         />
 
         <section>
-          
           {loadError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
               {loadError}

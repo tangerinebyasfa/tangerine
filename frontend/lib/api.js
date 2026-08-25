@@ -114,32 +114,6 @@ async function request(path, { method = "GET", body, authRequired = false } = {}
   return data;
 }
 
-async function requestAppApi(path, { method = "GET", body, authRequired = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-
-  if (authRequired) {
-    if (!auth) throw new Error("Firebase is not configured yet.");
-    const user = auth.currentUser;
-    if (!user) throw new Error("You must be signed in to do that.");
-    const token = await user.getIdToken();
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`/api${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data.error || `Request failed with status ${res.status}`);
-  }
-
-  return data;
-}
-
 export const api = {
   // Products
   getProducts: async (params = {}) => {
@@ -211,22 +185,22 @@ export const api = {
 
   // Gallery
   getGalleryItems: async () => {
+    if (db) {
+      const items = await readCollection("gallery");
+      return items.sort((a, b) => {
+        const aOrder = Number(a.sortOrder ?? 0);
+        const bOrder = Number(b.sortOrder ?? 0);
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
+        const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+    }
+
     try {
       return await request("/gallery");
     } catch (err) {
-      if (db) {
-        const items = await readCollection("gallery");
-        return items.sort((a, b) => {
-          const aOrder = Number(a.sortOrder ?? 0);
-          const bOrder = Number(b.sortOrder ?? 0);
-          if (aOrder !== bOrder) return aOrder - bOrder;
-
-          const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-          const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-          return bTime - aTime;
-        });
-      }
-
       if (process.env.NODE_ENV === "production") throw err;
       console.warn("Falling back to empty gallery after request failure:", err);
       return [];
@@ -237,8 +211,25 @@ export const api = {
   deleteGalleryItem: (id) => request(`/gallery/${id}`, { method: "DELETE", authRequired: true }),
 
   // Blogs
-  getBlogs: () => request("/blogs"),
-  getBlog: (idOrSlug) => request(`/blogs/${idOrSlug}`),
+  getBlogs: async () => {
+    if (db) {
+      const blogs = await readCollection("blogs");
+      return blogs.sort((a, b) => {
+        const aTime = a.publishedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? new Date(a.publishedAt || a.createdAt || 0).getTime();
+        const bTime = b.publishedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? new Date(b.publishedAt || b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+    }
+
+    return request("/blogs");
+  },
+  getBlog: async (idOrSlug) => {
+    if (db) {
+      return (await readDoc("blogs", idOrSlug)) || (await readBlogBySlug(idOrSlug));
+    }
+
+    return request(`/blogs/${idOrSlug}`);
+  },
   createBlog: (body) => request("/blogs", { method: "POST", body, authRequired: true }),
   updateBlog: (id, body) => request(`/blogs/${id}`, { method: "PUT", body, authRequired: true }),
   deleteBlog: (id) => request(`/blogs/${id}`, { method: "DELETE", authRequired: true }),
@@ -251,17 +242,91 @@ export const api = {
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
 
   // Users
-  syncUser: (body) => requestAppApi("/users/sync", { method: "POST", body, authRequired: true }),
+  syncUser: async (body) => {
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const ref = fsDoc(db, "users", user.uid);
+      const snap = await fsGetDoc(ref);
+      const existing = snap.exists() ? snap.data() : {};
+
+      await setDoc(
+        ref,
+        {
+          uid: user.uid,
+          email: user.email,
+          displayName: body?.displayName || user.displayName || user.email?.split("@")[0] || "",
+          photoURL: body?.photoURL ?? user.photoURL ?? null,
+          role: existing.role || "customer",
+          createdAt: existing.createdAt || serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      const updated = await fsGetDoc(ref);
+      return { id: updated.id, ...updated.data() };
+    }
+
+    return request("/users/sync", { method: "POST", body, authRequired: true });
+  },
   getMe: async () => {
-    return requestAppApi("/users/me", { authRequired: true });
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const snap = await fsGetDoc(fsDoc(db, "users", user.uid));
+      if (!snap.exists()) return null;
+      return { id: snap.id, ...snap.data() };
+    }
+
+    return request("/users/me", { authRequired: true });
   },
   updateMe: async (body) => {
-    return requestAppApi("/users/me", { method: "PUT", body, authRequired: true });
+    if (db) {
+      if (!auth?.currentUser) throw new Error("You must be signed in to do that.");
+
+      const user = auth.currentUser;
+      const ref = fsDoc(db, "users", user.uid);
+      await setDoc(
+        ref,
+        {
+          ...(body?.displayName && { displayName: body.displayName }),
+          ...(body?.phone && { phone: body.phone }),
+          ...(body?.address && { address: body.address }),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      const updated = await fsGetDoc(ref);
+      return { id: updated.id, ...updated.data() };
+    }
+
+    return request("/users/me", { method: "PUT", body, authRequired: true });
   },
   getAllUsers: async () => {
-    return requestAppApi("/users", { authRequired: true });
+    if (db) {
+      const snapshot = await fsGetDocs(collection(db, "users"));
+      return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+    }
+
+    return request("/users", { authRequired: true });
   },
   updateUserRole: async (id, role) => {
-    return requestAppApi(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true });
+    if (db) {
+      await setDoc(
+        fsDoc(db, "users", id),
+        {
+          role,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return { id, role };
+    }
+
+    return request(`/users/${id}/role`, { method: "PUT", body: { role }, authRequired: true });
   },
 };
