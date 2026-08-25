@@ -7,9 +7,9 @@ import Spinner from "../../components/ui/Spinner";
 import { normalizeImageUrl } from "../../lib/image";
 
 const socialTabs = [
-  { label: "Instagram", icon: Image, active: true },
-  { label: "Facebook", icon: Share2, active: false },
-  { label: "YouTube", icon: Play, active: false },
+  // { label: "Instagram", icon: Image, active: true },
+  // { label: "Facebook", icon: Share2, active: false },
+  // { label: "YouTube", icon: Play, active: false },
 ];
 
 function splitCopy(text) {
