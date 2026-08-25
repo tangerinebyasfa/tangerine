@@ -69,13 +69,13 @@ function BlogCard({ post }) {
       </Link>
 
       <div className="space-y-3 pt-4">
-        <h2 className="text-[17px] font-semibold leading-[1.28] tracking-[-0.02em] text-[#171412] md:text-[18px]">
+        <h2 className="text-[14px] font-semibold leading-[1.25] tracking-[-0.02em] text-[#171412] sm:text-[17px]">
           <Link href={href} className="transition-colors duration-200 hover:text-[#c45a2a]">
             {title}
           </Link>
         </h2>
 
-        {date ? <p className="text-[12px] uppercase tracking-[0.12em] text-[#b9b0a6]">{date}</p> : null}
+        {date ? <p className="text-[10px] uppercase tracking-[0.12em] text-[#b9b0a6] sm:text-[12px]">{date}</p> : null}
       </div>
     </article>
   );
@@ -116,7 +116,7 @@ export default async function BlogPage() {
           ) : null}
 
           {!loadError && blogs.length > 0 ? (
-            <div className="grid gap-x-5 gap-y-12 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-12 xl:grid-cols-4">
               {blogs.map((post) => (
                 <BlogCard key={post?.id || post?._id || post?.slug || post?.title} post={post} />
               ))}

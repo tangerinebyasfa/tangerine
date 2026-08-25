@@ -7,9 +7,9 @@ import Spinner from "../../components/ui/Spinner";
 import { normalizeImageUrl } from "../../lib/image";
 
 const socialTabs = [
-  // { label: "Instagram", icon: Image, active: true },
-  // { label: "Facebook", icon: Share2, active: false },
-  // { label: "YouTube", icon: Play, active: false },
+  { label: "Instagram", icon: Image, active: true },
+  { label: "Facebook", icon: Share2, active: false },
+  { label: "YouTube", icon: Play, active: false },
 ];
 
 function splitCopy(text) {
@@ -143,23 +143,24 @@ export default function GalleryPage() {
             to open the full detail view.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {socialTabs.map(({ label, icon: Icon, active }) => (
-              <button
-                key={label}
-                type="button"
-                className={`inline-flex items-center gap-2 border px-4 py-2 text-sm tracking-widest uppercase transition ${
-                  active
-                    ? "border-tangerine bg-tangerine text-paper shadow-sm"
-                    : "border-ink/15 bg-paper text-ink hover:border-tangerine hover:text-tangerine"
-                }`}
-                aria-pressed={active}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </button>
-            ))}
-          </div>
+            {/* <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              {socialTabs.map(({ label, icon: Icon, active }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={`inline-flex items-center gap-2 border px-4 py-2 text-sm tracking-widest uppercase transition ${
+                    active
+                      ? "border-tangerine bg-tangerine text-paper shadow-sm"
+                      : "border-ink/15 bg-paper text-ink hover:border-tangerine hover:text-tangerine"
+                  }`}
+                  aria-pressed={active}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
+            </div> */}
+
         </div>
 
         {/* <div className="mt-16 grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
@@ -201,12 +202,12 @@ export default function GalleryPage() {
               </p>
             </div>
           ) : (
-            <div className="columns-1 gap-5 sm:columns-2 xl:columns-4">
+            <div className="columns-2 gap-3 sm:columns-2 lg:columns-3 xl:columns-4 sm:gap-5">
               {items.map((item) => {
                 const image = normalizeImageUrl(item.imageUrl) || "/placeholder-category.svg";
 
                 return (
-                  <article key={item.id} className="mb-5 break-inside-avoid overflow-hidden bg-paper">
+                  <article key={item.id} className="mb-3 break-inside-avoid overflow-hidden bg-paper sm:mb-5">
                     <button
                       type="button"
                       onClick={() => setSelectedItem(item)}

@@ -37,47 +37,22 @@ export async function GET(_request, { params }) {
   try {
     const db = getAdminDb();
     if (!db) {
-      return proxyToBackend(_request, `/blogs/${params.slug}`);
+      return proxyToBackend(_request, `/blogs/${params.id}`);
     }
 
-    const slug = String(params.slug || "").trim();
+    const slug = String(params.id || params.slug || "").trim();
     if (!slug) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
 
     const directSnap = await db.collection("blogs").doc(slug).get();
     if (directSnap.exists) {
-      const data = directSnap.data();
-      return NextResponse.json({
-        id: directSnap.id,
-        title: data.title || "",
-        slug: data.slug || "",
-        content: data.content || "",
-        excerpt: data.excerpt || "",
-        imageUrl: data.imageUrl || "",
-        imageAlt: data.imageAlt || "",
-        createdAt: serializeTimestamp(data.createdAt),
-        publishedAt: serializeTimestamp(data.publishedAt),
-        updatedAt: serializeTimestamp(data.updatedAt),
-      });
+      return NextResponse.json(formatBlog(directSnap));
     }
 
     const slugSnapshot = await db.collection("blogs").where("slug", "==", slug).get();
     if (!slugSnapshot.empty) {
-      const doc = slugSnapshot.docs[0];
-      const data = doc.data();
-      return NextResponse.json({
-        id: doc.id,
-        title: data.title || "",
-        slug: data.slug || "",
-        content: data.content || "",
-        excerpt: data.excerpt || "",
-        imageUrl: data.imageUrl || "",
-        imageAlt: data.imageAlt || "",
-        createdAt: serializeTimestamp(data.createdAt),
-        publishedAt: serializeTimestamp(data.publishedAt),
-        updatedAt: serializeTimestamp(data.updatedAt),
-      });
+      return NextResponse.json(formatBlog(slugSnapshot.docs[0]));
     }
 
     const allBlogs = await db.collection("blogs").get();
@@ -91,19 +66,7 @@ export async function GET(_request, { params }) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
 
-    const data = found.data();
-    return NextResponse.json({
-      id: found.id,
-      title: data.title || "",
-      slug: data.slug || "",
-      content: data.content || "",
-      excerpt: data.excerpt || "",
-      imageUrl: data.imageUrl || "",
-      imageAlt: data.imageAlt || "",
-      createdAt: serializeTimestamp(data.createdAt),
-      publishedAt: serializeTimestamp(data.publishedAt),
-      updatedAt: serializeTimestamp(data.updatedAt),
-    });
+    return NextResponse.json(formatBlog(found));
   } catch (error) {
     console.error(error);
     return NextResponse.json(
@@ -111,7 +74,7 @@ export async function GET(_request, { params }) {
         error: "Failed to fetch blog post",
         detail: process.env.NODE_ENV === "production" ? undefined : error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -120,12 +83,12 @@ export async function PUT(request, { params }) {
   try {
     const db = getAdminDb();
     if (!db) {
-      return proxyToBackend(request, `/blogs/${params.slug}`);
+      return proxyToBackend(request, `/blogs/${params.id}`);
     }
 
     await requireAdminRequest(request);
 
-    const id = String(params.slug || "").trim();
+    const id = String(params.id || params.slug || "").trim();
     if (!id) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
@@ -148,7 +111,7 @@ export async function PUT(request, { params }) {
     if (!title || !content || !imageUrl) {
       return NextResponse.json(
         { error: "title, content, and imageUrl are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -172,7 +135,7 @@ export async function PUT(request, { params }) {
         error: "Failed to update blog post",
         detail: process.env.NODE_ENV === "production" ? undefined : error.message,
       },
-      { status: error.status || 500 }
+      { status: error.status || 500 },
     );
   }
 }
@@ -181,12 +144,12 @@ export async function DELETE(request, { params }) {
   try {
     const db = getAdminDb();
     if (!db) {
-      return proxyToBackend(request, `/blogs/${params.slug}`);
+      return proxyToBackend(request, `/blogs/${params.id}`);
     }
 
     await requireAdminRequest(request);
 
-    const id = String(params.slug || "").trim();
+    const id = String(params.id || params.slug || "").trim();
     if (!id) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
@@ -206,7 +169,7 @@ export async function DELETE(request, { params }) {
         error: "Failed to delete blog post",
         detail: process.env.NODE_ENV === "production" ? undefined : error.message,
       },
-      { status: error.status || 500 }
+      { status: error.status || 500 },
     );
   }
 }

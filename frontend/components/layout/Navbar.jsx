@@ -325,15 +325,16 @@ export default function Navbar() {
 
               <div className="mt-6 flex-1 overflow-y-auto pb-20">
                 <div className="space-y-6 pr-2">
-                  <Link href="/products/all" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90">
-                    Shop
-                  </Link>
-                  <Link href="/products/outlet" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90">
-                    Outlet
-                  </Link>
-                  <Link href="/gallery" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90">
-                    Gallery
-                  </Link>
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={closeMobileMenu}
+                      className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                   <button
                     type="button"
                     onClick={() => setAccessoriesOpen((open) => !open)}
@@ -356,17 +357,11 @@ export default function Navbar() {
                           onClick={closeMobileMenu}
                           className="block text-sm uppercase tracking-[0.06em] text-ink/70"
                         >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
+                      {link.label}
+                      </Link>
+                    ))}
+                  </div>
                   )}
-                  <Link href="/contact" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90">
-                    Contact
-                  </Link>
-                  <Link href="/about" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90">
-                    About
-                  </Link>
                   {isAdmin && (
                     <Link href="/admin" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-burgundy">
                       Admin Panel
