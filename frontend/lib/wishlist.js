@@ -1,62 +1,59 @@
-"use client";
+﻿"use client";
 
-import { auth } from "./firebase";
+import { auth, db, collection, doc, getDocs, setDoc, deleteDoc, query, orderBy, serverTimestamp } from "./firebase";
 
-function resolveApiUrl() {
-  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
-
-  if (process.env.NODE_ENV === "production") {
-    if (!configuredUrl) return "/api";
-
-    const isLocalhostUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i.test(configuredUrl);
-    return isLocalhostUrl ? "/api" : configuredUrl;
-  }
-
-  return configuredUrl || "http://localhost:5000/api";
+function normalizeId(value) {
+  return String(value || "").trim();
 }
 
-const API_URL = resolveApiUrl();
+function wishlistCollection(uid) {
+  return collection(db, "users", uid, "wishlist");
+}
 
-async function request(path, { method = "GET", body, authRequired = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-
-  if (authRequired) {
-    if (!auth) throw new Error("Firebase is not configured yet.");
-    const user = auth.currentUser;
-    if (!user) throw new Error("You must be signed in to do that.");
-    const token = await user.getIdToken();
-    headers.Authorization = `Bearer ${token}`;
+async function requireUser() {
+  const user = auth?.currentUser || null;
+  if (!user) {
+    throw new Error("Please sign in to use the wishlist.");
   }
-
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.error || `Request failed with status ${response.status}`);
-  }
-
-  return data;
+  return user;
 }
 
 export async function getWishlist() {
-  return request("/wishlist", { authRequired: true });
+  if (!db || !auth) return [];
+
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const snapshot = await getDocs(query(wishlistCollection(user.uid), orderBy("addedAt", "desc")));
+  return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 }
 
 export async function addWishlistItem(productId) {
-  return request(`/wishlist/${encodeURIComponent(String(productId || "").trim())}`, {
-    method: "POST",
-    authRequired: true,
-  });
+  if (!db || !auth) throw new Error("Firebase is not configured yet.");
+
+  const user = await requireUser();
+  const id = normalizeId(productId);
+  if (!id) throw new Error("Invalid product id");
+
+  await setDoc(
+    doc(db, "users", user.uid, "wishlist", id),
+    {
+      productId: id,
+      addedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return { id, productId: id };
 }
 
 export async function removeWishlistItem(productId) {
-  return request(`/wishlist/${encodeURIComponent(String(productId || "").trim())}`, {
-    method: "DELETE",
-    authRequired: true,
-  });
+  if (!db || !auth) throw new Error("Firebase is not configured yet.");
+
+  const user = await requireUser();
+  const id = normalizeId(productId);
+  if (!id) throw new Error("Invalid product id");
+
+  await deleteDoc(doc(db, "users", user.uid, "wishlist", id));
+  return { ok: true, productId: id };
 }
