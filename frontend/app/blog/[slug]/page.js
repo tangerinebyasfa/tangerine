@@ -1,15 +1,38 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 import PageHeader from "../../../components/ui/PageHeader";
-import { createBlogExcerpt, formatBlogDate } from "../../../lib/blog";
+import { createBlogExcerpt, formatBlogDate, slugify } from "../../../lib/blog";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
-import { getBlog, getBlogs } from "../../../lib/firestoreServer";
+import { getRequestOrigin } from "../../../SEO/schemaUtils";
 
 export const dynamic = "force-dynamic";
 
+function getApiBase() {
+  return `${getRequestOrigin(headers())}/api`;
+}
+
+async function fetchJson(path) {
+  const response = await fetch(`${getApiBase()}${path}`, {
+    cache: "no-store",
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+
+  return data;
+}
+
+function pickRelatedPosts(posts, currentId) {
+  return posts.filter((item) => item.id !== currentId).slice(0, 3);
+}
+
 export async function generateMetadata({ params }) {
-  const post = await getBlog(params.slug).catch(() => null);
+  const post = await fetchJson(`/blogs/${params.slug}`).catch(() => null);
 
   if (!post) {
     return {
@@ -44,12 +67,14 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogPostPage({ params }) {
-  const post = await getBlog(params.slug).catch(() => null);
+  const [post, related] = await Promise.all([
+    fetchJson(`/blogs/${params.slug}`).catch(() => null),
+    fetchJson("/blogs").catch(() => []),
+  ]);
 
   if (!post) notFound();
 
-  const related = await getBlogs().catch(() => []);
-  const morePosts = related.filter((item) => item.id !== post.id).slice(0, 3);
+  const morePosts = pickRelatedPosts(Array.isArray(related) ? related : [], post.id);
   const publishedDate = post.publishedAt || post.createdAt;
   const canonicalUrl = `/blog/${post.slug || params.slug}`;
   const ogImage = normalizeImageUrl(post.imageUrl);
@@ -61,8 +86,8 @@ export default async function BlogPostPage({ params }) {
     headline: post.title,
     description: post.excerpt || createBlogExcerpt(post.content, 155),
     image: ogImage ? [ogImage] : undefined,
-    datePublished: publishedDate?.toDate?.()?.toISOString?.() || undefined,
-    dateModified: post.updatedAt?.toDate?.()?.toISOString?.() || publishedDate?.toDate?.()?.toISOString?.() || undefined,
+    datePublished: publishedDate ? new Date(publishedDate).toISOString() : undefined,
+    dateModified: post.updatedAt || publishedDate || undefined,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": canonicalUrl,
@@ -134,11 +159,7 @@ export default async function BlogPostPage({ params }) {
               <p className="text-xs tracking-widest uppercase text-ink/40 mb-4">More posts</p>
               <div className="space-y-4">
                 {morePosts.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/blog/${item.slug || item.id}`}
-                    className="block group"
-                  >
+                  <Link key={item.id} href={`/blog/${item.slug || item.id}`} className="block group">
                     <p className="text-xs tracking-widest uppercase text-ink/40">
                       {formatBlogDate(item.publishedAt || item.createdAt)}
                     </p>

@@ -1,14 +1,30 @@
 import Link from "next/link";
 import Image from "next/image";
+import { headers } from "next/headers";
 import PageHeader from "../../components/ui/PageHeader";
 import { formatBlogDate } from "../../lib/blog";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
-import { getBlogs } from "../../lib/firestoreServer";
+import { getRequestOrigin } from "../../SEO/schemaUtils";
 
-export const metadata = {
-  title: "Blog | Tangerine",
-  description: "Style notes, brand stories, and fashion updates from Tangerine.",
-};
+export const dynamic = "force-dynamic";
+
+function getApiBase() {
+  return `${getRequestOrigin(headers())}/api`;
+}
+
+async function fetchJson(path) {
+  const response = await fetch(`${getApiBase()}${path}`, {
+    cache: "no-store",
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+
+  return data;
+}
 
 function getBlogImage(post) {
   const imageUrl = post?.imageUrl || post?.featuredImage || post?.image || post?.thumbnail || "";
@@ -70,7 +86,7 @@ export default async function BlogPage() {
   let loadError = "";
 
   try {
-    const result = await getBlogs();
+    const result = await fetchJson("/blogs");
     blogs = Array.isArray(result) ? result : [];
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Failed to load blog posts.";
@@ -94,7 +110,8 @@ export default async function BlogPage() {
 
           {!loadError && blogs.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-[#ded4ca] bg-white px-6 py-16 text-center text-[#6f645c]">
-              No blog posts yet. Add your first post from the admin Blog section and it will appear here automatically.
+              No blog posts yet. Add your first post from the admin Blog section and it will appear here
+              automatically.
             </div>
           ) : null}
 

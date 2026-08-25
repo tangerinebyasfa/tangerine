@@ -45,12 +45,12 @@ async function readWishlistFromFirestore() {
 
 export async function getWishlist() {
   try {
-    return await readWishlistFromFirestore();
-  } catch (firestoreError) {
+    return await requestApi("/wishlist", { authRequired: true });
+  } catch (apiError) {
     try {
-      return await requestApi("/wishlist", { authRequired: true });
-    } catch (apiError) {
-      throw firestoreError || apiError;
+      return await readWishlistFromFirestore();
+    } catch (firestoreError) {
+      throw apiError || firestoreError;
     }
   }
 }
@@ -60,26 +60,26 @@ export async function addWishlistItem(productId) {
   if (!id) throw new Error("Invalid product id");
 
   try {
-    if (!db || !auth?.currentUser) throw new Error("Please sign in to use the wishlist.");
-
-    await setDoc(
-      doc(db, "users", auth.currentUser.uid, "wishlist", id),
-      {
-        productId: id,
-        addedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return { id, productId: id };
-  } catch (firestoreError) {
+    return await requestApi(`/wishlist/${encodeURIComponent(id)}`, {
+      method: "POST",
+      authRequired: true,
+    });
+  } catch (apiError) {
     try {
-      return await requestApi(`/wishlist/${encodeURIComponent(id)}`, {
-        method: "POST",
-        authRequired: true,
-      });
-    } catch (apiError) {
-      throw firestoreError || apiError;
+      if (!db || !auth?.currentUser) throw new Error("Please sign in to use the wishlist.");
+
+      await setDoc(
+        doc(db, "users", auth.currentUser.uid, "wishlist", id),
+        {
+          productId: id,
+          addedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return { id, productId: id };
+    } catch (firestoreError) {
+      throw apiError || firestoreError;
     }
   }
 }
@@ -89,18 +89,18 @@ export async function removeWishlistItem(productId) {
   if (!id) throw new Error("Invalid product id");
 
   try {
-    if (!db || !auth?.currentUser) throw new Error("Please sign in to use the wishlist.");
-
-    await deleteDoc(doc(db, "users", auth.currentUser.uid, "wishlist", id));
-    return { ok: true, productId: id };
-  } catch (firestoreError) {
+    return await requestApi(`/wishlist/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      authRequired: true,
+    });
+  } catch (apiError) {
     try {
-      return await requestApi(`/wishlist/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        authRequired: true,
-      });
-    } catch (apiError) {
-      throw firestoreError || apiError;
+      if (!db || !auth?.currentUser) throw new Error("Please sign in to use the wishlist.");
+
+      await deleteDoc(doc(db, "users", auth.currentUser.uid, "wishlist", id));
+      return { ok: true, productId: id };
+    } catch (firestoreError) {
+      throw apiError || firestoreError;
     }
   }
 }
