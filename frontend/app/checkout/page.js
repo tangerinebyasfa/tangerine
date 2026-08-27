@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
@@ -28,6 +28,37 @@ function CheckoutForm() {
     phone: profile?.phone || "",
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
+
+  useEffect(() => {
+    const savedAddress = profile?.defaultAddress || profile?.address;
+    if (!savedAddress) {
+      setAddress((current) => ({
+        ...current,
+        fullName: current.fullName || profile?.displayName || "",
+        phone: current.phone || profile?.phone || "",
+      }));
+      return;
+    }
+
+    if (typeof savedAddress === "string") {
+      setAddress((current) => ({
+        ...current,
+        fullName: current.fullName || profile?.displayName || "",
+        phone: current.phone || profile?.phone || "",
+      }));
+      return;
+    }
+
+    setAddress((current) => ({
+      ...current,
+      fullName: current.fullName || savedAddress.fullName || profile?.displayName || "",
+      line1: current.line1 || savedAddress.line1 || "",
+      city: current.city || savedAddress.city || "",
+      state: current.state || savedAddress.state || "",
+      zip: current.zip || savedAddress.zip || "",
+      phone: current.phone || savedAddress.phone || profile?.phone || "",
+    }));
+  }, [profile]);
 
   const shipping = items.length ? SHIPPING_FLAT_RATE : 0;
   const total = subtotal + shipping;

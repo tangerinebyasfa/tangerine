@@ -114,6 +114,32 @@ async function request(path, { method = "GET", body, authRequired = false } = {}
   return data;
 }
 
+async function requestLocalApi(path, { method = "GET", body, authRequired = false } = {}) {
+  const headers = { "Content-Type": "application/json" };
+
+  if (authRequired) {
+    if (!auth) throw new Error("Firebase is not configured yet.");
+    const user = auth.currentUser;
+    if (!user) throw new Error("You must be signed in to do that.");
+    const token = await user.getIdToken();
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed with status ${res.status}`);
+  }
+
+  return data;
+}
+
 export const api = {
   // Products
   getProducts: async (params = {}) => {
@@ -248,6 +274,18 @@ export const api = {
   getAllOrders: () => request("/orders", { authRequired: true }),
   updateOrderStatus: (id, status) =>
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
+
+  // Reviews
+  createReview: (body) => requestLocalApi("/api/reviews", { method: "POST", body, authRequired: true }),
+  getReviews: async (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.productId) qs.set("productId", params.productId);
+    if (params.userId) qs.set("userId", params.userId);
+    if (params.verified === true || params.verified === false) qs.set("verified", String(params.verified));
+    const authRequired = Boolean(params.authRequired);
+    return requestLocalApi(`/api/reviews${qs.toString() ? `?${qs.toString()}` : ""}`, { authRequired });
+  },
+  deleteReview: (id) => requestLocalApi(`/api/reviews/${id}`, { method: "DELETE", authRequired: true }),
 
   // Users
   syncUser: async (body) => {

@@ -1,4 +1,6 @@
 import admin from "firebase-admin";
+import fs from "fs";
+import path from "path";
 
 function isPlaceholder(value) {
   return !value || /^(your[_-]?|changeme|replace[_-]?me|xxx|test)$/i.test(String(value).trim());
@@ -6,6 +8,34 @@ function isPlaceholder(value) {
 
 function normalizePrivateKey(value) {
   return String(value || "").replace(/^"|"$/g, "").replace(/\\n/g, "\n");
+}
+
+function parseEnvFile(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, "utf8");
+    const env = {};
+
+    for (const rawLine of content.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+
+      const separatorIndex = line.indexOf("=");
+      if (separatorIndex === -1) continue;
+
+      const key = line.slice(0, separatorIndex).trim();
+      let value = line.slice(separatorIndex + 1).trim();
+
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+
+      env[key] = value;
+    }
+
+    return env;
+  } catch {
+    return {};
+  }
 }
 
 function loadServiceAccount() {
@@ -19,9 +49,12 @@ function loadServiceAccount() {
     }
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
+  const backendEnvPath = path.resolve(process.cwd(), "..", "backend", ".env");
+  const backendEnv = parseEnvFile(backendEnvPath);
+
+  const projectId = process.env.FIREBASE_PROJECT_ID?.trim() || backendEnv.FIREBASE_PROJECT_ID?.trim();
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim() || backendEnv.FIREBASE_CLIENT_EMAIL?.trim();
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim() || backendEnv.FIREBASE_PRIVATE_KEY?.trim();
 
   if (!projectId || !clientEmail || !privateKey) return null;
   if (isPlaceholder(projectId) || isPlaceholder(clientEmail) || isPlaceholder(privateKey)) return null;

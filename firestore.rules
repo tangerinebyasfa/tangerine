@@ -68,6 +68,11 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Saved addresses live in a private subcollection for each user.
+    match /users/{userId}/addresses/{addressId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Orders belong to the signed-in user who created them; admins can read all.
     match /orders/{orderId} {
       allow create: if isSignedIn()
@@ -77,6 +82,26 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isAdmin());
 
       allow update, delete: if isAdmin();
+    }
+
+    // Public product review feed contains only customer-facing review data.
+    match /productReviews/{productId}/items/{reviewId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Private per-user review history for the logged-in owner.
+    match /users/{userId}/reviews/{reviewId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // Master review records are readable for admins and writable by the author.
+    match /reviews/{reviewId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     // Contact messages can be created by anyone.

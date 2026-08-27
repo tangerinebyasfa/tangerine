@@ -11,7 +11,11 @@ function normalizeId(value) {
 }
 
 function toMillis(value) {
-  return value?.toMillis?.() ?? new Date(value || 0).getTime();
+  if (!value) return 0;
+  if (typeof value?.toMillis === "function") return value.toMillis();
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function createOptimisticWishlistItem(productId) {
@@ -30,52 +34,50 @@ export function WishlistProvider({ children }) {
   const [optimisticMap, setOptimisticMap] = useState({});
   const [pendingIds, setPendingIds] = useState(() => new Set());
 
-  async function loadWishlist() {
-    if (!user) {
-      setWishlistDocs([]);
-      setWishlistLoading(false);
-      return;
-    }
-
-    setWishlistLoading(true);
-    try {
-      const items = await getWishlist();
-      const normalized = Array.isArray(items)
-        ? items.map((item) => ({
-            ...item,
-            id: normalizeId(item.id || item.productId),
-            productId: normalizeId(item.productId || item.id),
-          }))
-        : [];
-      setWishlistDocs(normalized);
-      setOptimisticMap({});
-    } catch (error) {
-      console.error("[wishlist] Failed to load wishlist:", error);
-      setWishlistDocs([]);
-    } finally {
-      setWishlistLoading(false);
-    }
-  }
-
   useEffect(() => {
     if (authLoading) {
       setWishlistLoading(true);
       return;
     }
 
-    loadWishlist();
-    const handleFocus = () => {
-      if (user) loadWishlist().catch(() => {});
-    };
+    if (!user) {
+      setWishlistDocs([]);
+      setWishlistLoading(false);
+      setOptimisticMap({});
+      setPendingIds(new Set());
+      return;
+    }
 
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleFocus);
+    setWishlistLoading(true);
+    let active = true;
+
+    getWishlist()
+      .then((items) => {
+        if (!active) return;
+
+        const normalized = Array.isArray(items)
+          ? items.map((item) => ({
+              ...item,
+              id: normalizeId(item.id || item.productId),
+              productId: normalizeId(item.productId || item.id),
+            }))
+          : [];
+
+        setWishlistDocs(normalized);
+        setOptimisticMap({});
+      })
+      .catch((error) => {
+        console.error("[wishlist] Failed to load wishlist:", error);
+        if (!active) return;
+        setWishlistDocs([]);
+      })
+      .finally(() => {
+        if (active) setWishlistLoading(false);
+      });
 
     return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleFocus);
+      active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.uid]);
 
   const wishlistIds = useMemo(() => {
@@ -135,7 +137,17 @@ export function WishlistProvider({ children }) {
 
     try {
       await addWishlistItem(productId);
-      await loadWishlist();
+      const items = await getWishlist();
+      setWishlistDocs(
+        Array.isArray(items)
+          ? items.map((item) => ({
+              ...item,
+              id: normalizeId(item.id || item.productId),
+              productId: normalizeId(item.productId || item.id),
+            }))
+          : []
+      );
+      setOptimisticMap({});
     } catch (error) {
       setOptimisticMap((current) => {
         const next = { ...current };
@@ -164,14 +176,23 @@ export function WishlistProvider({ children }) {
 
     try {
       await removeWishlistItem(id);
-      await loadWishlist();
+      const items = await getWishlist();
+      setWishlistDocs(
+        Array.isArray(items)
+          ? items.map((item) => ({
+              ...item,
+              id: normalizeId(item.id || item.productId),
+              productId: normalizeId(item.productId || item.id),
+            }))
+          : []
+      );
+      setOptimisticMap({});
     } catch (error) {
       setOptimisticMap((current) => {
         const next = { ...current };
         delete next[id];
         return next;
       });
-      await loadWishlist();
       throw error;
     } finally {
       setPendingIds((current) => {

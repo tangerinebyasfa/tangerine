@@ -192,19 +192,6 @@ export default function Navbar() {
               )}
             </button>
 
-            <Link
-              href="/wishlist"
-              className="relative hidden md:inline-flex text-ink hover:text-tangerine transition-colors"
-              aria-label="Open wishlist"
-            >
-              <Heart className="h-5 w-5" strokeWidth={2} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-burgundy text-paper text-[10px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
-
             <div className="relative hidden md:block">
               {user ? (
                 <button
@@ -423,7 +410,7 @@ export default function Navbar() {
             type="button"
             onClick={() => {
               closeMobileMenu();
-              router.push("/wishlist");
+              router.push("/profile#wishlist");
             }}
             className="flex flex-col items-center gap-1"
             aria-label="Open wishlist"

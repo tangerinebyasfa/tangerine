@@ -18,7 +18,6 @@ const quickLinks = [
 
 const companyLinks = [
   { href: "/about", label: "About Us" },
-  { href: "/wishlist", label: "Wishlist" },
   { href: "/signin", label: "Sign In" },
 ];
 
@@ -272,7 +271,7 @@ export default function Footer() {
                   </FooterLink>
                 ))}
               </ul>
-            </MobileSection>
+            </MobileSection>  
 
             <MobileSection title="Associated Brands">
               <BrandPills />
