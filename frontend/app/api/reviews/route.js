@@ -175,8 +175,11 @@ export async function GET(request) {
     const userId = normalizeText(url.searchParams.get("userId"));
     const verified = url.searchParams.get("verified");
 
+    const authenticatedUser = await authenticateRequest(request).catch(() => null);
     const isPublicProductFeed = Boolean(productId) && !userId && verified === null;
-    if (!isPublicProductFeed) {
+    const isOwnReviewsFeed = Boolean(userId) && Boolean(authenticatedUser?.uid) && authenticatedUser.uid === userId && verified === null;
+
+    if (!isPublicProductFeed && !isOwnReviewsFeed) {
       await requireAdminRequest(request);
     }
 

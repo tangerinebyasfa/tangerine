@@ -36,8 +36,8 @@ import {
   setDefaultAddress,
   updateAddress,
 } from "../../lib/accountFirestore";
-import { listenToUserReviews } from "../../lib/reviewFirestore";
-import { db, doc, serverTimestamp, setDoc } from "../../lib/firebase";
+import { api } from "../../lib/api";
+import { db, doc, serverTimestamp, setDoc, collection, getDocs, orderBy, query } from "../../lib/firebase";
 import { formatINR } from "../../lib/currency";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
@@ -301,21 +301,48 @@ function ProfileDashboard() {
   }, [wishlistIdKey]);
 
   useEffect(() => {
-    if (!user?.uid) return undefined;
+    let active = true;
+
+    if (!user?.uid) {
+      setReviewHistory([]);
+      setReviewHistoryLoading(false);
+      return undefined;
+    }
 
     setReviewHistoryLoading(true);
-    return listenToUserReviews(
-      user.uid,
-      (items) => {
+    async function loadReviews() {
+      try {
+        const items = await api.getReviews({ userId: user.uid, authRequired: true });
+        if (!active) return;
         setReviewHistory(Array.isArray(items) ? items : []);
-        setReviewHistoryLoading(false);
-      },
-      (error) => {
+      } catch (error) {
         console.error(error);
-        setReviewHistory([]);
-        setReviewHistoryLoading(false);
+        if (!active) return;
+
+        try {
+          const localItems = db
+            ? await getDocs(query(collection(db, "users", user.uid, "reviews"), orderBy("createdAt", "desc")))
+            : null;
+
+          const items = localItems
+            ? localItems.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() }))
+            : [];
+
+          setReviewHistory(Array.isArray(items) ? items : []);
+        } catch (fallbackError) {
+          console.error(fallbackError);
+          setReviewHistory([]);
+        }
+      } finally {
+        if (active) setReviewHistoryLoading(false);
       }
-    );
+    }
+
+    loadReviews();
+
+    return () => {
+      active = false;
+    };
   }, [user?.uid]);
 
   useEffect(() => {
@@ -654,7 +681,10 @@ function ProfileDashboard() {
                           ) : null}
                         </div>
                         <p className="mt-1 text-sm text-ink/45">{formatDate(review.createdAt)}</p>
-                        <p className="mt-3 text-sm leading-6 text-ink/70">{review.comment}</p>
+                        <div className="mt-3 border-l-2 border-tangerine/40 pl-3">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-ink/40">Your comment</p>
+                          <p className="mt-2 text-sm leading-6 text-ink/80">{review.comment || "No comment provided."}</p>
+                        </div>
                       </div>
 
                       <div className="flex flex-col items-start gap-2 md:items-end">
@@ -910,6 +940,95 @@ function ProfileDashboard() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    if (activeSection === "reviews") {
+      return (
+        <section className="border border-ink/10 bg-white/95 p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
+          <SectionHeader
+            title="My Reviews"
+            action={
+              <Link href="/products/all" className="inline-flex items-center gap-2 text-sm font-medium text-tangerine">
+                Browse Products
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            }
+          />
+          <p className="mb-4 text-sm leading-6 text-ink/55">
+            Your posted reviews, including the exact comment you wrote, appear here.
+          </p>
+
+          {reviewHistoryLoading ? (
+            <div className="space-y-4">
+              {[0, 1, 2].map((index) => (
+                <div key={index} className="h-28 animate-pulse border border-ink/10 bg-sand/60" />
+              ))}
+            </div>
+          ) : reviewHistory.length === 0 ? (
+            <div className="border border-dashed border-ink/10 bg-[#fffaf6] p-8 text-center">
+              <Star className="mx-auto h-8 w-8 text-tangerine/60" fill="currentColor" />
+              <p className="mt-4 font-display text-2xl text-ink">No reviews yet</p>
+              <p className="mt-2 text-sm leading-6 text-ink/55">
+                Your product review history will appear here after you share feedback on an order.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviewHistory.map((review) => {
+                const href = `/product/${review.productSlug || review.productId}`;
+
+                return (
+                  <article
+                    key={review.id}
+                    className="grid gap-4 border border-ink/10 bg-[#fffaf6] p-4 md:grid-cols-[72px_minmax(0,1fr)_auto] md:items-center"
+                  >
+                    <Link href={href} className="block">
+                      <div className="relative h-18 w-18 overflow-hidden border border-ink/10 bg-paper">
+                        {review.productImage ? (
+                          <Image
+                            src={normalizeImageUrl(review.productImage)}
+                            alt={review.productName || "Review product"}
+                            fill
+                            className="object-cover"
+                            unoptimized={isGoogleDriveImageUrl(review.productImage)}
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-sand text-[10px] uppercase tracking-[0.14em] text-ink/40">
+                            Review
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate font-medium text-ink">{review.productName || "Product"}</h3>
+                        {review.purchaseVerified ? (
+                          <span className="inline-flex border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-700">
+                            Verified Purchase
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-sm text-ink/45">{formatDate(review.createdAt)}</p>
+                      <div className="mt-3 border-l-2 border-tangerine/40 pl-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-ink/40">Your comment</p>
+                        <p className="mt-2 text-sm leading-6 text-ink/80">{review.comment || "No comment provided."}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start gap-2 md:items-end">
+                      <p className="text-sm font-medium text-ink">{review.rating}/5</p>
+                      <Link href={href} className="text-xs uppercase tracking-[0.18em] text-tangerine">
+                        View Product
+                      </Link>
                     </div>
                   </article>
                 );

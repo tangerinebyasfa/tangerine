@@ -277,6 +277,7 @@ export const api = {
 
   // Reviews
   createReview: (body) => requestLocalApi("/api/reviews", { method: "POST", body, authRequired: true }),
+  getMyReviews: () => requestLocalApi("/api/reviews/mine", { authRequired: true }),
   getReviews: async (params = {}) => {
     const qs = new URLSearchParams();
     if (params.productId) qs.set("productId", params.productId);
