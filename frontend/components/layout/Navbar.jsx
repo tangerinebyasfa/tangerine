@@ -11,7 +11,7 @@ import { useWishlist } from "../../context/WishlistContext";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/products/all", label: "Shop by Category" },
+  { href: "/products", label: "Shop by Category" },
   { href: "/gallery", label: "Gallery" },
   { href: "/products/outlet", label: "Outlet" },
   { href: "/about", label: "About" },
