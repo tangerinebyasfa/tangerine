@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../lib/image";
 import ProductCard from "../components/product/ProductCard";
@@ -55,6 +56,15 @@ function HomepageImage({ desktop, mobile, alt, priority = false }) {
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const featuredScrollRef = useRef(null);
+
+  function scrollFeatured(direction) {
+    const node = featuredScrollRef.current;
+    if (!node) return;
+
+    const amount = Math.max(320, Math.round(node.clientWidth * 0.72));
+    node.scrollBy({ left: amount * direction, behavior: "smooth" });
+  }
 
   useEffect(() => {
     let active = true;
@@ -98,29 +108,49 @@ export default function HomePage() {
 
         {featuredProducts.length > 0 && (
           <section className="mx-auto w-[90%] py-14 md:w-4/5">
-            <div className="mb-4 flex items-center justify-end">
+            <div className="mb-4 flex items-center justify-end gap-4">
               <Link
                 href="/products/all"
-                className="inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
+                className="ml-auto inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
               >
                 Show Now
               </Link>
             </div>
 
-            <div className="md:hidden -mx-[5vw] overflow-x-auto px-[5vw] pb-2">
-              <div className="flex snap-x snap-mandatory gap-4">
-                {featuredProducts.map((product) => (
-                  <div key={product.id} className="w-[72vw] shrink-0 snap-start">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => scrollFeatured(-1)}
+                aria-label="Scroll featured products left"
+                className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:flex"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
 
-            <div className="hidden md:grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              <button
+                type="button"
+                onClick={() => scrollFeatured(1)}
+                aria-label="Scroll featured products right"
+                className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:flex"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+
+              <div
+                ref={featuredScrollRef}
+                className="-mx-[5vw] overflow-x-auto px-[5vw] pb-2 md:mx-0 md:px-0 md:pb-4 no-scrollbar"
+              >
+                <div className="flex snap-x snap-mandatory gap-4 md:gap-6 lg:gap-8">
+                  {featuredProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="min-w-[78vw] shrink-0 snap-start sm:min-w-[58vw] md:min-w-[34vw] lg:min-w-[26vw] xl:min-w-[22vw]"
+                    >
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
         )}
