@@ -11,6 +11,13 @@ function formatOrder(doc) {
     ...data,
     createdAt: serializeTimestamp(data.createdAt),
     updatedAt: serializeTimestamp(data.updatedAt),
+    displayOrderId: data.orderId || doc.id,
+    statusHistory: Array.isArray(data.statusHistory)
+      ? data.statusHistory.map((entry) => ({
+          ...entry,
+          at: serializeTimestamp(entry.at),
+        }))
+      : [],
   };
 }
 

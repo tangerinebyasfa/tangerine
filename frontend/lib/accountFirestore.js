@@ -6,15 +6,14 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   query,
   where,
   onSnapshot,
   setDoc,
   deleteDoc,
-  writeBatch,
   serverTimestamp,
 } from "./firebase";
+import { api } from "./api";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -98,22 +97,6 @@ function sortAddresses(items) {
     if (updatedRank !== 0) return updatedRank;
     return toMillis(b?.createdAt) - toMillis(a?.createdAt);
   });
-}
-
-function syncDefaultAddressMirror(batch, uid, addressId, addressData) {
-  batch.set(
-    doc(db, "users", uid),
-    {
-      defaultAddressId: addressId,
-      defaultAddress: {
-        id: addressId,
-        ...addressData,
-      },
-      address: buildAddressSummary(addressData),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
 }
 
 export function listenToUserOrders(uid, onChange, onError) {
@@ -205,140 +188,30 @@ export async function removeWishlistItem(productId) {
 }
 
 export async function createAddress(payload) {
-  ensureDb();
-  const user = ensureUser();
-  const normalized = normalizeAddressPayload(payload);
-  const addressesRef = collection(db, "users", user.uid, "addresses");
-  const existing = await getDocs(addressesRef);
-  const addressRef = doc(addressesRef);
-  const shouldDefault = normalized.isDefault || existing.empty;
-  const batch = writeBatch(db);
-
-  if (shouldDefault) {
-    existing.docs.forEach((addressDoc) => {
-      batch.update(addressDoc.ref, {
-        isDefault: false,
-        updatedAt: serverTimestamp(),
-      });
-    });
-  }
-
-  batch.set(addressRef, {
-    ...normalized,
-    isDefault: shouldDefault,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  if (shouldDefault) {
-    syncDefaultAddressMirror(batch, user.uid, addressRef.id, normalized);
-  }
-
-  await batch.commit();
-  return { id: addressRef.id, ...normalized, isDefault: shouldDefault };
+  ensureUser();
+  return api.createMyAddress(normalizeAddressPayload(payload));
 }
 
 export async function updateAddress(addressId, payload) {
-  ensureDb();
-  const user = ensureUser();
+  ensureUser();
   const id = normalizeText(addressId);
   if (!id) throw new Error("Invalid address id");
-
-  const ref = doc(db, "users", user.uid, "addresses", id);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Address not found.");
-
-  const normalized = normalizeAddressPayload({
-    ...snap.data(),
+  return api.updateMyAddress(id, normalizeAddressPayload({
     ...payload,
-    isDefault: snap.data()?.isDefault,
-  });
-  const { isDefault, ...updates } = normalized;
-
-  await setDoc(
-    ref,
-    {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-
-  if (payload?.isDefault) {
-    await setDefaultAddress(id);
-  }
-
-  return { id, ...updates, isDefault: snap.data()?.isDefault || false };
+    isDefault: Boolean(payload?.isDefault),
+  }));
 }
 
 export async function setDefaultAddress(addressId) {
-  ensureDb();
-  const user = ensureUser();
+  ensureUser();
   const id = normalizeText(addressId);
   if (!id) throw new Error("Invalid address id");
-
-  const addressesRef = collection(db, "users", user.uid, "addresses");
-  const snapshot = await getDocs(addressesRef);
-  if (snapshot.empty) throw new Error("Add an address first.");
-
-  const target = snapshot.docs.find((addressDoc) => addressDoc.id === id);
-  if (!target) throw new Error("Address not found.");
-
-  const batch = writeBatch(db);
-
-  snapshot.docs.forEach((addressDoc) => {
-    batch.update(addressDoc.ref, {
-      isDefault: addressDoc.id === id,
-      updatedAt: serverTimestamp(),
-    });
-  });
-
-  syncDefaultAddressMirror(batch, user.uid, id, target.data());
-  await batch.commit();
-  return { id };
+  return api.setMyDefaultAddress(id);
 }
 
 export async function deleteAddress(addressId) {
-  ensureDb();
-  const user = ensureUser();
+  ensureUser();
   const id = normalizeText(addressId);
   if (!id) throw new Error("Invalid address id");
-
-  const addressRef = doc(db, "users", user.uid, "addresses", id);
-  const snap = await getDoc(addressRef);
-  if (!snap.exists()) throw new Error("Address not found.");
-
-  const addressesRef = collection(db, "users", user.uid, "addresses");
-  const remainingSnapshot = await getDocs(addressesRef);
-  const remaining = remainingSnapshot.docs.filter((addressDoc) => addressDoc.id !== id);
-  const batch = writeBatch(db);
-  batch.delete(addressRef);
-
-  if (snap.data()?.isDefault && remaining.length > 0) {
-    const nextDefault = sortAddresses(remaining.map(mapDoc))[0];
-
-    remaining.forEach((addressDoc) => {
-      batch.update(addressDoc.ref, {
-        isDefault: addressDoc.id === nextDefault.id,
-        updatedAt: serverTimestamp(),
-      });
-    });
-
-    syncDefaultAddressMirror(batch, user.uid, nextDefault.id, nextDefault);
-  } else if (snap.data()?.isDefault) {
-    batch.set(
-      doc(db, "users", user.uid),
-      {
-        defaultAddressId: null,
-        defaultAddress: null,
-        address: null,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  }
-
-  await batch.commit();
-  return { ok: true, id };
+  return api.deleteMyAddress(id);
 }
-

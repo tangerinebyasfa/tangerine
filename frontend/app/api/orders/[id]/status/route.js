@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../../../lib/firebaseAdmin";
 import { proxyToBackend } from "../../../../../lib/serverApi";
+import { normalizeOrderStatus } from "../../../../../lib/order";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,12 @@ function formatOrder(doc) {
     ...data,
     createdAt: serializeTimestamp(data.createdAt),
     updatedAt: serializeTimestamp(data.updatedAt),
+    statusHistory: Array.isArray(data.statusHistory)
+      ? data.statusHistory.map((entry) => ({
+          ...entry,
+          at: serializeTimestamp(entry.at),
+        }))
+      : [],
   };
 }
 
@@ -23,13 +30,8 @@ export async function PUT(request, { params }) {
 
     await requireAdminRequest(request);
 
-    const allowed = ["pending", "processing", "shipped", "delivered", "cancelled"];
     const body = await request.json().catch(() => ({}));
-    const status = String(body.status || "").trim();
-
-    if (!allowed.includes(status)) {
-      return NextResponse.json({ error: `status must be one of ${allowed.join(", ")}` }, { status: 400 });
-    }
+    const status = normalizeOrderStatus(body.status);
 
     const id = String(params.id || "").trim();
     const ref = db.collection("orders").doc(id);
@@ -39,7 +41,21 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    await ref.update({ status, updatedAt: new Date() });
+    const now = new Date();
+    const historyEntry = {
+      status,
+      at: now,
+      by: "admin",
+      note: body.note ? String(body.note).trim() : `Order marked ${status}`,
+    };
+
+    await ref.update({
+      status,
+      updatedAt: now,
+      statusHistory: [...(snap.data()?.statusHistory || []), historyEntry],
+      statusUpdatedAt: now,
+      statusUpdatedBy: "admin",
+    });
     const updated = await ref.get();
     return NextResponse.json(formatOrder(updated));
   } catch (error) {

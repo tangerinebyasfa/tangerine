@@ -31,7 +31,6 @@ import {
   createAddress,
   deleteAddress,
   loadProductsByIds,
-  listenToUserAddresses,
   listenToUserOrders,
   setDefaultAddress,
   updateAddress,
@@ -40,6 +39,7 @@ import { api } from "../../lib/api";
 import { db, doc, serverTimestamp, setDoc, collection, getDocs, orderBy, query } from "../../lib/firebase";
 import { formatINR } from "../../lib/currency";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
+import { formatOrderDate, getOrderDisplayId, getOrderItemCount } from "../../lib/order";
 
 const summaryCards = [
   { key: "total", label: "Total Orders", icon: Package2 },
@@ -74,6 +74,8 @@ const EMPTY_ADDRESS_FORM = {
   phone: "",
   isDefault: false,
 };
+
+const ZIP_LOOKUP_MIN_LENGTH = 6;
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -127,15 +129,6 @@ function formatAddressLines(address, fallbackName) {
   if (address.phone) parts.push(address.phone);
 
   return parts.length ? parts : ["Add a default shipping address."];
-}
-
-function shortOrderId(orderId) {
-  return String(orderId || "").slice(-6).toUpperCase();
-}
-
-function getOrderItemCount(order) {
-  if (!Array.isArray(order?.items)) return 0;
-  return order.items.reduce((sum, item) => sum + Number(item?.quantity || 0), 0);
 }
 
 function getWishlistIds(items) {
@@ -221,6 +214,9 @@ function ProfileDashboard() {
   const [addressSaving, setAddressSaving] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
+  const [zipLookupLoading, setZipLookupLoading] = useState(false);
+  const [zipLookupError, setZipLookupError] = useState("");
+  const [zipVerified, setZipVerified] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -250,22 +246,27 @@ function ProfileDashboard() {
     );
   }, [user?.uid]);
 
-  useEffect(() => {
-    if (!user?.uid) return undefined;
+  async function refreshAddresses() {
+    if (!user?.uid) {
+      setAddresses([]);
+      setAddressesLoading(false);
+      return;
+    }
 
     setAddressesLoading(true);
-    return listenToUserAddresses(
-      user.uid,
-      (items) => {
-        setAddresses(Array.isArray(items) ? items : []);
-        setAddressesLoading(false);
-      },
-      (error) => {
-        console.error(error);
-        setAddresses([]);
-        setAddressesLoading(false);
-      }
-    );
+    try {
+      const items = await api.getMyAddresses();
+      setAddresses(Array.isArray(items) ? items : []);
+    } catch (error) {
+      console.error(error);
+      setAddresses([]);
+    } finally {
+      setAddressesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshAddresses();
   }, [user?.uid]);
 
   const wishlistIds = useMemo(() => getWishlistIds(wishlistItems), [wishlistItems]);
@@ -439,6 +440,9 @@ function ProfileDashboard() {
       ...EMPTY_ADDRESS_FORM,
       isDefault: addresses.length === 0,
     });
+    setZipLookupLoading(false);
+    setZipLookupError("");
+    setZipVerified(false);
     setAddressFormOpen(true);
   }
 
@@ -456,8 +460,80 @@ function ProfileDashboard() {
       phone: address.phone || "",
       isDefault: Boolean(address.isDefault),
     });
+    setZipLookupLoading(false);
+    setZipLookupError("");
+    setZipVerified(Boolean(address.city && address.state && address.zip));
     setAddressFormOpen(true);
   }
+
+  useEffect(() => {
+    const zip = String(addressForm.zip || "").trim();
+
+    if (!addressFormOpen) {
+      setZipLookupLoading(false);
+      setZipLookupError("");
+      setZipVerified(false);
+      return undefined;
+    }
+
+    if (zip.length < ZIP_LOOKUP_MIN_LENGTH) {
+      setZipLookupLoading(false);
+      setZipLookupError("");
+      setZipVerified(false);
+      return undefined;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    async function lookupZipCode() {
+      setZipLookupLoading(true);
+      setZipLookupError("");
+
+      try {
+        const response = await fetch(`https://api.postalpincode.in/pincode/${encodeURIComponent(zip)}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to verify ZIP code.");
+        }
+
+        const data = await response.json();
+        const result = Array.isArray(data) ? data[0] : null;
+        const office = result?.PostOffice?.[0];
+
+        if (!active) return;
+
+        if (result?.Status !== "Success" || !office) {
+          setZipVerified(false);
+          setZipLookupError("Enter a valid ZIP / postal code.");
+          return;
+        }
+
+        setZipVerified(true);
+        setAddressForm((current) => ({
+          ...current,
+          city: office.District || current.city,
+          state: office.State || current.state,
+          country: current.country || "India",
+        }));
+      } catch (error) {
+        if (!active || error?.name === "AbortError") return;
+        setZipVerified(false);
+        setZipLookupError("Enter a valid ZIP / postal code.");
+      } finally {
+        if (active) setZipLookupLoading(false);
+      }
+    }
+
+    lookupZipCode();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [addressForm.zip, addressFormOpen]);
 
   async function handleSaveAddress(event) {
     event.preventDefault();
@@ -475,6 +551,7 @@ function ProfileDashboard() {
       setAddressFormOpen(false);
       setEditingAddressId(null);
       setAddressForm(EMPTY_ADDRESS_FORM);
+      await refreshAddresses();
       await refreshProfile();
     } catch (error) {
       console.error(error);
@@ -491,6 +568,7 @@ function ProfileDashboard() {
     try {
       await deleteAddress(addressId);
       toast.success("Address removed");
+      await refreshAddresses();
       await refreshProfile();
     } catch (error) {
       console.error(error);
@@ -502,6 +580,7 @@ function ProfileDashboard() {
     try {
       await setDefaultAddress(addressId);
       toast.success("Default address updated");
+      await refreshAddresses();
       await refreshProfile();
     } catch (error) {
       console.error(error);
@@ -728,55 +807,54 @@ function ProfileDashboard() {
                 const total = Number(order?.total || order?.subtotal || 0);
                 const itemCount = getOrderItemCount(order);
                 const firstItem = order?.items?.[0];
-                const image = normalizeImageUrl(firstItem?.image) || "/placeholder-product.svg";
+                const image = normalizeImageUrl(firstItem?.productImage || firstItem?.image || firstItem?.thumbnail) || "/placeholder-product.svg";
+                const displayOrderId = getOrderDisplayId(order);
+                const productLabel = firstItem?.name || firstItem?.productName || "Order item";
 
                 return (
-                  <article key={order.id} className="grid gap-4 border border-ink/10 p-4 md:grid-cols-[92px_minmax(0,1fr)_auto] md:items-center">
-                    <div className="relative h-24 w-full overflow-hidden border border-ink/10 bg-[#fff6ef] md:h-24 md:w-24">
-                      <Image
-                        src={image}
-                        alt={firstItem?.name || "Order item"}
-                        fill
-                        className="object-cover"
-                        unoptimized={isGoogleDriveImageUrl(image)}
-                      />
-                    </div>
+                  <article key={order.id} className="border border-ink/10 bg-[#fffaf6] p-4 md:p-5">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden border border-ink/10 bg-white">
+                          <Image
+                            src={image}
+                            alt={productLabel}
+                            fill
+                            className="object-cover"
+                            unoptimized={isGoogleDriveImageUrl(image)}
+                          />
+                        </div>
 
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="font-medium text-ink">Order #{shortOrderId(order.id)}</h3>
-                        <span
-                          className={`inline-flex border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] ${
-                            orderStatusStyles[status] || "border-ink/10 bg-sand text-ink/70"
-                          }`}
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-display text-xl text-ink">{productLabel}</h3>
+                            <span
+                              className={`inline-flex border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] ${
+                                orderStatusStyles[status] || "border-ink/10 bg-sand text-ink/70"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-ink/55">
+                            Order ID: <span className="text-ink">{displayOrderId || order.id}</span>
+                          </p>
+                          <p className="mt-1 text-sm text-ink/55">{formatOrderDate(order.createdAt)}</p>
+                          <p className="mt-2 text-sm text-ink/70">
+                            {itemCount} {itemCount === 1 ? "item" : "items"} · {formatINR(total)}
+                          </p>
+
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 md:justify-end">
+                        <Link
+                          href={`/orders/${encodeURIComponent(order.id)}`}
+                          className="inline-flex items-center gap-2 border border-tangerine/30 bg-white px-4 py-2 text-sm text-tangerine transition-colors hover:bg-tangerine hover:text-white"
                         >
-                          {String(status || "pending").charAt(0).toUpperCase() + String(status || "pending").slice(1)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-ink/45">{formatDate(order.createdAt)}</p>
-
-                      <div className="mt-3 flex flex-wrap gap-2 text-sm text-ink/60">
-                        {Array.isArray(order.items) && order.items.slice(0, 3).map((item) => (
-                          <span key={`${order.id}-${item.productId || item.name}`} className="border border-ink/10 px-2 py-1">
-                            {item.name} x {item.quantity}
-                          </span>
-                        ))}
-                        {Array.isArray(order.items) && order.items.length > 3 ? (
-                          <span className="border border-ink/10 px-2 py-1">+{order.items.length - 3} more</span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 md:justify-end">
-                      <div className="text-right">
-                        <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Items</p>
-                        <p className="text-sm font-medium text-ink">
-                          {itemCount} {itemCount === 1 ? "item" : "items"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Total</p>
-                        <p className="text-sm font-medium text-ink">{formatINR(total)}</p>
+                          View Details
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
                       </div>
                     </div>
                   </article>
@@ -1214,28 +1292,57 @@ function ProfileDashboard() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input
-                  label="City"
-                  value={addressForm.city}
-                  onChange={(event) => setAddressForm({ ...addressForm, city: event.target.value })}
-                />
-                <Input
-                  label="State"
-                  value={addressForm.state}
-                  onChange={(event) => setAddressForm({ ...addressForm, state: event.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input
                   label="ZIP / Postal Code"
                   value={addressForm.zip}
-                  onChange={(event) => setAddressForm({ ...addressForm, zip: event.target.value })}
+                  inputMode="numeric"
+                  maxLength={6}
+                  onChange={(event) => {
+                    const nextZip = event.target.value.replace(/\D/g, "").slice(0, 6);
+                    setAddressForm({
+                      ...addressForm,
+                      zip: nextZip,
+                      city: "",
+                      state: "",
+                    });
+                  }}
                 />
                 <Input
                   label="Phone"
                   value={addressForm.phone}
                   onChange={(event) => setAddressForm({ ...addressForm, phone: event.target.value })}
                 />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="City"
+                  value={addressForm.city}
+                  readOnly={zipVerified}
+                  disabled={zipVerified}
+                  className={zipVerified ? "bg-[#faf7f2] cursor-not-allowed" : ""}
+                  onChange={(event) => setAddressForm({ ...addressForm, city: event.target.value })}
+                />
+                <Input
+                  label="State"
+                  value={addressForm.state}
+                  readOnly={zipVerified}
+                  disabled={zipVerified}
+                  className={zipVerified ? "bg-[#faf7f2] cursor-not-allowed" : ""}
+                  onChange={(event) => setAddressForm({ ...addressForm, state: event.target.value })}
+                />
+              </div>
+
+              <div className="flex items-start gap-2 text-xs text-ink/60">
+                <span className="mt-0.5">-</span>
+                {zipLookupLoading ? (
+                  <span>Verifying ZIP code and loading city/state...</span>
+                ) : zipVerified ? (
+                  <span className="text-emerald-700">ZIP verified. City and state are locked.</span>
+                ) : zipLookupError ? (
+                  <span className="text-rose-700">{zipLookupError}</span>
+                ) : (
+                  <span>Enter a valid ZIP / postal code to auto-fill city and state.</span>
+                )}
               </div>
 
               <Input

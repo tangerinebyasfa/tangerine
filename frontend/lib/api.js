@@ -272,8 +272,10 @@ export const api = {
   createOrder: (body) => request("/orders", { method: "POST", body, authRequired: true }),
   getMyOrders: () => request("/orders/mine", { authRequired: true }),
   getAllOrders: () => request("/orders", { authRequired: true }),
+  getOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { authRequired: true }),
   updateOrderStatus: (id, status) =>
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
+  deleteOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { method: "DELETE", authRequired: true }),
 
   // Reviews
   createReview: (body) => requestLocalApi("/api/reviews", { method: "POST", body, authRequired: true }),
@@ -297,6 +299,32 @@ export const api = {
   },
   updateMe: async (body) => {
     return request("/users/me", { method: "PUT", body, authRequired: true });
+  },
+  getMyAddresses: async () => {
+    return requestLocalApi("/api/users/me/addresses", { authRequired: true });
+  },
+  createMyAddress: async (body) => {
+    return requestLocalApi("/api/users/me/addresses", { method: "POST", body, authRequired: true });
+  },
+  updateMyAddress: async (id, body) => {
+    return requestLocalApi(`/api/users/me/addresses/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body,
+      authRequired: true,
+    });
+  },
+  deleteMyAddress: async (id) => {
+    return requestLocalApi(`/api/users/me/addresses/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      authRequired: true,
+    });
+  },
+  setMyDefaultAddress: async (id) => {
+    return requestLocalApi(`/api/users/me/addresses/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: { isDefault: true },
+      authRequired: true,
+    });
   },
   getAllUsers: async () => {
     return request("/users", { authRequired: true });
