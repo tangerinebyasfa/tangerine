@@ -36,13 +36,11 @@ const TYPE_COPY = {
 
 const OUTLET_LOCATIONS = [
   {
-    name: "Outlet One",
+    name: "Atharva University",
     label: "Flagship Outlet",
     address: [
-      "Tangerine Studio Outlet",
-      "Shop No. 12, Ground Floor",
-      "City Center Mall, Main Road",
-      "Ahmedabad, Gujarat 380015",
+      "Atharva University",
+      "Malad West, Mumbai",
     ],
     phone: "+91 98765 43210",
     whatsapp: "+91 98765 43210",
@@ -56,13 +54,12 @@ const OUTLET_LOCATIONS = [
     directionsHref: "#",
   },
   {
-    name: "Outlet Two",
+    name: "Blue Ocean Resort",
     label: "City Boutique Outlet",
     address: [
-      "Tangerine Outlet Store",
-      "Second Floor, Boutique Arcade",
-      "Near Park Avenue, Ring Road",
-      "Surat, Gujarat 395002",
+      "Blue Ocean Resort",
+      "Ganpatipule, Ratnagiri",
+      "Maharashtra, 415612",
     ],
     phone: "+91 98765 43211",
     whatsapp: "+91 98765 43211",
@@ -225,90 +222,10 @@ export default function CategoryPage() {
 
       {category === "outlet" ? (
         <div className="space-y-8">
-          <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-stretch">
-            <div className="relative overflow-hidden border border-ink/10 bg-gradient-to-br from-paper via-sand/20 to-paper p-7 md:p-10">
-              <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(135deg,#111111_1px,transparent_1px),linear-gradient(45deg,#111111_1px,transparent_1px)] bg-[size:24px_24px]" />
-              <div className="relative">
-                <p className="eyebrow mb-4">Two locations, one experience</p>
-                <h2 className="font-display text-4xl md:text-6xl max-w-2xl leading-tight">
-                  Visit our outlet stores for in-person styling, fits, and exclusive pieces.
-                </h2>
-                <p className="mt-5 max-w-2xl text-sm md:text-base leading-7 text-ink/65">
-                  Use this section to present your store locations with the full details customers care
-                  about most: address, timing, contact methods, parking notes, special services, and
-                  any outlet-only announcements.
-                </p>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <a
-                    href="#locations"
-                    className="inline-flex items-center gap-2 bg-ink text-paper px-5 py-3 text-xs tracking-widest uppercase hover:bg-burgundy transition-colors"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    View Locations
-                  </a>
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-2 border border-ink text-ink px-5 py-3 text-xs tracking-widest uppercase hover:bg-sand transition-colors"
-                  >
-                    Contact Us
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="border border-ink/10 bg-ink text-paper p-6 md:p-7">
-                <p className="text-xs tracking-widest uppercase text-paper/40 mb-2">Outlet Overview</p>
-                <p className="text-2xl font-display">Make visiting simple and informative.</p>
-                <p className="mt-4 text-sm leading-7 text-paper/75">
-                  Add operating hours, event timings, appointment policies, and any quick info your
-                  team wants shoppers to know before arriving.
-                </p>
-              </div>
-              <div className="border border-ink/10 bg-paper p-6 md:p-7">
-                <p className="text-xs tracking-widest uppercase text-ink/40 mb-2">Suggested Details</p>
-                <ul className="space-y-3 text-sm leading-6 text-ink/75">
-                  <li>Parking availability and nearest landmark</li>
-                  <li>WhatsApp / phone for quick enquiry</li>
-                  <li>Store timings and closed days</li>
-                  <li>Services like exchange, fitting, or tailoring support</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
           <section id="locations" className="space-y-6">
             {OUTLET_LOCATIONS.map((outlet) => (
               <OutletCard key={outlet.name} outlet={outlet} />
             ))}
-          </section>
-
-          <section className="grid gap-6 md:grid-cols-3">
-            <div className="border border-ink/10 p-6 bg-paper">
-              <p className="text-xs tracking-widest uppercase text-ink/40 mb-3">Before You Visit</p>
-              <p className="font-display text-2xl">What to add here</p>
-              <p className="mt-3 text-sm leading-7 text-ink/65">
-                Include any details that reduce friction for customers, like appointment-only hours,
-                lift access, nearby parking, or how to reach staff on arrival.
-              </p>
-            </div>
-            <div className="border border-ink/10 p-6 bg-sand/30">
-              <p className="text-xs tracking-widest uppercase text-ink/40 mb-3">Store Notes</p>
-              <p className="font-display text-2xl">Add your own text</p>
-              <p className="mt-3 text-sm leading-7 text-ink/65">
-                This card can hold unique outlet notes such as weekend timings, sale periods, or
-                special in-store services.
-              </p>
-            </div>
-            <div className="border border-ink/10 p-6 bg-ink text-paper">
-              <p className="text-xs tracking-widest uppercase text-paper/40 mb-3">Need Help?</p>
-              <p className="font-display text-2xl">Direct support</p>
-              <p className="mt-3 text-sm leading-7 text-paper/75">
-                Add the main outlet contact here so visitors can call or WhatsApp before they leave
-                home.
-              </p>
-            </div>
           </section>
         </div>
       ) : loading ? (

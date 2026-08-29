@@ -51,16 +51,16 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-ink/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <span className="sr-only">Home</span>
+        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between">
+          <Link href="/products/outlet" className="flex items-center">
+            <span className="sr-only">Outlet</span>
             <Image
               src="/Images/logo.png"
               alt="Tangerine"
               width={180}
               height={60}
               priority
-              className="h-12 md:h-14 w-auto object-contain"
+              className="h-12 md:h-16 w-auto object-contain"
             />
           </Link>
 
