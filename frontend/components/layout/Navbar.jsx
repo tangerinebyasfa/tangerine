@@ -4,19 +4,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Home, LogIn, Menu, ShoppingBag, UserRound, ChevronDown, Search, X, Heart } from "lucide-react";
+import { Home, LogIn, Menu, ShoppingBag, UserRound, Search, X, Heart, ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
-import { api } from "../../lib/api";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/products/all", label: "Shop" },
-  { href: "/products/outlet", label: "Outlet" },
+  { href: "/products/all", label: "Shop by Category" },
   { href: "/gallery", label: "Gallery" },
-  { href: "/contact", label: "Contact" },
+  { href: "/products/outlet", label: "Outlet" },
   { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const mobileFeatureCards = [
@@ -44,64 +43,9 @@ export default function Navbar() {
   const { wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [accessoriesOpen, setAccessoriesOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const accessoriesCloseTimerRef = useRef(null);
-
-  useEffect(() => {
-    let active = true;
-
-    api
-      .getSubcategories()
-      .then((data) => {
-        if (active) setCategories(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (active) setCategories([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (accessoriesCloseTimerRef.current) {
-        clearTimeout(accessoriesCloseTimerRef.current);
-      }
-    };
-  }, []);
-
-  const accessoriesLinks = (Array.isArray(categories) ? categories : [])
-    .filter((category) => category?.parentType === "accessories")
-    .map((category) => ({
-      href: `/products/${category.slug}`,
-      label: category.name,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-
-  function openAccessoriesMenu() {
-    if (accessoriesCloseTimerRef.current) {
-      clearTimeout(accessoriesCloseTimerRef.current);
-      accessoriesCloseTimerRef.current = null;
-    }
-    setAccessoriesOpen(true);
-  }
-
-  function closeAccessoriesMenu() {
-    if (accessoriesCloseTimerRef.current) {
-      clearTimeout(accessoriesCloseTimerRef.current);
-    }
-
-    accessoriesCloseTimerRef.current = setTimeout(() => {
-      setAccessoriesOpen(false);
-    }, 2000);
-  }
 
   function closeMobileMenu() {
     setMenuOpen(false);
-    setAccessoriesOpen(false);
   }
 
   return (
@@ -130,36 +74,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div
-              className="relative"
-              onMouseEnter={openAccessoriesMenu}
-              onMouseLeave={closeAccessoriesMenu}
-            >
-              <Link
-                href="/products/accessories"
-                className="inline-flex items-center gap-1 text-xs tracking-widest uppercase text-ink/70 hover:text-burgundy transition-colors"
-              >
-                Accessories
-                <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
-              </Link>
-              {accessoriesOpen && (
-                <div
-                  className="absolute left-0 top-full mt-1 w-44 bg-paper border border-ink/10 shadow-lg py-2"
-                  onMouseEnter={openAccessoriesMenu}
-                  onMouseLeave={closeAccessoriesMenu}
-                >
-                  {accessoriesLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="block px-4 py-2 text-sm text-ink/80 hover:bg-sand hover:text-burgundy"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
             {isAdmin && (
               <Link
                 href="/admin"
@@ -322,33 +236,6 @@ export default function Navbar() {
                       {link.label}
                     </Link>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setAccessoriesOpen((open) => !open)}
-                    className="flex w-full items-center justify-between text-left text-sm font-medium uppercase tracking-[0.06em] text-ink/90"
-                    aria-expanded={accessoriesOpen}
-                    aria-controls="mobile-accessories-menu"
-                  >
-                    <span>Accessories</span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-ink/30 transition-transform ${accessoriesOpen ? "rotate-180" : ""}`}
-                      strokeWidth={2}
-                    />
-                  </button>
-                  {accessoriesOpen && (
-                    <div id="mobile-accessories-menu" className="space-y-4 pl-1 pt-2">
-                      {accessoriesLinks.map((link) => (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={closeMobileMenu}
-                          className="block text-sm uppercase tracking-[0.06em] text-ink/70"
-                        >
-                      {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                  )}
                   {isAdmin && (
                     <Link href="/admin" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-burgundy">
                       Admin Panel
