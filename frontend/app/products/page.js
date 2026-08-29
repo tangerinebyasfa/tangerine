@@ -59,7 +59,6 @@ function CategoryHeroCard({ category }) {
         <div className="absolute inset-x-0 bottom-0 p-5">
           <p className="text-[11px] uppercase tracking-[0.24em] text-paper/75">Browse Category</p>
           <h3 className="mt-2 font-display text-3xl leading-tight text-white">{category.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-paper/80">{category.description}</p>
         </div>
       </div>
 
@@ -168,7 +167,7 @@ export default function ProductsPage() {
         description="Choose a category to jump into the matching product page. Each category page will show only the products for that section."
       />
 
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
         {categoryCards.map((category) => (
           <CategoryHeroCard key={category.key} category={category} />
         ))}
@@ -197,7 +196,7 @@ export default function ProductsPage() {
             No subcategories found yet.
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
             {subcategories.map((item) => (
               <SubcategoryCard key={item.id} item={item} />
             ))}

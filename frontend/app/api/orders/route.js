@@ -64,7 +64,7 @@ function groupQuantitiesByProduct(items) {
 }
 
 function pickProductPrice(product) {
-  const preferred = product?.salePrice ?? product?.compareAtPrice ?? product?.price ?? 0;
+  const preferred = product?.Price ?? product?.compareAtPrice ?? product?.price ?? 0;
   return normalizeMoney(preferred);
 }
 
