@@ -56,11 +56,6 @@ export default function ProductCard({ product }) {
                 />
               </div>
             </div>
-            {onSale && (
-              <span className="absolute left-0 top-0 bg-tangerine px-3 py-1.5 text-[10px] tracking-widest uppercase text-paper">
-                Sale
-              </span>
-            )}
           </div>
         </Link>
 
