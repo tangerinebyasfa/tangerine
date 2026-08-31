@@ -6,9 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import {
   Clock3,
   MapPin,
-  Navigation,
   Phone,
-  Sparkles,
   Store,
   MessageCircle,
 } from "lucide-react";
@@ -45,13 +43,8 @@ const OUTLET_LOCATIONS = [
     phone: "+91 98765 43210",
     whatsapp: "+91 98765 43210",
     hours: ["Mon - Sat: 10:30 AM - 9:00 PM", "Sunday: 11:00 AM - 8:00 PM"],
-    highlights: [
-      "In-store styling support",
-      "Fresh outlet-only edits",
-      "Easy exchanges and fitting assistance",
-    ],
-    directionsLabel: "Get Directions",
-    directionsHref: "#",
+    mapSrc:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d941.9848015891606!2d72.82593776963357!3d19.197857465401317!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7b72b40faf091%3A0x372093a6375172fa!2sAtharva%20University%20Mumbai!5e0!3m2!1sen!2sin!4v1788167211768!5m2!1sen!2sin",
   },
   {
     name: "Blue Ocean Resort",
@@ -64,13 +57,8 @@ const OUTLET_LOCATIONS = [
     phone: "+91 98765 43211",
     whatsapp: "+91 98765 43211",
     hours: ["Mon - Sat: 11:00 AM - 8:30 PM", "Sunday: 11:30 AM - 7:30 PM"],
-    highlights: [
-      "Curated outlet pieces",
-      "Seasonal offers and bundles",
-      "Private appointment support",
-    ],
-    directionsLabel: "Get Directions",
-    directionsHref: "#",
+    mapSrc:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3811.80749379707!2d73.25541007607045!3d17.179573108756795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bea0d22b314f62f%3A0xd7222cf5ca7e771b!2sBlue%20Ocean%20The%20Fern%20Resort%20%26%20Spa%20Ganpatipule%2C%20Series%20by%20Marriott!5e0!3m2!1sen!2sin!4v1788167283728!5m2!1sen!2sin",
   },
 ];
 
@@ -139,28 +127,17 @@ function OutletCard({ outlet }) {
           </div>
         </div>
 
-        <div className="bg-ink text-paper p-6 md:p-7">
-          <div className="flex items-center gap-2 text-xs tracking-widest uppercase text-paper/50">
-            <Sparkles className="h-4 w-4" />
-            Important Details
-          </div>
-          <ul className="mt-5 space-y-3 text-sm leading-6 text-paper/80">
-            {outlet.highlights.map((item) => (
-              <li key={item} className="flex gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-tangerine shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 border-t border-paper/10 pt-5">
-            <Link
-              href={outlet.directionsHref}
-              className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-tangerine hover:text-paper transition-colors"
-            >
-              <Navigation className="h-4 w-4" />
-              {outlet.directionsLabel}
-            </Link>
-          </div>
+        <div className="overflow-hidden border border-ink/10 bg-white">
+          <iframe
+            src={outlet.mapSrc}
+            title={`${outlet.name} location map`}
+            width="600"
+            height="450"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            className="h-[320px] w-full border-0 md:h-full"
+          />
         </div>
       </div>
     </div>
