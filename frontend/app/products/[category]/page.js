@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   Clock3,
   MapPin,
@@ -169,6 +169,8 @@ function OutletCard({ outlet }) {
 
 export default function CategoryPage() {
   const { category } = useParams();
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get("q")?.trim() || searchParams.get("search")?.trim() || "";
   const [products, setProducts] = useState([]);
   const [categoryInfo, setCategoryInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -190,7 +192,10 @@ export default function CategoryPage() {
         const isMainType = MAIN_TYPES.includes(category);
         const [productList, info] = await Promise.all([
           api.getProducts(
-            isAll ? {} : isMainType ? { type: category } : { category }
+            {
+              ...(isAll ? {} : isMainType ? { type: category } : { category }),
+              ...(searchTerm ? { search: searchTerm } : {}),
+            }
           ),
           isAll || isMainType ? Promise.resolve(null) : api.getSubcategory(category).catch(() => null),
         ]);
@@ -223,22 +228,26 @@ export default function CategoryPage() {
       window.removeEventListener("focus", refreshProducts);
       document.removeEventListener("visibilitychange", refreshProducts);
     };
-  }, [category]);
+  }, [category, searchTerm]);
 
   const isMainType = MAIN_TYPES.includes(category);
   const typeCopy = TYPE_COPY[category];
   const title =
-    category === "outlet"
-      ? "Outlet"
-      : category === "all"
-        ? "All Products"
-        : categoryInfo?.name || typeCopy?.title || category;
+    searchTerm
+      ? `Search results for "${searchTerm}"`
+      : category === "outlet"
+        ? "Outlet"
+        : category === "all"
+          ? "All Products"
+          : categoryInfo?.name || typeCopy?.title || category;
   const description =
-    category === "outlet"
-      ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
-      : category === "all"
-      ? "Browse the full range from this edit."
-      : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
+    searchTerm
+      ? `Showing products that match "${searchTerm}".`
+      : category === "outlet"
+        ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
+        : category === "all"
+          ? "Browse the full range from this edit."
+          : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">

@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Home, LogIn, Menu, ShoppingBag, UserRound, Search, X, Heart, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Home, LogIn, Menu, ShoppingBag, UserRound, Search, X, Heart, ChevronDown, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { api } from "../../lib/api";
+import { formatINR } from "../../lib/currency";
+import { normalizeImageUrl } from "../../lib/image";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -38,14 +41,91 @@ const mobileQuickLinks = [
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, profile, isAdmin, logout } = useAuth();
   const { itemCount, setDrawerOpen } = useCart();
   const { wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchProducts, setSearchProducts] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchInputRef = useRef(null);
 
   function closeMobileMenu() {
     setMenuOpen(false);
+  }
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchQuery("");
+  }
+
+  function openSearch() {
+    setMenuOpen(false);
+    setUserMenuOpen(false);
+    setSearchOpen(true);
+  }
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+
+    let active = true;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeSearch();
+    };
+
+    const debounceId = window.setTimeout(() => {
+      setSearchLoading(true);
+      api
+        .getProducts(searchQuery.trim() ? { search: searchQuery.trim() } : {})
+        .then((items) => {
+          if (!active) return;
+          setSearchProducts(Array.isArray(items) ? items : []);
+        })
+        .catch((error) => {
+          console.error(error);
+          if (active) setSearchProducts([]);
+        })
+        .finally(() => {
+          if (active) setSearchLoading(false);
+        });
+    }, searchQuery.trim() ? 220 : 0);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      active = false;
+      window.clearTimeout(debounceId);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [searchOpen, searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus?.();
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setMenuOpen(false);
+    setUserMenuOpen(false);
+  }, [pathname]);
+
+  const searchResults = useMemo(() => searchProducts.slice(0, 6), [searchProducts]);
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    closeSearch();
+    router.push(query ? `/products?q=${encodeURIComponent(query)}` : "/products");
+  }
+
+  function handleResultClick() {
+    closeSearch();
   }
 
   return (
@@ -85,13 +165,14 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-4 md:gap-5">
-            <Link
-              href="/products/all"
+            <button
+              type="button"
+              onClick={openSearch}
               className="relative hidden md:inline-flex text-ink hover:text-tangerine transition-colors"
               aria-label="Search products"
             >
               <Search className="h-5 w-5" strokeWidth={2} />
-            </Link>
+            </button>
 
             <button
               onClick={() => setDrawerOpen(true)}
@@ -169,6 +250,84 @@ export default function Navbar() {
         </div>
       </header>
 
+      {searchOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/35" onClick={closeSearch} />
+          <div className="fixed left-1/2 top-20 z-50 w-[min(100vw-1rem,28rem)] -translate-x-1/2 md:left-auto md:right-6 md:top-24 md:w-[min(92vw,28rem)] md:translate-x-0">
+            <div className="overflow-hidden rounded-2xl border border-ink/10 bg-paper shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+              <form onSubmit={handleSearchSubmit} className="border-b border-ink/10 p-3">
+                <div className="flex items-center gap-2 rounded-xl border border-ink/20 bg-white px-3 py-2">
+                  <Search className="h-4 w-4 text-ink/35" strokeWidth={2} />
+                  <input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search products..."
+                    className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink/35"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="text-ink/40 transition-colors hover:text-ink"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              <div className="max-h-[20rem] overflow-y-auto p-2">
+                {searchLoading ? (
+                  <div className="p-4 text-sm text-ink/55">Loading products...</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-4 text-sm text-ink/55">No products found.</div>
+                ) : (
+                  <div className="space-y-1">
+                    {searchResults.map((product) => {
+                      const image = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
+                      return (
+                        <Link
+                          key={product.id}
+                          href={`/product/${product.slug || product.id}`}
+                          onClick={handleResultClick}
+                          className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-sand/70"
+                        >
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-ink/10 bg-sand">
+                            <Image src={image} alt={product.name || "Product"} fill className="object-cover" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-ink">{product.name}</p>
+                            <p className="truncate text-xs text-ink/50">
+                              {product.description || product.categorySlug || "Product"}
+                            </p>
+                            <div className="mt-1 flex items-center justify-between gap-2">
+                              <p className="text-sm font-semibold text-ink">{formatINR(product.price)}</p>
+                              <ArrowRight className="h-4 w-4 text-tangerine" />
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-ink/10 p-3">
+                <button
+                  type="submit"
+                  onClick={handleSearchSubmit}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-medium text-paper transition-colors hover:bg-burgundy"
+                >
+                  Search all products
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
             {menuOpen && (
         <div className="fixed inset-0 z-50 bg-black/45 md:hidden" onClick={closeMobileMenu}>
           <div
@@ -179,9 +338,17 @@ export default function Navbar() {
               <div className="flex items-center justify-between border-b border-ink/20 pb-3">
                 <span className="text-[13px] uppercase tracking-[0.08em] text-ink/65">Search</span>
                 <div className="flex items-center gap-3">
-                  <Link href="/products/all" className="text-ink" aria-label="Search products" onClick={closeMobileMenu}>
+                  <button
+                    type="button"
+                    className="text-ink"
+                    aria-label="Search products"
+                    onClick={() => {
+                      closeMobileMenu();
+                      openSearch();
+                    }}
+                  >
                     <Search className="h-5 w-5" strokeWidth={2} />
-                  </Link>
+                  </button>
                   <button
                     type="button"
                     onClick={closeMobileMenu}
@@ -266,7 +433,7 @@ export default function Navbar() {
             type="button"
             onClick={() => {
               closeMobileMenu();
-              router.push("/products/all");
+              openSearch();
             }}
             className="flex flex-col items-center gap-1"
             aria-label="Search"

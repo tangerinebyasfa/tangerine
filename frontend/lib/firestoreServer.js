@@ -57,6 +57,29 @@ function sortByCreatedAtDesc(a, b) {
   return bTime - aTime;
 }
 
+function normalizeSearchTerm(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function productMatchesSearch(product, searchTerm) {
+  if (!searchTerm) return true;
+
+  const haystack = [
+    product?.name,
+    product?.code,
+    product?.internalCode,
+    product?.categorySlug,
+    product?.productType,
+    product?.subType,
+    product?.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(searchTerm);
+}
+
 function serializeTimestamp(value) {
   if (!value) return null;
   if (typeof value.toDate === "function") return value.toDate().toISOString();
@@ -100,12 +123,14 @@ export async function getProducts(params = {}) {
 
   const snapshot = await getDocs(collection(db, "products"));
   const products = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
+  const searchTerm = normalizeSearchTerm(params.search);
 
   return products
     .filter((product) => {
       if (params.category && product.categorySlug !== params.category) return false;
       if (params.type && (product.categoryParentType || product.productType) !== params.type) return false;
       if (params.featured === "true" && !product.featured) return false;
+      if (searchTerm && !productMatchesSearch(product, searchTerm)) return false;
       return true;
     })
     .sort(sortByCreatedAtDesc);

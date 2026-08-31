@@ -83,6 +83,29 @@ async function readBlogBySlug(idOrSlug) {
   return found ? { id: found.id, ...found.data() } : null;
 }
 
+function normalizeSearchTerm(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function productMatchesSearch(product, searchTerm) {
+  if (!searchTerm) return true;
+
+  const haystack = [
+    product?.name,
+    product?.code,
+    product?.internalCode,
+    product?.categorySlug,
+    product?.productType,
+    product?.subType,
+    product?.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(searchTerm);
+}
+
 /**
  * Thin wrapper around fetch that talks to the Express backend.
  * When `authRequired` is true (default for anything other than GET),
@@ -143,6 +166,7 @@ async function requestLocalApi(path, { method = "GET", body, authRequired = fals
 export const api = {
   // Products
   getProducts: async (params = {}) => {
+    const searchTerm = normalizeSearchTerm(params.search);
     if (db) {
       const products = await readCollection("products");
 
@@ -151,6 +175,7 @@ export const api = {
           if (params.category && product.categorySlug !== params.category) return false;
           if (params.type && (product.categoryParentType || product.productType) !== params.type) return false;
           if (params.featured === "true" && !product.featured) return false;
+          if (searchTerm && !productMatchesSearch(product, searchTerm)) return false;
           return true;
         })
         .sort((a, b) => {

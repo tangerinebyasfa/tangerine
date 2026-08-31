@@ -51,6 +51,29 @@ function mapProduct(doc) {
   return { id: doc.id, ...doc.data() };
 }
 
+function normalizeSearchTerm(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function productMatchesSearch(product, searchTerm) {
+  if (!searchTerm) return true;
+
+  const haystack = [
+    product?.name,
+    product?.code,
+    product?.internalCode,
+    product?.categorySlug,
+    product?.productType,
+    product?.subType,
+    product?.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(searchTerm);
+}
+
 async function findByCode(code) {
   if (!code) return null;
   const snapshot = await productsRef.where("code", "==", code).limit(1).get();
@@ -74,7 +97,9 @@ async function findBySlugOrId(slugOrId) {
 exports.getProducts = async (req, res) => {
   try {
     const snapshot = await productsRef.orderBy("createdAt", "desc").get();
-    res.json(snapshot.docs.map(mapProduct));
+    const searchTerm = normalizeSearchTerm(req.query?.search);
+    const products = snapshot.docs.map(mapProduct).filter((product) => productMatchesSearch(product, searchTerm));
+    res.json(products);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch products" });

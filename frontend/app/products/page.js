@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
-import Image from "next/image";
 import Spinner from "../../components/ui/Spinner";
+import ProductCard from "../../components/product/ProductCard";
 import { api } from "../../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
@@ -99,11 +101,87 @@ function SubcategoryCard({ item }) {
   );
 }
 
+function SearchResultsPage({ searchTerm, products, loading }) {
+  const countLabel = `${products.length} product${products.length === 1 ? "" : "s"} found`;
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <div className="border-b border-ink/10 pb-8 text-center">
+        <p className="eyebrow mb-3">Search</p>
+        <h1 className="font-display text-4xl md:text-5xl text-ink">{`Results for "${searchTerm}"`}</h1>
+        <p className="mt-4 text-sm text-ink/55">
+          Showing products that match your search query.
+        </p>
+      </div>
+
+      <div className="mt-8 flex items-center justify-between gap-4">
+        <p className="text-sm text-ink/60">{countLabel}</p>
+        {loading && <p className="text-sm text-ink/40">Searching...</p>}
+      </div>
+
+      {loading ? (
+        <div className="py-16">
+          <Spinner />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="mt-8 border border-dashed border-ink/10 bg-white p-8 text-sm text-ink/50">
+          No products found for this search.
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get("q")?.trim() || searchParams.get("search")?.trim() || "";
+
   const [subcategories, setSubcategories] = useState([]);
   const [loadingSubcategories, setLoadingSubcategories] = useState(true);
+  const [searchProducts, setSearchProducts] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
+    if (!searchTerm) {
+      setSearchProducts([]);
+      setSearchLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadSearchResults() {
+      setSearchLoading(true);
+      try {
+        const data = await api.getProducts({ search: searchTerm });
+        if (active) setSearchProducts(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error(error);
+        if (active) setSearchProducts([]);
+      } finally {
+        if (active) setSearchLoading(false);
+      }
+    }
+
+    loadSearchResults();
+
+    return () => {
+      active = false;
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (searchTerm) {
+      setLoadingSubcategories(false);
+      return undefined;
+    }
+
     let active = true;
 
     async function loadSubcategories() {
@@ -124,7 +202,7 @@ export default function ProductsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [searchTerm]);
 
   const groupedSubcategories = useMemo(() => {
     const groups = {
@@ -158,6 +236,16 @@ export default function ProductsPage() {
       }),
     [groupedSubcategories]
   );
+
+  if (searchTerm) {
+    return (
+      <SearchResultsPage
+        searchTerm={searchTerm}
+        products={searchProducts}
+        loading={searchLoading}
+      />
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
