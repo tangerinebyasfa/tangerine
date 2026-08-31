@@ -1,6 +1,7 @@
 const { db, admin } = require("../config/firebaseAdmin");
 
 const ordersRef = db.collection("orders");
+const productsRef = db.collection("products");
 const ORDER_PREFIX = "TGNR";
 const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
 const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
@@ -12,6 +13,44 @@ function normalizeText(value) {
 function normalizeMoney(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function groupQuantitiesByProduct(items = []) {
+  return items.reduce((acc, item) => {
+    const productId = normalizeText(item.productId);
+    const quantity = Math.max(1, Number(item.quantity || 1));
+    if (!productId || quantity <= 0) return acc;
+    acc.set(productId, (acc.get(productId) || 0) + quantity);
+    return acc;
+  }, new Map());
+}
+
+function pickProductPrice(product) {
+  return normalizeMoney(product?.compareAtPrice ?? product?.price ?? 0);
+}
+
+function getProductImage(product) {
+  return normalizeText(product?.image || product?.images?.[0] || "");
+}
+
+function enrichOrderItems(items = [], productMap = new Map()) {
+  return items.map((item) => {
+    const product = productMap.get(item.productId) || {};
+    const unitPrice = pickProductPrice(product);
+    const lineTotal = normalizeMoney(item.lineTotal ?? unitPrice * item.quantity);
+
+    return {
+      productId: item.productId,
+      productSlug: normalizeText(product.slug || item.productSlug || item.slug),
+      productName: normalizeText(product.name || item.productName || item.name) || "Product",
+      productImage: getProductImage(product) || normalizeText(item.productImage || item.image),
+      size: normalizeText(item.size),
+      color: normalizeText(item.color),
+      quantity: Math.max(1, Number(item.quantity || 1)),
+      unitPrice,
+      lineTotal,
+    };
+  });
 }
 
 function normalizeOrderStatus(status) {
@@ -97,6 +136,52 @@ function buildShippingSummary(address = {}) {
     .join(", ");
 }
 
+function groupOrderQuantities(items = []) {
+  return items.reduce((acc, item) => {
+    const productId = normalizeText(item?.productId);
+    const quantity = Math.max(1, Number(item?.quantity || 1));
+    if (!productId || quantity <= 0) return acc;
+    acc.set(productId, (acc.get(productId) || 0) + quantity);
+    return acc;
+  }, new Map());
+}
+
+async function adjustInventoryForStatusChange(tx, orderSnap, nextStatus) {
+  const data = orderSnap.data() || {};
+  const previousStatus = normalizeOrderStatus(data.status);
+
+  if (previousStatus === nextStatus) return;
+
+  const shouldRestoreStock = previousStatus !== "cancelled" && nextStatus === "cancelled";
+  const shouldConsumeStock = previousStatus === "cancelled" && nextStatus !== "cancelled";
+  if (!shouldRestoreStock && !shouldConsumeStock) return;
+
+  const quantities = groupOrderQuantities(Array.isArray(data.items) ? data.items : []);
+  if (!quantities.size) return;
+
+  const productRefs = [...quantities.keys()].map((productId) => productsRef.doc(productId));
+  const productSnapshots = await Promise.all(productRefs.map((ref) => tx.get(ref)));
+  const productMap = new Map();
+
+  productSnapshots.forEach((snap) => {
+    if (snap.exists) {
+      productMap.set(snap.id, snap.data());
+    }
+  });
+
+  const delta = shouldRestoreStock ? 1 : -1;
+
+  for (const [productId, quantity] of quantities.entries()) {
+    const product = productMap.get(productId);
+    if (!product || typeof product.stock !== "number") continue;
+
+    tx.update(productsRef.doc(productId), {
+      stock: Math.max(0, Number(product.stock || 0) + delta * quantity),
+      updatedAt: new Date(),
+    });
+  }
+}
+
 async function createOrderDocument(payload, user) {
   const items = normalizeItems(payload.items);
   if (!items.length) {
@@ -125,45 +210,98 @@ async function createOrderDocument(payload, user) {
   const total = Math.max(0, subtotal + shipping - discount);
   const paymentMethod = normalizeText(payload.paymentMethod || "cod").toLowerCase();
   const orderStatus = normalizeOrderStatus(payload.status || "pending");
+  const groupedQuantities = groupQuantitiesByProduct(items);
+  const productRefs = [...groupedQuantities.keys()].map((productId) => productsRef.doc(productId));
+  const orderRef = ordersRef.doc(orderId);
 
-  await ordersRef.doc(orderId).set({
-    orderId,
-    orderNumber: orderId,
-    userId: user.uid,
-    userUid: user.uid,
-    userEmail: normalizeText(payload.customerEmail || user.email || ""),
-    userPhone: normalizeText(payload.customerPhone || shippingAddress.phone || ""),
-    customerName: normalizeText(payload.customerName || shippingAddress.fullName || user.email?.split("@")[0] || ""),
-    customerEmail: normalizeText(payload.customerEmail || user.email || ""),
-    customerPhone: normalizeText(payload.customerPhone || shippingAddress.phone || ""),
-    shippingAddress,
-    shippingAddressSummary: buildShippingSummary(shippingAddress),
-    items,
-    itemCount: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
-    subtotal,
-    discount,
-    discountCode: normalizeText(payload.discountCode || "") || null,
-    shipping,
-    total,
-    currency: normalizeText(payload.currency) || "INR",
-    paymentMethod,
-    paymentStatus: normalizePaymentStatus(payload.paymentStatus || "pending"),
-    paymentReference: normalizeText(payload.paymentReference || "") || null,
-    paymentProvider: normalizeText(payload.paymentProvider || "") || null,
-    status: orderStatus,
-    statusHistory: [
-      {
-        status: orderStatus,
-        at: new Date(),
-        note: "Order placed",
-        by: user.uid,
-      },
-    ],
-    notes: normalizeText(payload.notes || "") || null,
-    source: "checkout",
-    createdAt: now,
-    updatedAt: now,
-  });
+  const run = async (tx) => {
+    const productSnapshots = await Promise.all(productRefs.map((ref) => tx.get(ref)));
+    const productMap = new Map();
+
+    productSnapshots.forEach((snap) => {
+      if (snap.exists) {
+        productMap.set(snap.id, snap.data());
+      }
+    });
+
+    for (const [productId, quantityNeeded] of groupedQuantities.entries()) {
+      const product = productMap.get(productId);
+      if (!product) {
+        const error = new Error(`Product not found: ${productId}`);
+        error.status = 404;
+        throw error;
+      }
+
+      if (typeof product.stock === "number" && product.stock < quantityNeeded) {
+        const error = new Error(`Only ${product.stock} left in stock for ${product.name || productId}.`);
+        error.status = 409;
+        throw error;
+      }
+    }
+
+    const enrichedItems = enrichOrderItems(items, productMap);
+    const itemCount = enrichedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const nowDate = new Date();
+
+    productSnapshots.forEach((snap) => {
+      const qty = groupedQuantities.get(snap.id) || 0;
+      if (qty > 0 && typeof snap.data()?.stock === "number") {
+        tx.update(snap.ref, {
+          stock: Math.max(0, Number(snap.data().stock || 0) - qty),
+          updatedAt: nowDate,
+        });
+      }
+    });
+
+    tx.set(orderRef, {
+      orderId,
+      orderNumber: orderId,
+      userId: user.uid,
+      userUid: user.uid,
+      userEmail: normalizeText(payload.customerEmail || user.email || ""),
+      userPhone: normalizeText(payload.customerPhone || shippingAddress.phone || ""),
+      customerName: normalizeText(payload.customerName || shippingAddress.fullName || user.email?.split("@")[0] || ""),
+      customerEmail: normalizeText(payload.customerEmail || user.email || ""),
+      customerPhone: normalizeText(payload.customerPhone || shippingAddress.phone || ""),
+      shippingAddress,
+      shippingAddressSummary: buildShippingSummary(shippingAddress),
+      items: enrichedItems,
+      itemCount,
+      subtotal: enrichedItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0),
+      discount,
+      discountCode: normalizeText(payload.discountCode || "") || null,
+      shipping,
+      total: Math.max(0, enrichedItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0) + shipping - discount),
+      currency: normalizeText(payload.currency) || "INR",
+      paymentMethod,
+      paymentStatus: normalizePaymentStatus(payload.paymentStatus || "pending"),
+      paymentReference: normalizeText(payload.paymentReference || "") || null,
+      paymentProvider: normalizeText(payload.paymentProvider || "") || null,
+      status: orderStatus,
+      statusHistory: [
+        {
+          status: orderStatus,
+          at: new Date(),
+          note: "Order placed",
+          by: user.uid,
+        },
+      ],
+      notes: normalizeText(payload.notes || "") || null,
+      source: "checkout",
+      createdAt: now,
+      updatedAt: now,
+    });
+  };
+
+  if (typeof db.runTransaction === "function") {
+    await db.runTransaction(run);
+  } else {
+    await run({
+      get: async (ref) => ref.get(),
+      update: async (ref, updates) => ref.update(updates),
+      set: async (ref, data) => ref.set(data),
+    });
+  }
 
   const created = await ordersRef.doc(orderId).get();
   return serializeOrder(created);
@@ -230,7 +368,6 @@ exports.updateOrderStatus = async (req, res) => {
     const doc = await docRef.get();
     if (!doc.exists) return res.status(404).json({ error: "Order not found" });
 
-    const history = Array.isArray(doc.data().statusHistory) ? doc.data().statusHistory : [];
     const entry = {
       status: nextStatus,
       at: new Date(),
@@ -238,13 +375,34 @@ exports.updateOrderStatus = async (req, res) => {
       note: normalizeText(req.body.note) || `Order marked ${nextStatus}`,
     };
 
-    await docRef.update({
-      status: nextStatus,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      statusUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      statusUpdatedBy: req.user.uid,
-      statusHistory: [...history, entry],
-    });
+    const applyUpdate = async (tx) => {
+      const freshSnap = await tx.get(docRef);
+      if (!freshSnap.exists) {
+        const error = new Error("Order not found");
+        error.status = 404;
+        throw error;
+      }
+
+      const currentHistory = Array.isArray(freshSnap.data()?.statusHistory) ? freshSnap.data().statusHistory : [];
+      await adjustInventoryForStatusChange(tx, freshSnap, nextStatus);
+
+      tx.update(docRef, {
+        status: nextStatus,
+        updatedAt: new Date(),
+        statusUpdatedAt: new Date(),
+        statusUpdatedBy: req.user.uid,
+        statusHistory: [...currentHistory, entry],
+      });
+    };
+
+    if (typeof db.runTransaction === "function") {
+      await db.runTransaction(applyUpdate);
+    } else {
+      await applyUpdate({
+        get: async (ref) => ref.get(),
+        update: async (ref, updates) => ref.update(updates),
+      });
+    }
 
     const updated = await docRef.get();
     res.json(serializeOrder(updated));

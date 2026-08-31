@@ -174,15 +174,18 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    if (category === "outlet") {
+      setProducts([]);
+      setCategoryInfo(null);
+      setLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadProducts() {
       setLoading(true);
       try {
-        if (category === "outlet") {
-          setProducts([]);
-          setCategoryInfo(null);
-          return;
-        }
-
         const isAll = category === "all";
         const isMainType = MAIN_TYPES.includes(category);
         const [productList, info] = await Promise.all([
@@ -191,14 +194,35 @@ export default function CategoryPage() {
           ),
           isAll || isMainType ? Promise.resolve(null) : api.getSubcategory(category).catch(() => null),
         ]);
+        if (!active) return;
         setProducts(productList);
         setCategoryInfo(info);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
-    })();
+    }
+
+    loadProducts();
+
+    const refreshProducts = () => {
+      if (document.visibilityState === "visible") {
+        loadProducts();
+      }
+    };
+
+    const interval = setInterval(loadProducts, 15000);
+
+    window.addEventListener("focus", refreshProducts);
+    document.addEventListener("visibilitychange", refreshProducts);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", refreshProducts);
+      document.removeEventListener("visibilitychange", refreshProducts);
+    };
   }, [category]);
 
   const isMainType = MAIN_TYPES.includes(category);

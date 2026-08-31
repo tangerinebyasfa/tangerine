@@ -21,6 +21,45 @@ function formatOrder(doc) {
   };
 }
 
+function groupOrderQuantities(items = []) {
+  return items.reduce((acc, item) => {
+    const productId = String(item?.productId || "").trim();
+    const quantity = Math.max(1, Number(item?.quantity || 1));
+    if (!productId || quantity <= 0) return acc;
+    acc.set(productId, (acc.get(productId) || 0) + quantity);
+    return acc;
+  }, new Map());
+}
+
+async function adjustInventoryForStatusChange(tx, db, orderSnap, nextStatus) {
+  const data = orderSnap.data() || {};
+  const previousStatus = normalizeOrderStatus(data.status);
+  if (previousStatus === nextStatus) return;
+
+  const shouldRestoreStock = previousStatus !== "cancelled" && nextStatus === "cancelled";
+  const shouldConsumeStock = previousStatus === "cancelled" && nextStatus !== "cancelled";
+  if (!shouldRestoreStock && !shouldConsumeStock) return;
+
+  const quantities = groupOrderQuantities(Array.isArray(data.items) ? data.items : []);
+  if (!quantities.size) return;
+
+  const delta = shouldRestoreStock ? 1 : -1;
+  const productRefs = [...quantities.keys()].map((productId) => db.collection("products").doc(productId));
+  const productSnapshots = await Promise.all(productRefs.map((ref) => tx.get(ref)));
+
+  productSnapshots.forEach((snap) => {
+    const quantity = quantities.get(snap.id) || 0;
+    if (!snap.exists || quantity <= 0) return;
+    const product = snap.data() || {};
+    if (typeof product.stock !== "number") return;
+
+    tx.update(snap.ref, {
+      stock: Math.max(0, Number(product.stock || 0) + delta * quantity),
+      updatedAt: new Date(),
+    });
+  });
+}
+
 export async function PUT(request, { params }) {
   try {
     const db = getAdminDb();
@@ -49,13 +88,33 @@ export async function PUT(request, { params }) {
       note: body.note ? String(body.note).trim() : `Order marked ${status}`,
     };
 
-    await ref.update({
-      status,
-      updatedAt: now,
-      statusHistory: [...(snap.data()?.statusHistory || []), historyEntry],
-      statusUpdatedAt: now,
-      statusUpdatedBy: "admin",
-    });
+    const applyUpdate = async (tx) => {
+      const freshSnap = await tx.get(ref);
+      if (!freshSnap.exists) {
+        const error = new Error("Order not found");
+        error.status = 404;
+        throw error;
+      }
+
+      await adjustInventoryForStatusChange(tx, db, freshSnap, status);
+
+      tx.update(ref, {
+        status,
+        updatedAt: now,
+        statusHistory: [...(freshSnap.data()?.statusHistory || []), historyEntry],
+        statusUpdatedAt: now,
+        statusUpdatedBy: "admin",
+      });
+    };
+
+    if (typeof db.runTransaction === "function") {
+      await db.runTransaction(applyUpdate);
+    } else {
+      await applyUpdate({
+        get: async (docRef) => docRef.get(),
+        update: async (docRef, updates) => docRef.update(updates),
+      });
+    }
     const updated = await ref.get();
     return NextResponse.json(formatOrder(updated));
   } catch (error) {

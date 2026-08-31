@@ -116,7 +116,7 @@ async function createOrderDocument(db, user, body) {
   const orderStatus = normalizeOrderStatus(body.status || "pending");
   const discount = normalizeMoney(body.discount, 0);
   const couponCode = String(body.couponCode || "").trim();
-  const notes = String(body.notes || "").trim();
+  const notes = String(body.notes || "").trim();  
   const shipping = normalizeMoney(body.shipping, DEFAULT_SHIPPING);
   const snapshot = createOrderSnapshot({
     items,

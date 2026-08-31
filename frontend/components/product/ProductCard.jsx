@@ -21,11 +21,14 @@ export default function ProductCard({ product }) {
   const primaryImage = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
   const secondaryImage = normalizeImageUrl(product.images?.[1]) || primaryImage;
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
+  const isSoldOut = Number(product.stock) === 0;
   const href = `/product/${product.slug || slugify(product.name) || product.id}`;
 
   function handleQuickAdd(event) {
     event.preventDefault();
     event.stopPropagation();
+
+    if (isSoldOut) return;
     addItem(product, { quantity: 1 });
   }
 
@@ -66,11 +69,18 @@ export default function ProductCard({ product }) {
           />
         </div>
 
+        {isSoldOut && (
+          <div className="absolute left-3 top-3 z-10 rounded-full border border-burgundy/15 bg-white/95 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-burgundy shadow-[0_10px_22px_rgba(0,0,0,0.08)]">
+            Sold Out
+          </div>
+        )}
+
         <button
           type="button"
-          aria-label="Quick add to bag"
+          aria-label={isSoldOut ? "Sold out" : "Quick add to bag"}
           onClick={handleQuickAdd}
-          className="absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:h-10 md:w-10"
+          disabled={isSoldOut}
+          className="absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:w-10"
         >
           <ShoppingBag className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.8} />
         </button>

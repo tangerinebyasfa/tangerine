@@ -68,6 +68,12 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Sold-out notification requests are created by signed-in customers and reviewed by admins.
+    match /productNotifications/{notificationId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
     // Saved addresses live in a private subcollection for each user.
     match /users/{userId}/addresses/{addressId} {
       allow read, write: if isOwner(userId);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { api } from "../../../lib/api";
@@ -14,7 +15,8 @@ import Button from "../../../components/ui/Button";
 import Spinner from "../../../components/ui/Spinner";
 import ProductCard from "../../../components/product/ProductCard";
 import WishlistButton from "../../../components/wishlist/WishlistButton";
-import { Star } from "lucide-react";
+import { Bell, Star } from "lucide-react";
+import { addProductNotification } from "../../../lib/notifications";
 
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
 
@@ -43,6 +45,8 @@ function RatingStars({ rating = 0 }) {
 export default function ProductDetailClient({ initialProduct = null, relatedProducts = [] }) {
   const { id } = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { addItem } = useCart();
   const { user } = useAuth();
 
@@ -58,6 +62,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   const [productReviewsLoading, setProductReviewsLoading] = useState(true);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [notifySubmitting, setNotifySubmitting] = useState(false);
+  const [notifySent, setNotifySent] = useState(false);
 
   useEffect(() => {
     setProduct(initialProduct);
@@ -71,9 +77,12 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   }, [initialProduct]);
 
   useEffect(() => {
-    (async () => {
+    let active = true;
+
+    async function refreshProduct() {
       try {
         const data = await api.getProduct(id);
+        if (!active) return;
         setProduct(data);
         const availableSizes = getAvailableSizeLabels(data);
         if (availableSizes.length) setSize(availableSizes[0]);
@@ -81,9 +90,53 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
-    })();
+    }
+
+    refreshProduct();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return undefined;
+
+    let active = true;
+
+    async function refreshProduct() {
+      try {
+        const data = await api.getProduct(id);
+        if (!active) return;
+        setProduct(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshProduct();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshProduct();
+    };
+
+    const interval = setInterval(refreshProduct, 15000);
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -108,6 +161,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     if (!product?.id) return undefined;
 
     setProductReviewsLoading(true);
+    setNotifySent(false);
+    setNotifySubmitting(false);
     let active = true;
 
     api
@@ -131,6 +186,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
 
   useEffect(() => {
     setReviewForm({ rating: 5, comment: "" });
+    setNotifySubmitting(false);
+    setNotifySent(false);
   }, [product?.id]);
 
   if (loading) return <Spinner className="min-h-[60vh]" />;
@@ -149,6 +206,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   const sizeOptions = getSizeOptions(product);
   const hasCompareAtPrice =
     typeof product.compareAtPrice === "number" && product.compareAtPrice > product.price;
+  const isSoldOut = Number(product.stock) === 0;
   const discountPercent = hasCompareAtPrice
     ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
     : 0;
@@ -187,13 +245,45 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   }
 
   function handleAddToCart() {
+    if (isSoldOut) {
+      toast.error("This product is sold out.");
+      return;
+    }
+
     addItem(product, { size, color, quantity: 1 });
     toast.success("Added to bag");
   }
 
   function handleBuyNow() {
+    if (isSoldOut) {
+      toast.error("This product is sold out.");
+      return;
+    }
+
     addItem(product, { size, color, quantity: 1 });
     router.push("/checkout");
+  }
+
+  async function handleNotifyMe() {
+    if (notifySubmitting || notifySent) return;
+
+    if (!user) {
+      const next = searchParams?.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+      toast.error("Please sign in to get restock updates.");
+      router.push(`/signin?next=${encodeURIComponent(next)}`);
+      return;
+    }
+
+    setNotifySubmitting(true);
+    try {
+      await addProductNotification(product);
+      setNotifySent(true);
+      toast.success("We'll notify you when it's back in stock.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save notification");
+    } finally {
+      setNotifySubmitting(false);
+    }
   }
 
   async function handleSubmitReview(event) {
@@ -276,6 +366,33 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     },
   ];
 
+  const purchaseActions = isSoldOut ? (
+    <div className="grid grid-cols-2 gap-3">
+      <Button onClick={handleAddToCart} disabled className="w-full">
+        Sold Out
+      </Button>
+      <Button
+        onClick={handleNotifyMe}
+        loading={notifySubmitting}
+        disabled={notifySent}
+        variant="outline"
+        className="w-full border-tangerine text-tangerine hover:bg-tangerine hover:text-white"
+      >
+        <Bell className="h-4 w-4" />
+        {notifySent ? "Notified" : "Notify Me"}
+      </Button>
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 gap-3">
+      <Button onClick={handleAddToCart} className="w-full">
+        Add to Bag
+      </Button>
+      <Button onClick={handleBuyNow} className="w-full bg-tangerine text-white hover:bg-tangerine/90">
+        Buy Now
+      </Button>
+    </div>
+  );
+
   const productInfoPanel = (
     <>
       <div>
@@ -316,26 +433,17 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Button onClick={handleAddToCart} disabled={product.stock === 0} className="w-full">
-            {product.stock === 0 ? "Out of Stock" : "Add to Bag"}
-          </Button>
-          <Button
-            onClick={handleBuyNow}
-            disabled={product.stock === 0}
-            className="w-full bg-tangerine text-white hover:bg-tangerine/90"
-          >
-            Buy Now
-          </Button>
-        </div>
+        {purchaseActions}
 
         <div className="mt-3">
           <WishlistButton product={product} mode="text" className="w-full" />
         </div>
 
-        {typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 && (
+        {isSoldOut ? (
+          <p className="text-xs text-burgundy mt-3">This product is sold out.</p>
+        ) : typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 ? (
           <p className="text-xs text-burgundy mt-3">Only {product.stock} left in stock.</p>
-        )}
+        ) : null}
 
         <div className="mt-10 border-t border-ink/10">
           {accordionItems.map((item) => {
@@ -744,26 +852,17 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button onClick={handleAddToCart} disabled={product.stock === 0} className="w-full">
-                  {product.stock === 0 ? "Out of Stock" : "Add to Bag"}
-                </Button>
-                <Button
-                  onClick={handleBuyNow}
-                  disabled={product.stock === 0}
-                  className="w-full bg-tangerine text-white hover:bg-tangerine/90"
-                >
-                  Buy Now
-                </Button>
-              </div>
+              {purchaseActions}
 
               <div className="mt-3">
                 <WishlistButton product={product} mode="text" className="w-full" />
               </div>
 
-              {typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 && (
+              {isSoldOut ? (
+                <p className="text-xs text-burgundy mt-3">This product is sold out.</p>
+              ) : typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 ? (
                 <p className="text-xs text-burgundy mt-3">Only {product.stock} left in stock.</p>
-              )}
+              ) : null}
 
               <div className="mt-10 border-t border-ink/10">
                 {accordionItems.map((item) => {
