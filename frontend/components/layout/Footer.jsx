@@ -23,16 +23,18 @@ const companyLinks = [
 
 const supportLinks = [
   { href: "/contact", label: "Contact Us" },
-  { href: "/contact", label: "Size & Fit Help" },
-  { href: "/contact", label: "Shipping Support" },
-  { href: "/contact", label: "Returns Support" },
+  { href: "/termsandcondition", label: "Terms & Conditions" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/return", label: "Returns Policy" },
+  { href: "/shippingpolicy", label: "Shipping Policy" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 const socialItems = [
-  { label: "Instagram", mark: "IG" },
-  { label: "Facebook", mark: "FB" },
-  { label: "YouTube", mark: "YT" },
-  { label: "LinkedIn", mark: "IN" },
+  { label: "Instagram", src: "/Images/instagram.png" },
+  { label: "Facebook", src: "/Images/facebook.webp" },
+  { label: "YouTube", src: "/Images/youtube.png" },
+  { label: "LinkedIn", src: "/Images/linkedin.webp" },
 ];
 
 const locations = [
@@ -82,14 +84,20 @@ function ContactLine({ icon: Icon, children }) {
 function SocialRow() {
   return (
     <div className="flex flex-wrap gap-3">
-      {socialItems.map(({ label, mark }) => (
+      {socialItems.map(({ label, src }) => (
         <span
           key={label}
           aria-label={label}
           title={label}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-paper text-ink shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:-translate-y-0.5"
+          className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:-translate-y-0.5 sm:h-11 sm:w-11"
         >
-          <span className="text-[10px] font-semibold tracking-[0.18em] text-tangerine">{mark}</span>
+          <Image
+            src={src}
+            alt={label}
+            width={40}
+            height={40}
+            className="h-full w-full object-contain"
+          />
         </span>
       ))}
     </div>
