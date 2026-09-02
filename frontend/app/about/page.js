@@ -34,6 +34,29 @@ const aboutLinks = [
   },
 ];
 
+const teamMembers = [
+  {
+    name: "Neha Sharma",
+    role: "Founder & Creative Head",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=85",
+  },
+  {
+    name: "Pooja Verma",
+    role: "Design Head",
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=500&q=85",
+  },
+  {
+    name: "Anjali Mehta",
+    role: "Marketing Head",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=85",
+  },
+  {
+    name: "Rohan Kapoor",
+    role: "Operations Head",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=85",
+  },
+];
+
 export default function AboutPage() {
   const heroImage = normalizeImageUrl(
     "https://drive.google.com/file/d/1Vnq7R6KcCC83SSksmoJLgmQj_dK2M2n7/view?usp=sharing"
@@ -89,6 +112,56 @@ export default function AboutPage() {
           ) : null}
         </div>
       </div>
+
+      {/* <section
+        className="relative mt-16 overflow-hidden bg-transparent px-5 py-10 sm:px-8 sm:py-12 lg:mt-20 lg:px-12"
+        aria-labelledby="heart-behind-heading"
+      >
+        <div
+          className="pointer-events-none absolute -left-10 top-5 h-32 w-32 opacity-70"
+          style={{
+            backgroundImage: "radial-gradient(#ff6a00 1.2px, transparent 1.2px)",
+            backgroundSize: "12px 12px",
+            maskImage: "linear-gradient(135deg, black, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute -right-10 bottom-5 h-32 w-32 rotate-180 opacity-70"
+          style={{
+            backgroundImage: "radial-gradient(#ff6a00 1.2px, transparent 1.2px)",
+            backgroundSize: "12px 12px",
+            maskImage: "linear-gradient(135deg, black, transparent 75%)",
+          }}
+        />
+
+        <div className="relative text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-ink/50">Meet the team</p>
+          <h2 id="heart-behind-heading" className="mt-2 font-display text-3xl text-ink sm:text-4xl">
+            The Heart Behind <span className="text-tangerine">Tangerine</span>
+          </h2>
+          <div className="mx-auto mt-3 h-0.5 w-5 bg-tangerine" />
+        </div>
+
+        <div className="relative mx-auto mt-8 grid max-w-5xl grid-cols-2 gap-x-4 gap-y-8 sm:mt-10 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10">
+          {teamMembers.map((member) => (
+            <article key={member.name} className="text-center">
+              <div className="relative mx-auto aspect-square w-full max-w-[132px] overflow-hidden rounded-full bg-sand ring-8 ring-white sm:max-w-[148px]">
+                <Image
+                  src={member.image}
+                  alt={member.name}
+                  fill
+                  sizes="(max-width: 640px) 38vw, (max-width: 1024px) 148px, 148px"
+                  className="object-cover"
+                />
+              </div>
+              <h3 className="mt-5 font-display text-lg text-ink sm:text-xl">{member.name}</h3>
+              <p className="mx-auto mt-1 max-w-[150px] text-[10px] uppercase leading-4 tracking-[0.12em] text-ink/50 sm:text-[11px]">
+                {member.role}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section> */}
 
       <div className="mt-10 rounded-2xl border border-ink/10 bg-ink px-6 py-6 text-paper sm:px-8">
         <p className="text-xs uppercase tracking-[0.24em] text-tangerine">Quick read</p>

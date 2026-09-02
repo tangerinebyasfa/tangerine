@@ -28,24 +28,26 @@ const homeImages = [
 
 function HomepageImage({ desktop, mobile, alt, priority = false }) {
   return (
-    <div className="w-full">
-      <div className="hidden md:block">
+    <div className="w-full max-w-[100vw] overflow-hidden">
+      <div className="hidden xl:block">
         <Image
           src={desktop}
           alt={alt}
-          width={1920}
-          height={1080}
-          className="block h-auto w-full object-cover"
+          width={1777}
+          height={885}
+          sizes="100vw"
+          className="block h-auto w-full max-w-full object-contain"
           priority={priority}
         />
       </div>
-      <div className="block md:hidden">
+      <div className="block xl:hidden">
         <Image
           src={mobile}
           alt={alt}
-          width={1200}
-          height={1600}
-          className="block h-auto w-full object-cover"
+          width={941}
+          height={1672}
+          sizes="100vw"
+          className="block h-auto w-full max-w-full object-contain"
           priority={priority}
         />
       </div>
@@ -97,7 +99,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <Link href="/product/royal-blue-lace-co-ord-set" className="block">
+        <Link href="/product/royal-blue-lace-co-ord-set" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[0].desktop}
             mobile={homeImages[0].mobile}
@@ -144,7 +146,7 @@ export default function HomePage() {
                   {featuredProducts.map((product) => (
                     <div
                       key={product.id}
-                      className="min-w-[78vw] shrink-0 snap-start sm:min-w-[58vw] md:min-w-[34vw] lg:min-w-[26vw] xl:min-w-[22vw]"
+                      className="w-[78vw] shrink-0 snap-start sm:w-[58vw] md:w-[34vw] lg:w-[26vw] xl:w-[22vw]"
                     >
                       <ProductCard product={product} />
                     </div>
@@ -155,7 +157,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/bloomscape-high-low-maxi-dress" className="block">
+        <Link href="/product/bloomscape-high-low-maxi-dress" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
             mobile={homeImages[1].mobile}
@@ -211,7 +213,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/crimson-cascade-high-low-skirt" className="block">
+        <Link href="/product/crimson-cascade-high-low-skirt" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[2].desktop}
             mobile={homeImages[2].mobile}

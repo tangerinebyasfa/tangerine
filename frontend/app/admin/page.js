@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
 import { api } from "../../lib/api";
+import { db } from "../../lib/firebase";
 import Spinner from "../../components/ui/Spinner";
 import { formatINR } from "../../lib/currency";
 import { getProductNotifications } from "../../lib/notifications";
@@ -54,7 +56,7 @@ export default function AdminDashboard() {
     let active = true;
 
     (async () => {
-      const [productsResult, categoriesResult, ordersResult, notificationsResult, blogsResult, galleryResult, usersResult, reviewsResult] =
+      const [productsResult, categoriesResult, ordersResult, notificationsResult, blogsResult, galleryResult, usersResult, reviewsResult, messagesResult] =
         await Promise.allSettled([
           api.getProducts(),
           api.getCategories(),
@@ -64,6 +66,7 @@ export default function AdminDashboard() {
           api.getGalleryItems(),
           api.getAllUsers(),
           api.getReviews({ authRequired: true }),
+          db ? getDocs(collection(db, "messages")) : Promise.resolve({ docs: [] }),
         ]);
 
       if (!active) return;
@@ -76,12 +79,14 @@ export default function AdminDashboard() {
       const gallery = toArray(galleryResult.status === "fulfilled" ? galleryResult.value : [], ["gallery", "items", "data", "results"]);
       const users = toArray(usersResult.status === "fulfilled" ? usersResult.value : [], ["users", "data", "results"]);
       const reviews = toArray(reviewsResult.status === "fulfilled" ? reviewsResult.value : [], ["reviews", "data", "results"]);
+      const messages = messagesResult.status === "fulfilled" ? messagesResult.value.docs || [] : [];
 
       setStats({
         products: products.length,
         categories: categories.length,
         orders: orders.length,
         notifications: notifications.length,
+        messages: messages.length,
         revenue: orders.reduce((sum, order) => sum + getOrderTotal(order), 0),
         actualRevenue: getActualRevenue(orders),
         blogs: blogs.length,
@@ -102,6 +107,7 @@ export default function AdminDashboard() {
     { label: "Products", value: stats.products },
     { label: "Categories", value: stats.categories },
     { label: "Orders", value: stats.orders },
+    { label: "Reached Customers", value: stats.messages },
     { label: "Notifications", value: stats.notifications || 0 },
     { label: "Revenue", value: formatINR(stats.revenue) },
     { label: "Actual Revenue", value: formatINR(stats.actualRevenue) },

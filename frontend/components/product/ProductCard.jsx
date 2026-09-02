@@ -33,10 +33,10 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <article className="group block">
-      <div className="relative">
-        <Link href={href} className="block">
-          <div className="relative aspect-[4/5] overflow-hidden bg-paper">
+    <article className="group flex h-full min-w-0 flex-col">
+      <div className="relative w-full">
+        <Link href={href} className="block w-full">
+          <div className="relative aspect-[4/5] w-full overflow-hidden bg-paper">
             <div className="absolute inset-0 flex w-[200%] transition-transform duration-700 ease-out motion-reduce:transition-none group-hover:-translate-x-1/2">
               <div className="relative h-full w-1/2 shrink-0">
                 <Image
@@ -86,7 +86,7 @@ export default function ProductCard({ product }) {
         </button>
       </div>
 
-      <Link href={href} className="mt-2 flex items-start justify-between gap-3">
+      <Link href={href} className="mt-2 flex min-h-[4.5rem] items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-[13px] leading-5 uppercase tracking-[0.12em] text-ink transition-colors group-hover:text-tangerine">
             {product.name}

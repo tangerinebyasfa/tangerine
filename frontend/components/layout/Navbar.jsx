@@ -4,7 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LogIn, Menu, ShoppingBag, UserRound, Search, X, Heart, ChevronDown, ArrowRight } from "lucide-react";
+import {
+  Home,
+  LogIn,
+  Menu,
+  ShoppingBag,
+  UserRound,
+  Search,
+  X,
+  Heart,
+  ChevronDown,
+  ArrowRight,
+  LayoutGrid,
+  Images,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -131,7 +144,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-ink/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-20 xl:h-24 flex items-center justify-between">
           <Link href="/products/outlet" className="flex items-center">
             <span className="sr-only">Outlet</span>
             <Image
@@ -140,11 +153,11 @@ export default function Navbar() {
               width={180}
               height={60}
               priority
-              className="h-12 md:h-16 w-auto object-contain"
+              className="h-12 xl:h-16 w-auto object-contain"
             />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden xl:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -164,11 +177,11 @@ export default function Navbar() {
             )}
           </nav>
 
-          <div className="flex items-center gap-4 md:gap-5">
+          <div className="flex items-center gap-4 xl:gap-5">
             <button
               type="button"
               onClick={openSearch}
-              className="relative hidden md:inline-flex text-ink hover:text-tangerine transition-colors"
+              className="relative hidden xl:inline-flex text-ink hover:text-tangerine transition-colors"
               aria-label="Search products"
             >
               <Search className="h-5 w-5" strokeWidth={2} />
@@ -176,7 +189,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setDrawerOpen(true)}
-              className="relative hidden md:inline-flex text-ink hover:text-tangerine transition-colors"
+              className="relative hidden xl:inline-flex text-ink hover:text-tangerine transition-colors"
               aria-label="Open cart"
             >
               <ShoppingBag className="h-5 w-5" strokeWidth={2} />
@@ -187,7 +200,7 @@ export default function Navbar() {
               )}
             </button>
 
-            <div className="relative hidden md:block">
+            <div className="relative hidden xl:block">
               {user ? (
                 <button
                   onClick={() => setUserMenuOpen((o) => !o)}
@@ -239,13 +252,44 @@ export default function Navbar() {
               )}
             </div>
 
-            <button
-              className="md:hidden text-ink hover:text-tangerine transition-colors"
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Toggle menu"
-            >
-              <Menu className="h-6 w-6" strokeWidth={2} />
-            </button>
+            <div className="flex items-center gap-3 xl:hidden">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="relative text-ink transition-colors hover:text-tangerine"
+                aria-label="Open cart"
+              >
+                <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+                {itemCount > 0 && (
+                  <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center bg-tangerine px-1 text-[9px] font-semibold leading-none text-paper">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/profile#wishlist")}
+                className="relative text-ink transition-colors hover:text-tangerine"
+                aria-label="Open wishlist"
+              >
+                <Heart className="h-5 w-5" strokeWidth={2} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="text-ink transition-colors hover:text-tangerine"
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-6 w-6" strokeWidth={2} />
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -253,7 +297,7 @@ export default function Navbar() {
       {searchOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/35" onClick={closeSearch} />
-          <div className="fixed left-1/2 top-20 z-50 w-[min(100vw-1rem,28rem)] -translate-x-1/2 md:left-auto md:right-6 md:top-24 md:w-[min(92vw,28rem)] md:translate-x-0">
+          <div className="fixed left-1/2 top-20 z-50 w-[min(100vw-1rem,28rem)] -translate-x-1/2 xl:left-auto xl:right-6 xl:top-24 xl:w-[min(92vw,28rem)] xl:translate-x-0">
             <div className="overflow-hidden rounded-2xl border border-ink/10 bg-paper shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
               <form onSubmit={handleSearchSubmit} className="border-b border-ink/10 p-3">
                 <div className="flex items-center gap-2 rounded-xl border border-ink/20 bg-white px-3 py-2">
@@ -329,7 +373,7 @@ export default function Navbar() {
       )}
 
             {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/45 md:hidden" onClick={closeMobileMenu}>
+        <div className="fixed inset-0 z-50 bg-black/45 xl:hidden" onClick={closeMobileMenu}>
           <div
             className="absolute left-1/2 top-4 h-[calc(100vh-5rem)] w-[min(100vw-2rem,24.5rem)] -translate-x-1/2 overflow-hidden bg-paper shadow-2xl"
             onClick={(event) => event.stopPropagation()}
@@ -415,15 +459,15 @@ export default function Navbar() {
         </div>
       )}
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-paper">
-        <div className="mx-auto grid max-w-md grid-cols-5 items-center gap-1 px-4 py-2 text-center text-[10px] uppercase tracking-[0.16em] text-ink/70">
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-paper">
+        <div className="mx-auto grid w-full min-w-0 max-w-md grid-cols-5 items-center gap-1 overflow-hidden px-2 py-2 text-center text-[10px] uppercase tracking-[0.12em] text-ink/70">
           <button
             type="button"
             onClick={() => {
               closeMobileMenu();
               router.push("/");
             }}
-            className="flex flex-col items-center gap-1"
+            className="flex min-w-0 flex-col items-center gap-1"
             aria-label="Home"
           >
             <Home className="h-5 w-5" strokeWidth={2} />
@@ -435,7 +479,7 @@ export default function Navbar() {
               closeMobileMenu();
               openSearch();
             }}
-            className="flex flex-col items-center gap-1"
+            className="flex min-w-0 flex-col items-center gap-1"
             aria-label="Search"
           >
             <Search className="h-5 w-5" strokeWidth={2} />
@@ -445,39 +489,25 @@ export default function Navbar() {
             type="button"
             onClick={() => {
               closeMobileMenu();
-              setDrawerOpen(true);
+              router.push("/products");
             }}
-            className="flex flex-col items-center gap-1"
-            aria-label="Open cart"
+            className="flex min-w-0 flex-col items-center gap-1"
+            aria-label="Shop by category"
           >
-            <span className="relative inline-flex h-6 w-6 items-center justify-center">
-              <ShoppingBag className="h-5 w-5" strokeWidth={2} />
-              {itemCount > 0 && (
-                <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper shadow-sm ring-2 ring-paper">
-                  {itemCount}
-                </span>
-              )}
-            </span>
-            Cart
+            <LayoutGrid className="h-5 w-5" strokeWidth={2} />
+            Category
           </button>
           <button
             type="button"
             onClick={() => {
               closeMobileMenu();
-              router.push("/profile#wishlist");
+              router.push("/gallery");
             }}
-            className="flex flex-col items-center gap-1"
-            aria-label="Open wishlist"
+            className="flex min-w-0 flex-col items-center gap-1"
+            aria-label="Gallery"
           >
-            <span className="relative inline-flex h-6 w-6 items-center justify-center">
-              <Heart className="h-5 w-5" strokeWidth={2} />
-              {wishlistCount > 0 && (
-                <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper shadow-sm ring-2 ring-paper">
-                  {wishlistCount}
-                </span>
-              )}
-            </span>
-            Wishlist
+            <Images className="h-5 w-5" strokeWidth={2} />
+            Gallery
           </button>
           <button
             type="button"
@@ -485,7 +515,7 @@ export default function Navbar() {
               closeMobileMenu();
               router.push(user ? "/profile" : "/signin");
             }}
-            className="flex flex-col items-center gap-1"
+            className="flex min-w-0 flex-col items-center gap-1"
             aria-label="Account"
           >
             <UserRound className="h-5 w-5" strokeWidth={2} />
