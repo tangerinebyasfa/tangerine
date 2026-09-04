@@ -15,7 +15,7 @@ import Button from "../../../components/ui/Button";
 import Spinner from "../../../components/ui/Spinner";
 import ProductCard from "../../../components/product/ProductCard";
 import WishlistButton from "../../../components/wishlist/WishlistButton";
-import { Bell, Star } from "lucide-react";
+import { Bell, Check, Copy, Star } from "lucide-react";
 import { addProductNotification } from "../../../lib/notifications";
 
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
@@ -43,6 +43,25 @@ function RatingStars({ rating = 0 }) {
 }
 
 function CouponOffers({ coupons = [] }) {
+  const [copiedCode, setCopiedCode] = useState("");
+
+  useEffect(() => {
+    if (!copiedCode) return undefined;
+
+    const timer = setTimeout(() => setCopiedCode(""), 1500);
+    return () => clearTimeout(timer);
+  }, [copiedCode]);
+
+  async function handleCopy(code) {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      toast.success("Coupon code copied");
+    } catch {
+      toast.error("Could not copy coupon code");
+    }
+  }
+
   if (!coupons.length) return null;
 
   return (
@@ -52,15 +71,27 @@ function CouponOffers({ coupons = [] }) {
         {coupons.map((coupon) => (
           <div key={coupon.id} className="border-b border-tangerine/10 pb-3 last:border-0 last:pb-0">
             <div className="flex items-center justify-between gap-3">
-              <span className="font-semibold tracking-widest text-ink">{coupon.code}</span>
-              <span className="text-sm font-medium text-tangerine">
-                {coupon.discountType === "percentage" ? `${coupon.discountValue}% off` : `${formatINR(coupon.discountValue)} off`}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold tracking-widest text-ink">{coupon.code}</span>
+                <span className="text-sm font-medium text-tangerine">
+                  {coupon.discountType === "percentage" ? `${coupon.discountValue}% off` : `${formatINR(coupon.discountValue)} off`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopy(coupon.code)}
+                className="inline-flex items-center gap-1.5 border border-tangerine/30 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-tangerine transition-colors hover:bg-tangerine hover:text-white"
+                aria-label={`Copy coupon code ${coupon.code}`}
+              >
+                {copiedCode === coupon.code ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copiedCode === coupon.code ? "Copied" : "Copy"}
+              </button>
             </div>
-            <p className="mt-1 text-xs leading-5 text-ink/60">
-              {coupon.minimumOrderValue ? `On orders above ${formatINR(coupon.minimumOrderValue)}. ` : "Store offer. "}
-              Expires {new Date(coupon.expiresAt).toLocaleDateString()}
-            </p>
+            {coupon.minimumOrderValue ? (
+              <p className="mt-1 text-xs leading-5 text-ink/60">
+                On orders above {formatINR(coupon.minimumOrderValue)}.
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
