@@ -1,4 +1,5 @@
 const { db, admin } = require("../config/firebaseAdmin");
+const { validateCouponForOrder, couponsRef } = require("./couponsController");
 
 const ordersRef = db.collection("orders");
 const productsRef = db.collection("products");
@@ -206,8 +207,7 @@ async function createOrderDocument(payload, user) {
 
   const subtotal = items.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
   const shipping = normalizeMoney(payload.shipping, 0);
-  const discount = normalizeMoney(payload.discount, 0);
-  const total = Math.max(0, subtotal + shipping - discount);
+  const requestedCouponCode = normalizeText(payload.couponCode || payload.discountCode).toUpperCase();
   const paymentMethod = normalizeText(payload.paymentMethod || "cod").toLowerCase();
   const orderStatus = normalizeOrderStatus(payload.status || "pending");
   const groupedQuantities = groupQuantitiesByProduct(items);
@@ -241,6 +241,32 @@ async function createOrderDocument(payload, user) {
 
     const enrichedItems = enrichOrderItems(items, productMap);
     const itemCount = enrichedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const actualSubtotal = enrichedItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+    let appliedCoupon = null;
+    let couponDocument = null;
+    if (requestedCouponCode) {
+      couponDocument = await tx.get(couponsRef.where("code", "==", requestedCouponCode).limit(1));
+      if (couponDocument.empty) {
+        const error = new Error("Coupon not found.");
+        error.status = 400;
+        throw error;
+      }
+      appliedCoupon = await validateCouponForOrder({
+        code: requestedCouponCode,
+        userId: user.uid,
+        items: enrichedItems,
+        productMap,
+        subtotal: actualSubtotal,
+        transaction: tx,
+        couponDocument: couponDocument.docs[0],
+      });
+      tx.update(couponDocument.docs[0].ref, {
+        usedCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date(),
+      });
+    }
+    const discount = appliedCoupon?.discountAmount || 0;
+    const total = Math.max(0, actualSubtotal + shipping - discount);
     const nowDate = new Date();
 
     productSnapshots.forEach((snap) => {
@@ -267,11 +293,16 @@ async function createOrderDocument(payload, user) {
       shippingAddressSummary: buildShippingSummary(shippingAddress),
       items: enrichedItems,
       itemCount,
-      subtotal: enrichedItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0),
+      subtotal: actualSubtotal,
       discount,
-      discountCode: normalizeText(payload.discountCode || "") || null,
+      discountCode: appliedCoupon?.code || null,
+      couponId: appliedCoupon?.id || null,
+      couponCode: appliedCoupon?.code || null,
+      couponDiscountType: appliedCoupon?.discountType || null,
+      couponDiscountValue: appliedCoupon?.discountValue || null,
+      couponDiscountAmount: discount,
       shipping,
-      total: Math.max(0, enrichedItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0) + shipping - discount),
+      total,
       currency: normalizeText(payload.currency) || "INR",
       paymentMethod,
       paymentStatus: normalizePaymentStatus(payload.paymentStatus || "pending"),

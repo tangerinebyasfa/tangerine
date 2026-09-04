@@ -42,6 +42,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Coupon documents are publicly readable only while active and unexpired.
+    // Creation, edits, deletes, and usage counters are server-admin operations.
+    match /coupons/{couponId} {
+      allow read: if resource.data.active == true
+        && resource.data.expiresAt > request.time;
+      allow write: if isAdmin();
+    }
+
     // User profiles:
     // - A signed-in user can create their own doc on signup.
     // - They can read their own doc.

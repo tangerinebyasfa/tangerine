@@ -42,6 +42,32 @@ function RatingStars({ rating = 0 }) {
   );
 }
 
+function CouponOffers({ coupons = [] }) {
+  if (!coupons.length) return null;
+
+  return (
+    <div className="mb-6 border border-tangerine/20 bg-[#fff8f1] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-tangerine">Available offers</p>
+      <div className="mt-3 space-y-3">
+        {coupons.map((coupon) => (
+          <div key={coupon.id} className="border-b border-tangerine/10 pb-3 last:border-0 last:pb-0">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold tracking-widest text-ink">{coupon.code}</span>
+              <span className="text-sm font-medium text-tangerine">
+                {coupon.discountType === "percentage" ? `${coupon.discountValue}% off` : `${formatINR(coupon.discountValue)} off`}
+              </span>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-ink/60">
+              {coupon.minimumOrderValue ? `On orders above ${formatINR(coupon.minimumOrderValue)}. ` : "Store offer. "}
+              Expires {new Date(coupon.expiresAt).toLocaleDateString()}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetailClient({ initialProduct = null, relatedProducts = [] }) {
   const { id } = useParams();
   const router = useRouter();
@@ -64,6 +90,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [notifySubmitting, setNotifySubmitting] = useState(false);
   const [notifySent, setNotifySent] = useState(false);
+  const [validCoupons, setValidCoupons] = useState([]);
 
   useEffect(() => {
     setProduct(initialProduct);
@@ -189,6 +216,20 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     setNotifySubmitting(false);
     setNotifySent(false);
   }, [product?.id]);
+
+  useEffect(() => {
+    if (!product?.id) return undefined;
+    let active = true;
+    api
+      .getValidCoupons(product.id, product.categorySlug)
+      .then((coupons) => {
+        if (active) setValidCoupons(Array.isArray(coupons) ? coupons : []);
+      })
+      .catch(() => {
+        if (active) setValidCoupons([]);
+      });
+    return () => { active = false; };
+  }, [product?.id, product?.categorySlug]);
 
   if (loading) return <Spinner className="min-h-[60vh]" />;
   if (!product) {
@@ -408,6 +449,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
           )}
           <p className="text-sm font-medium text-ink/70">Inclusive Of All Taxes</p>
         </div>
+
+        <CouponOffers coupons={validCoupons} />
 
         {sizeOptions.length > 0 && (
           <div className="mb-6">
@@ -825,6 +868,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                 )}
                 <p className="text-sm font-medium text-ink/70">Inclusive Of All Taxes</p>
               </div>
+
+              <CouponOffers coupons={validCoupons} />
 
               {sizeOptions.length > 0 && (
                 <div className="mb-6">

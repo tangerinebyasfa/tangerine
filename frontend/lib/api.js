@@ -302,6 +302,19 @@ export const api = {
     request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
   deleteOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { method: "DELETE", authRequired: true }),
 
+  // Coupons
+  getCoupons: () => request("/coupons", { authRequired: true }),
+  getValidCoupons: (productId, categorySlug) => {
+    const params = new URLSearchParams();
+    if (productId) params.set("productId", productId);
+    if (categorySlug) params.set("categorySlug", categorySlug);
+    return request(`/coupons/valid?${params.toString()}`);
+  },
+  validateCoupon: (body) => request("/coupons/validate", { method: "POST", body, authRequired: true }),
+  createCoupon: (body) => request("/coupons", { method: "POST", body, authRequired: true }),
+  updateCoupon: (id, body) => request(`/coupons/${encodeURIComponent(id)}`, { method: "PUT", body, authRequired: true }),
+  deleteCoupon: (id) => request(`/coupons/${encodeURIComponent(id)}`, { method: "DELETE", authRequired: true }),
+
   // Reviews
   createReview: (body) => requestLocalApi("/api/reviews", { method: "POST", body, authRequired: true }),
   getMyReviews: () => requestLocalApi("/api/reviews/mine", { authRequired: true }),

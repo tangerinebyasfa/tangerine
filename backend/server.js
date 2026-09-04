@@ -11,6 +11,7 @@ const usersRoutes = require("./routes/users");
 const galleryRoutes = require("./routes/gallery");
 const blogsRoutes = require("./routes/blogs");
 const wishlistRoutes = require("./routes/wishlist");
+const couponsRoutes = require("./routes/coupons");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/blogs", blogsRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/coupons", couponsRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));

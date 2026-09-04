@@ -10,8 +10,8 @@ import AuthGuard from "../../components/auth/AuthGuard";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { formatINR } from "../../lib/currency";
-import { buildAddressSummary, listenToUserAddresses } from "../../lib/accountFirestore";
-import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck } from "lucide-react";
+import { buildAddressSummary } from "../../lib/accountFirestore";
+import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X } from "lucide-react";
 
 const SHIPPING_FLAT_RATE = 8;
 const ZIP_LOOKUP_MIN_LENGTH = 6;
@@ -110,7 +110,13 @@ function CheckoutForm() {
     phone: profile?.phone || "",
   });
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
   const selectedPayment = PAYMENT_OPTIONS.find((option) => option.value === paymentMethod) || PAYMENT_OPTIONS[0];
+  const hasSavedAddresses = addresses.length > 0;
+  const hasMultipleSavedAddresses = addresses.length > 1;
 
   useEffect(() => {
     if (!user?.uid) {
@@ -120,18 +126,26 @@ function CheckoutForm() {
     }
 
     setAddressesLoading(true);
-    return listenToUserAddresses(
-      user.uid,
-      (items) => {
+    let active = true;
+
+    api
+      .getMyAddresses()
+      .then((items) => {
+        if (!active) return;
         setAddresses(Array.isArray(items) ? items : []);
-        setAddressesLoading(false);
-      },
-      (error) => {
+      })
+      .catch((error) => {
+        if (!active) return;
         console.error(error);
         setAddresses([]);
-        setAddressesLoading(false);
-      }
-    );
+      })
+      .finally(() => {
+        if (active) setAddressesLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [user?.uid]);
 
   useEffect(() => {
@@ -217,7 +231,40 @@ function CheckoutForm() {
   }, [address.zip]);
 
   const shipping = items.length ? SHIPPING_FLAT_RATE : 0;
-  const total = subtotal + shipping;
+  const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
+  const total = Math.max(0, subtotal + shipping - couponDiscount);
+
+  async function handleApplyCoupon() {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      setCouponError("Enter a coupon code.");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const result = await api.validateCoupon({
+        code,
+        subtotal,
+        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity, lineTotal: item.price * item.quantity })),
+      });
+      setAppliedCoupon(result);
+      setCouponCode(result.code);
+      toast.success("Coupon applied");
+    } catch (error) {
+      setAppliedCoupon(null);
+      setCouponError(error.message || "This coupon cannot be applied.");
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  }
 
   async function handlePlaceOrder(e) {
     e.preventDefault();
@@ -248,7 +295,8 @@ function CheckoutForm() {
         })),
         subtotal,
         shipping,
-        discount: 0,
+        couponCode: appliedCoupon?.code || "",
+        discount: couponDiscount,
         total,
         currency: "INR",
       };
@@ -322,56 +370,89 @@ function CheckoutForm() {
               </div>
             </div>
 
-          {addressesLoading ? (
-            <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
-              Loading your saved addresses...
-            </div>
-          ) : addresses.length > 0 ? (
-            <div className="mb-6 space-y-3">
-              <p className="text-xs tracking-widest uppercase text-ink/45">Saved Addresses</p>
-              <div className="space-y-3">
-                {addresses.map((savedAddress, index) => {
-                  const isSelected = savedAddress.id === selectedAddressId;
-                  const summary = buildAddressSummary(savedAddress);
-                  return (
-                    <label
-                      key={savedAddress.id}
-                      className={`flex cursor-pointer items-start gap-3 border px-4 py-4 transition-colors sm:px-5 ${
-                        isSelected
-                          ? "border-tangerine bg-[#fff7f0] shadow-[0_8px_24px_rgba(255,106,0,0.08)]"
-                          : "border-ink/15 bg-white hover:bg-[#fffaf6]"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="saved-address"
-                        className="mt-1"
-                        checked={isSelected}
-                        onChange={() => setSelectedAddressId(savedAddress.id)}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-display text-lg text-ink">
-                            {savedAddress.label || `Address ${index + 1}`}
-                          </span>
-                          {savedAddress.isDefault ? (
-                            <span className="border border-tangerine/20 bg-tangerine/10 px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-tangerine">
-                              Default
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-1 text-sm leading-6 text-ink/70">{summary}</p>
-                      </div>
-                    </label>
-                  );
-                })}
+            {addressesLoading ? (
+              <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
+                Loading your saved addresses...
               </div>
-            </div>
-          ) : (
-            <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
-              No saved addresses found. Fill in the form below to use a new shipping address.
-            </div>
-          )}
+            ) : hasSavedAddresses ? (
+              <div className="mb-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs tracking-widest uppercase text-ink/45">Saved Addresses</p>
+                    <p className="mt-1 text-sm text-ink/60">
+                      {hasMultipleSavedAddresses
+                        ? "Choose the address you want to ship to."
+                        : "Your saved address is selected below."}
+                    </p>
+                  </div>
+                  {hasMultipleSavedAddresses ? (
+                    <div className="rounded-full border border-ink/10 bg-[#fffaf6] px-3 py-1 text-xs uppercase tracking-[0.18em] text-ink/55">
+                      {addresses.length} saved
+                    </div>
+                  ) : null}
+                </div>
+
+                {hasMultipleSavedAddresses ? (
+                  <div className="space-y-3">
+                    {addresses.map((savedAddress, index) => {
+                      const isSelected = savedAddress.id === selectedAddressId;
+                      const summary = buildAddressSummary(savedAddress);
+                      return (
+                        <label
+                          key={savedAddress.id}
+                          className={`flex cursor-pointer items-start gap-3 border px-4 py-4 transition-colors sm:px-5 ${
+                            isSelected
+                              ? "border-tangerine bg-[#fff7f0] shadow-[0_8px_24px_rgba(255,106,0,0.08)]"
+                              : "border-ink/15 bg-white hover:bg-[#fffaf6]"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="saved-address"
+                            className="mt-1"
+                            checked={isSelected}
+                            onChange={() => setSelectedAddressId(savedAddress.id)}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-display text-lg text-ink">
+                                {savedAddress.label || `Address ${index + 1}`}
+                              </span>
+                              {savedAddress.isDefault ? (
+                                <span className="border border-tangerine/20 bg-tangerine/10 px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-tangerine">
+                                  Default
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-1 text-sm leading-6 text-ink/70">{summary}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="border border-ink/10 bg-[#fffaf6] px-4 py-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center border border-tangerine/20 bg-white text-tangerine">
+                        <MapPin className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-ink">
+                          {addresses[0].label || "Saved Address"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-ink/70">
+                          {buildAddressSummary(addresses[0])}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
+                No saved addresses found. Fill in the form below to use a new shipping address.
+              </div>
+            )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
@@ -550,11 +631,23 @@ function CheckoutForm() {
             ))}
           </div>
 
+          <div className="mb-5 border border-ink/10 bg-[#fffaf6] p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-ink"><Tag className="h-4 w-4 text-tangerine" /> Apply Coupon</div>
+            {appliedCoupon ? (
+              <div className="mt-3 flex items-center justify-between gap-3 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><span><strong>{appliedCoupon.code}</strong> applied</span><button type="button" onClick={handleRemoveCoupon} aria-label="Remove coupon" className="text-emerald-700"><X className="h-4 w-4" /></button></div>
+            ) : (
+              <div className="mt-3 flex gap-2"><input value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-tangerine" /><button type="button" onClick={handleApplyCoupon} disabled={couponLoading} className="border border-tangerine px-3 py-2 text-xs font-semibold uppercase tracking-widest text-tangerine disabled:opacity-50">{couponLoading ? "Checking" : "Apply"}</button></div>
+            )}
+            {couponError ? <p className="mt-2 text-xs text-rose-600">{couponError}</p> : null}
+            {appliedCoupon ? <p className="mt-2 text-xs text-ink/55">Coupon discount: {formatINR(couponDiscount)}</p> : null}
+          </div>
+
           <div className="border-t border-ink/10 pt-4 space-y-2">
             <div className="flex justify-between text-sm text-ink/70">
               <span>Subtotal</span>
               <span>{formatINR(subtotal)}</span>
             </div>
+            {appliedCoupon ? <div className="flex justify-between text-sm text-emerald-700"><span>Coupon ({appliedCoupon.code})</span><span>- {formatINR(couponDiscount)}</span></div> : null}
             <div className="flex justify-between text-sm text-ink/70">
               <span>Shipping</span>
               <span>{formatINR(shipping)}</span>

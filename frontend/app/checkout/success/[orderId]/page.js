@@ -210,13 +210,17 @@ export default function OrderSuccessPage() {
                         <span>Shipping</span>
                         <span>{shipping > 0 ? formatINR(shipping) : "FREE"}</span>
                       </div>
-                      <div className="flex items-center justify-between text-ink/70">
-                        <span>Discount</span>
-                        <span>- {formatINR(discount)}</span>
-                      </div>
+                      {order?.couponCode || order?.discountCode ? (
+                        <>
+                          <div className="flex items-center justify-between text-emerald-700"><span>Coupon Code</span><span>{order.couponCode || order.discountCode}</span></div>
+                          <div className="flex items-center justify-between text-emerald-700"><span>Coupon Discount</span><span>- {formatINR(Number(order.couponDiscountAmount ?? discount))}</span></div>
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-between text-ink/70"><span>Discount</span><span>- {formatINR(discount)}</span></div>
+                      )}
                       <div className="border-t border-ink/10 pt-3">
                         <div className="flex items-center justify-between text-base font-medium text-ink">
-                          <span>Total Paid</span>
+                          <span>Final Total</span>
                           <span>{formatINR(total)}</span>
                         </div>
                       </div>
