@@ -6,6 +6,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ArrowRight, Clock3, MapPin, MessageCircle, Mail, Phone, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { db } from "../../lib/firebase";
+import PageHeader from "../../components/ui/PageHeader";
 
 const CONTACT_CHANNELS = [
   {
@@ -101,25 +102,12 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(circle_at_top_left,_rgba(255,149,92,0.18),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(90,63,55,0.08),_transparent_28%),linear-gradient(180deg,_#fff8f1_0%,_#fdfdfc_72%)]" />
-      <div className="absolute left-[-5rem] top-24 -z-10 h-72 w-72 bg-tangerine/10 blur-3xl" />
-      <div className="absolute right-[-6rem] top-64 -z-10 h-80 w-80 bg-ink/5 blur-3xl" />
-
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="max-w-3xl">
-          <p className="eyebrow mb-4 inline-flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Get in touch
-          </p>
-          <h1 className="max-w-2xl font-display text-[clamp(2.6rem,6vw,4.8rem)] leading-[0.95] text-ink">
-            Contact Us
-          </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-ink/65 sm:text-base">
-            Questions about an order, a fitting, or store availability? Send a note, choose your
-            preferred location, and our team will respond with care.
-          </p>
-        </div>
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <PageHeader
+        eyebrow="Get in touch"
+        title="Contact Us"
+        description="Questions about an order, a fitting, or store availability? Send a note, choose your preferred location, and our team will respond with care."
+      />
 
         <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {CONTACT_CHANNELS.map((item) => {
@@ -129,9 +117,9 @@ export default function ContactPage() {
               <a
                 key={item.label}
                 href={item.href}
-                className="group border border-ink/15 border-t-4 border-tangerine bg-white/90 p-5 backdrop-blur transition-transform duration-200 hover:-translate-y-1"
+                className="group border border-ink/10 bg-white p-5 transition-colors hover:border-tangerine/40 hover:bg-sand/30"
               >
-                <div className="flex h-12 w-12 items-center justify-center border border-tangerine/30 bg-tangerine/10 text-tangerine">
+                <div className="flex h-11 w-11 items-center justify-center border border-tangerine/30 bg-sand text-tangerine">
                   <Icon className="h-5 w-5" />
                 </div>
                 <p className="mt-4 text-xs uppercase tracking-[0.28em] text-ink/40">{item.label}</p>
@@ -143,7 +131,7 @@ export default function ContactPage() {
         </section>
 
         <section className="mt-8">
-          <div className="border border-ink/10 border-l-4 border-l-tangerine bg-white/90 p-6 backdrop-blur sm:p-8">
+          <div className="border border-ink/10 bg-white p-6 sm:p-8">
             <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
               <div>
                 <p className="eyebrow mb-3">Send a message</p>
@@ -255,8 +243,8 @@ export default function ContactPage() {
                 </form>
               </div>
 
-              <aside className="border border-tangerine/20 bg-gradient-to-br from-paper via-[#fff7ef] to-[#ffe9d7] p-5 sm:p-6">
-                <div className="border border-white/70 bg-white/70 p-5 backdrop-blur">
+              <aside className="border border-ink/10 bg-sand/30 p-5 sm:p-6">
+                <div className="border border-ink/10 bg-white p-5">
                   <p className="eyebrow mb-3">Why reach out?</p>
                   <h3 className="font-display text-2xl text-ink">We keep replies thoughtful and quick</h3>
                   <div className="mt-6 space-y-4">
@@ -296,7 +284,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 overflow-hidden border border-white/70 bg-white/70">
+                <div className="mt-5 overflow-hidden border border-ink/10 bg-white">
                   <div className="p-5">
                     <p className="eyebrow mb-3">Quick links</p>
                     <div className="space-y-3 text-sm">
@@ -333,7 +321,7 @@ export default function ContactPage() {
 
         <section
           id="locations"
-          className="mt-8 border border-ink/10 border-t-4 border-t-ink bg-white/90 p-6 backdrop-blur sm:p-8"
+          className="mt-8 border border-ink/10 bg-white p-6 sm:p-8"
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -348,8 +336,8 @@ export default function ContactPage() {
 
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
             {LOCATIONS.map((location) => (
-              <article key={location.name} className="overflow-hidden border border-ink/10 border-l-4 border-l-tangerine bg-paper">
-                <div className="border-b border-ink/10 bg-gradient-to-br from-[#fff7ef] to-[#fff] p-5">
+              <article key={location.name} className="overflow-hidden border border-ink/10 bg-paper">
+                <div className="border-b border-ink/10 bg-sand/30 p-5">
                   <p className="text-xs uppercase tracking-[0.28em] text-tangerine">{location.tag}</p>
                   <h3 className="mt-3 font-display text-2xl text-ink">{location.name}</h3>
                   <div className="mt-4 space-y-1 text-sm leading-6 text-ink/65">
@@ -398,7 +386,6 @@ export default function ContactPage() {
             ))}
           </div>
         </section>
-      </div>
     </div>
   );
 }
