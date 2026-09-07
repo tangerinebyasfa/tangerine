@@ -199,7 +199,6 @@ export default function CartDrawer() {
                             className="object-cover transition-transform duration-500 group-hover:scale-105"
                             unoptimized={isGoogleDriveImageUrl(image)}
                           />
-                          {/*  */}
                         </div>
                         <p className="mt-2 truncate text-[12px] uppercase tracking-[0.08em] text-ink">
                           {stripHtml(product.name)}

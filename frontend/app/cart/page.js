@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../../context/CartContext";
 import PageHeader from "../../components/ui/PageHeader";
-import Button from "../../components/ui/Button";
 import { normalizeImageUrl } from "../../lib/image";
 import { formatINR } from "../../lib/currency";
 

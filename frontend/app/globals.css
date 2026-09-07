@@ -28,9 +28,6 @@
   .eyebrow {
     @apply text-xs tracking-widest2 uppercase text-tangerine font-medium;
   }
-  .section-heading {
-    @apply font-display text-3xl md:text-4xl text-ink;
-  }
 
   .no-scrollbar {
     -ms-overflow-style: none;

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  auth,
   db,
   collection,
   doc as fsDoc,
@@ -10,7 +11,6 @@ import {
   where as fsWhere,
   orderBy as fsOrderBy,
 } from "./firebase";
-import { auth } from "./firebase";
 import { slugify } from "./blog";
 
 

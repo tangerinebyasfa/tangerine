@@ -31,7 +31,7 @@ fashion-ecommerce/
 │   ├── components/
 │   │   ├── layout/                 # Navbar, Footer
 │   │   ├── ui/                     # Button, Input, Spinner, PageHeader
-│   │   ├── product/                # ProductCard, CategoryCard
+│   │   ├── product/                # ProductCard
 │   │   ├── cart/                   # CartDrawer
 │   │   ├── auth/                   # AuthGuard
 │   │   └── admin/                  # AdminGuard, AdminSidebar, ProductForm

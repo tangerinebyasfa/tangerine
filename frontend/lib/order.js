@@ -6,14 +6,6 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
-function toMillis(value) {
-  if (!value) return 0;
-  if (typeof value?.toMillis === "function") return value.toMillis();
-  if (typeof value?.toDate === "function") return value.toDate().getTime();
-  const parsed = new Date(value).getTime();
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
 function pad(value, size = 2) {
   return String(value).padStart(size, "0");
 }
@@ -100,16 +92,6 @@ export function formatOrderItemLabel(item) {
   if (item?.size) bits.push(`Size ${item.size}`);
   if (item?.color) bits.push(item.color);
   return bits.join(" | ");
-}
-
-export function mapOrderDoc(doc) {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    ...data,
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
-  };
 }
 
 export function normalizeCheckoutLineItem(item = {}) {

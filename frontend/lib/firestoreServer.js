@@ -12,9 +12,6 @@ import {
 
 import { slugify } from "./blog";
 
-
-
-
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -78,44 +75,6 @@ function productMatchesSearch(product, searchTerm) {
     .toLowerCase();
 
   return haystack.includes(searchTerm);
-}
-
-function serializeTimestamp(value) {
-  if (!value) return null;
-  if (typeof value.toDate === "function") return value.toDate().toISOString();
-  if (typeof value.toMillis === "function") return new Date(value.toMillis()).toISOString();
-  return value;
-}
-
-function serializeBlogDoc(document) {
-  const data = document.data();
-  return {
-    id: document.id,
-    title: data.title || "",
-    slug: data.slug || "",
-    content: data.content || "",
-    excerpt: data.excerpt || "",
-    imageUrl: data.imageUrl || "",
-    imageAlt: data.imageAlt || "",
-    createdAt: serializeTimestamp(data.createdAt),
-    publishedAt: serializeTimestamp(data.publishedAt),
-    updatedAt: serializeTimestamp(data.updatedAt),
-  };
-}
-
-function serializeGalleryDoc(document) {
-  const data = document.data();
-  return {
-    id: document.id,
-    title: data.title || "",
-    caption: data.caption || "",
-    instagramLink: data.instagramLink || "",
-    imageUrl: data.imageUrl || "",
-    imageAlt: data.imageAlt || "",
-    sortOrder: Number(data.sortOrder ?? 0),
-    createdAt: serializeTimestamp(data.createdAt),
-    updatedAt: serializeTimestamp(data.updatedAt),
-  };
 }
 
 export async function getProducts(params = {}) {
@@ -203,52 +162,6 @@ export async function getSubcategory(idOrSlug) {
 
   const found = snapshot.docs[0];
   return { id: found.id, ...found.data() };
-}
-
-export async function getGalleryItems() {
-  assertDb();
-
-  const snapshot = await getDocs(collection(db, "gallery"));
-  const items = snapshot.docs.map(serializeGalleryDoc);
-
-  return items.sort((a, b) => {
-    const aOrder = Number(a.sortOrder ?? 0);
-    const bOrder = Number(b.sortOrder ?? 0);
-    if (aOrder !== bOrder) return aOrder - bOrder;
-
-    const aTime = a.createdAt?.toMillis?.() ?? new Date(a.createdAt || 0).getTime();
-    const bTime = b.createdAt?.toMillis?.() ?? new Date(b.createdAt || 0).getTime();
-    return bTime - aTime;
-  });
-}
-export async function getBlogs() {
-  assertDb();
-
-  const snapshot = await getDocs(collection(db, "blogs"));
-  const blogs = snapshot.docs.map(serializeBlogDoc);
-
-  return blogs.sort((a, b) => {
-    const aTime = a.publishedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? new Date(a.publishedAt || a.createdAt || 0).getTime();
-    const bTime = b.publishedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? new Date(b.publishedAt || b.createdAt || 0).getTime();
-    return bTime - aTime;
-  });
-}
-
-export async function getBlog(idOrSlug) {
-  assertDb();
-
-  const directDoc = await getDoc(doc(db, "blogs", idOrSlug));
-  if (directDoc.exists()) return serializeBlogDoc(directDoc);
-
-  const blogSnapshot = await getDocs(query(collection(db, "blogs"), where("slug", "==", idOrSlug)));
-  if (!blogSnapshot.empty) {
-    const found = blogSnapshot.docs[0];
-    return serializeBlogDoc(found);
-  }
-
-  const allBlogs = await getDocs(collection(db, "blogs"));
-  const found = allBlogs.docs.find((document) => slugify(document.data()?.title) === idOrSlug);
-  return found ? serializeBlogDoc(found) : null;
 }
 
 

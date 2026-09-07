@@ -12,7 +12,7 @@ const getTimestamp = () =>
 // user document always exists (role defaults to "customer").
 exports.syncUser = async (req, res) => {
   try {
-    const { uid, email, role } = req.user;
+    const { uid, email } = req.user;
     const docRef = usersRef.doc(uid);
     const doc = await docRef.get();
 

@@ -1,16 +1,10 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Image, Play, Share2, X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import { api } from "../../lib/api";
 import Spinner from "../../components/ui/Spinner";
 import { normalizeImageUrl } from "../../lib/image";
-
-const socialTabs = [
-  { label: "Instagram", icon: Image, active: true },
-  { label: "Facebook", icon: Share2, active: false },
-  { label: "YouTube", icon: Play, active: false },
-];
 
 function splitCopy(text) {
   return String(text || "")
@@ -143,53 +137,7 @@ export default function GalleryPage() {
             to open the full detail view.
           </p>
 
-            {/* <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              {socialTabs.map(({ label, icon: Icon, active }) => (
-                <button
-                  key={label}
-                  type="button"
-                  className={`inline-flex items-center gap-2 border px-4 py-2 text-sm tracking-widest uppercase transition ${
-                    active
-                      ? "border-tangerine bg-tangerine text-paper shadow-sm"
-                      : "border-ink/15 bg-paper text-ink hover:border-tangerine hover:text-tangerine"
-                  }`}
-                  aria-pressed={active}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </button>
-              ))}
-            </div> */}
-
         </div>
-
-        {/* <div className="mt-16 grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-          <div>
-            <p className="eyebrow mb-4 text-burgundy">Gallery</p>
-            <h2 className="max-w-2xl font-display text-[clamp(3rem,7vw,5.5rem)] leading-[0.92] text-ink">
-              A visual diary of looks, moments, and Instagram highlights.
-            </h2>
-            <p className="mt-8 max-w-2xl text-base sm:text-lg leading-8 text-ink/70">
-              Each card below is driven by Firebase. Add, edit, or remove gallery items from the admin panel,
-              and the public gallery updates automatically.
-            </p>
-          </div>
-
-          <div className="border border-ink/10 bg-[#faf6f0] p-6 sm:p-8 lg:p-10">
-            <p className="eyebrow mb-5 text-ink/35">Instagram Links</p>
-            <p className="text-base sm:text-lg leading-8 text-ink/70">
-              Link every image to a post, reel, or profile page. This makes the gallery work as both a visual
-              showcase and a traffic bridge to your social content.
-            </p>
-            <a
-              href="/contact"
-              className="mt-8 inline-flex items-center gap-2 text-sm tracking-widest uppercase text-burgundy transition hover:text-ink"
-            >
-              Contact us for gallery help
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </div>
-        </div> */}
 
         <div className="mt-12 lg:mt-14">
           {loading ? (

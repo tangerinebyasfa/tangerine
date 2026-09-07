@@ -180,7 +180,6 @@ export default function AdminOrdersPage() {
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const items = Array.isArray(order.items) ? order.items : [];
-            const firstItem = items[0];
             return (
               <article key={order.id} className="border border-ink/10 bg-white p-4 sm:p-5">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

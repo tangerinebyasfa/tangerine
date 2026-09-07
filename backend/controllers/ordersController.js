@@ -205,7 +205,6 @@ async function createOrderDocument(payload, user) {
     phone: normalizeText(payload.shippingAddress?.phone || payload.customerPhone || ""),
   };
 
-  const subtotal = items.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
   const shipping = normalizeMoney(payload.shipping, 0);
   const requestedCouponCode = normalizeText(payload.couponCode || payload.discountCode).toUpperCase();
   const paymentMethod = normalizeText(payload.paymentMethod || "cod").toLowerCase();

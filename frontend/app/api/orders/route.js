@@ -3,9 +3,7 @@ import { authenticateRequest, getAdminDb, requireAdminRequest, serializeTimestam
 import { proxyToBackend } from "../../../lib/serverApi";
 import {
   createOrderSnapshot,
-  formatOrderDateTime,
   generateReadableOrderId,
-  getOrderDisplayId,
   normalizeCheckoutLineItem,
   normalizeMoney,
   normalizeOrderStatus,
@@ -268,4 +266,3 @@ export async function GET(request) {
     );
   }
 }
-

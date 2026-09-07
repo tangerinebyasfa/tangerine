@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSubcategories } from "../../../lib/firestoreServer";
-import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../lib/firebaseAdmin";
+import { getAdminDb, requireAdminRequest } from "../../../lib/firebaseAdmin";
 import { proxyToBackend } from "../../../lib/serverApi";
 
 export const dynamic = "force-dynamic";
@@ -24,16 +24,6 @@ function normalizeParentType(value) {
   if (!value) return null;
   const normalized = String(value).trim().toLowerCase();
   return PRODUCT_TYPES.includes(normalized) ? normalized : null;
-}
-
-function formatSubcategory(doc) {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    ...data,
-    createdAt: serializeTimestamp(data.createdAt),
-    updatedAt: serializeTimestamp(data.updatedAt),
-  };
 }
 
 export async function GET() {

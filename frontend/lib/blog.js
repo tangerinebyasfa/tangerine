@@ -29,10 +29,3 @@ export function formatBlogDate(value) {
     year: "numeric",
   }).format(date);
 }
-
-export function toBlogDate(value) {
-  const date = value?.toDate?.() || (value ? new Date(value) : null);
-  if (!date || Number.isNaN(date.getTime())) return null;
-  return date;
-}
-

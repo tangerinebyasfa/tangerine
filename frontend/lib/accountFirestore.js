@@ -9,9 +9,6 @@ import {
   query,
   where,
   onSnapshot,
-  setDoc,
-  deleteDoc,
-  serverTimestamp,
 } from "./firebase";
 import { api } from "./api";
 
@@ -89,16 +86,6 @@ function sortByLatestFirst(items, field = "createdAt") {
   return [...items].sort((a, b) => toMillis(b?.[field]) - toMillis(a?.[field]));
 }
 
-function sortAddresses(items) {
-  return [...items].sort((a, b) => {
-    const defaultRank = Number(Boolean(b?.isDefault)) - Number(Boolean(a?.isDefault));
-    if (defaultRank !== 0) return defaultRank;
-    const updatedRank = toMillis(b?.updatedAt) - toMillis(a?.updatedAt);
-    if (updatedRank !== 0) return updatedRank;
-    return toMillis(b?.createdAt) - toMillis(a?.createdAt);
-  });
-}
-
 export function listenToUserOrders(uid, onChange, onError) {
   if (!db || !uid) {
     onChange([]);
@@ -116,40 +103,6 @@ export function listenToUserOrders(uid, onChange, onError) {
   );
 }
 
-export function listenToUserAddresses(uid, onChange, onError) {
-  if (!db || !uid) {
-    onChange([]);
-    return () => {};
-  }
-
-  const ref = collection(db, "users", uid, "addresses");
-  return onSnapshot(
-    ref,
-    (snapshot) => {
-      const addresses = sortAddresses(snapshot.docs.map(mapDoc));
-      onChange(addresses);
-    },
-    onError
-  );
-}
-
-export function listenToUserWishlist(uid, onChange, onError) {
-  if (!db || !uid) {
-    onChange([]);
-    return () => {};
-  }
-
-  const ref = collection(db, "users", uid, "wishlist");
-  return onSnapshot(
-    ref,
-    (snapshot) => {
-      const items = sortByLatestFirst(snapshot.docs.map(mapDoc), "addedAt");
-      onChange(items);
-    },
-    onError
-  );
-}
-
 export async function loadProductsByIds(ids = []) {
   ensureDb();
 
@@ -157,34 +110,6 @@ export async function loadProductsByIds(ids = []) {
   const snapshots = await Promise.all(uniqueIds.map((id) => getDoc(doc(db, "products", id))));
 
   return snapshots.filter((snapshot) => snapshot.exists()).map((snapshot) => mapDoc(snapshot));
-}
-
-export async function addWishlistItem(productId) {
-  ensureDb();
-  const user = ensureUser();
-  const id = normalizeText(productId);
-  if (!id) throw new Error("Invalid product id");
-
-  await setDoc(
-    doc(db, "users", user.uid, "wishlist", id),
-    {
-      productId: id,
-      addedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-
-  return { id, productId: id };
-}
-
-export async function removeWishlistItem(productId) {
-  ensureDb();
-  const user = ensureUser();
-  const id = normalizeText(productId);
-  if (!id) throw new Error("Invalid product id");
-
-  await deleteDoc(doc(db, "users", user.uid, "wishlist", id));
-  return { ok: true, productId: id };
 }
 
 export async function createAddress(payload) {

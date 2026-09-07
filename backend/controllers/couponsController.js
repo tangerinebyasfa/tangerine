@@ -181,7 +181,7 @@ exports.getPublicCoupons = async (req, res) => {
 
 exports.validateCoupon = async (req, res) => {
   try {
-    const { items = [], subtotal = 0 } = req.body || {};
+    const { items = [] } = req.body || {};
     const productIds = [...new Set(items.map((item) => text(item.productId)).filter(Boolean))];
     const productSnapshots = await Promise.all(productIds.map((id) => db.collection("products").doc(id).get()));
     const productMap = new Map(productSnapshots.filter((snap) => snap.exists).map((snap) => [snap.id, snap.data()]));

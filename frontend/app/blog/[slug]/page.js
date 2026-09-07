@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { headers } from "next/headers";
 import PageHeader from "../../../components/ui/PageHeader";
-import { createBlogExcerpt, formatBlogDate, slugify } from "../../../lib/blog";
+import { createBlogExcerpt, formatBlogDate } from "../../../lib/blog";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
 import { getRequestOrigin } from "../../../SEO/schemaUtils";
 

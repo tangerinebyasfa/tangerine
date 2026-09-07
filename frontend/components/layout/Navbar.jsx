@@ -40,18 +40,6 @@ const mobileFeatureCards = [
   { href: "/gallery", label: "Gallery", image: "/Images/HomePage/3mobile.png" },
 ];
 
-const mobileQuickLinks = [
-  { href: "/products/new-in", label: "New In" },
-  { href: "/products/all", label: "All Products" },
-  { href: "/products/outlet", label: "Outlet" },
-  { href: "/products/denim", label: "Everything Denim" },
-  { href: "/products/basics", label: "Basics" },
-  { href: "/products/most-loved", label: "Most Loved" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/contact", label: "Contact" },
-  { href: "/about", label: "About" },
-];
-
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../lib/firebaseAdmin";
+import { getAdminDb, requireAdminRequest } from "../../../lib/firebaseAdmin";
 import { proxyToBackend } from "../../../lib/serverApi";
 import { getProducts } from "../../../lib/firestoreServer";
 
@@ -38,16 +38,6 @@ function normalizeNumber(value) {
   if (value === "" || value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatProduct(doc) {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    ...data,
-    createdAt: serializeTimestamp(data.createdAt),
-    updatedAt: serializeTimestamp(data.updatedAt),
-  };
 }
 
 export async function GET(request) {

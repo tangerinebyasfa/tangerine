@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  auth,
-} from "./firebase";
-
-function normalizeId(value) {
-  return String(value || "").trim();
-}
+import { auth } from "./firebase";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -45,8 +39,8 @@ async function requestLocalApi(path, { method = "GET", body, authRequired = fals
 }
 
 export async function addProductNotification(product) {
-  const user = ensureUser();
-  const productId = normalizeId(product?.id);
+  ensureUser();
+  const productId = normalizeText(product?.id);
   if (!productId) throw new Error("Invalid product id");
 
   return requestLocalApi("/product-notifications", {
