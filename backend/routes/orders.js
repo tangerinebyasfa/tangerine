@@ -4,6 +4,9 @@ const ctrl = require("../controllers/ordersController");
 const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 // Authenticated user
+router.get("/attempt/:requestId", verifyToken, ctrl.recoverOrder);
+router.post("/quote", verifyToken, ctrl.quoteOrder);
+router.put("/:id/cancel", verifyToken, ctrl.cancelOrder);
 router.post("/", verifyToken, ctrl.createOrder);
 router.get("/mine", verifyToken, ctrl.getMyOrders);
 router.get("/:id", verifyToken, ctrl.getOrderById);

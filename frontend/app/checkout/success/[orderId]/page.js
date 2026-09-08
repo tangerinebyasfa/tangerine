@@ -132,7 +132,7 @@ export default function OrderSuccessPage() {
                     </div>
                   </div>
                   <p className="max-w-2xl text-sm leading-7 text-ink/70 sm:text-base">
-                    We have received your order and it is now being processed. You will receive an email confirmation shortly.
+                    Your cash-on-delivery order is recorded. Pay the confirmed total when it arrives. View your order details for status updates or cancellation before shipment.
                   </p>
                 </div>
 
@@ -254,8 +254,8 @@ export default function OrderSuccessPage() {
                       <div className="flex items-start gap-3">
                         <ShieldCheck className="mt-0.5 h-5 w-5 text-tangerine" />
                         <div>
-                          <p className="font-medium text-ink">Secure Payments</p>
-                          <p className="mt-1 text-sm leading-6 text-ink/60">100% safe & encrypted</p>
+                          <p className="font-medium text-ink">Cash on Delivery</p>
+                          <p className="mt-1 text-sm leading-6 text-ink/60">Pay the confirmed total when your order arrives.</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -268,8 +268,8 @@ export default function OrderSuccessPage() {
                       <div className="flex items-start gap-3">
                         <Truck className="mt-0.5 h-5 w-5 text-tangerine" />
                         <div>
-                          <p className="font-medium text-ink">Free Shipping</p>
-                          <p className="mt-1 text-sm leading-6 text-ink/60">On selected orders</p>
+                          <p className="font-medium text-ink">Shipping</p>
+                          <p className="mt-1 text-sm leading-6 text-ink/60">{formatINR(shipping)} included in your order total.</p>
                         </div>
                       </div>
                     </div>

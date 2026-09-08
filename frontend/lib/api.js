@@ -294,13 +294,15 @@ export const api = {
   deleteBlog: (id) => request(`/blogs/${id}`, { method: "DELETE", authRequired: true }),
 
   // Orders
+  recoverOrder: (requestId) => request(`/orders/attempt/${encodeURIComponent(requestId)}`, { authRequired: true }),
+  quoteOrder: (body) => request("/orders/quote", { method: "POST", body, authRequired: true }),
   createOrder: (body) => request("/orders", { method: "POST", body, authRequired: true }),
   getMyOrders: () => request("/orders/mine", { authRequired: true }),
   getAllOrders: () => request("/orders", { authRequired: true }),
   getOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { authRequired: true }),
-  updateOrderStatus: (id, status) =>
-    request(`/orders/${id}/status`, { method: "PUT", body: { status }, authRequired: true }),
-  deleteOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { method: "DELETE", authRequired: true }),
+  updateOrderStatus: (id, status, collection = {}) =>
+    request(`/orders/${encodeURIComponent(id)}/status`, { method: "PUT", body: { status, ...collection }, authRequired: true }),
+  cancelOrder: (id) => request(`/orders/${encodeURIComponent(id)}/cancel`, { method: "PUT", body: {}, authRequired: true }),
 
   // Coupons
   getCoupons: () => request("/coupons", { authRequired: true }),

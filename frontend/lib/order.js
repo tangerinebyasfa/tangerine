@@ -1,6 +1,6 @@
 export const ORDER_PREFIX = "TGNR";
 export const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
-export const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
+export const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded", "cancelled"];
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -127,4 +127,8 @@ export function createOrderSnapshot(payload = {}) {
     total,
     currency: normalizeText(payload.currency) || "INR",
   };
+}
+
+export function allowedOrderTransitions(status) {
+  return { pending: ["processing", "cancelled"], processing: ["shipped", "cancelled"], shipped: ["delivered"], delivered: [], cancelled: [] }[status] || [];
 }

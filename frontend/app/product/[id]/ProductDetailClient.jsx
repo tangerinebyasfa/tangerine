@@ -294,7 +294,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
 
     const structuredSizes = Array.isArray(productData?.sizeOptions) ? productData.sizeOptions : [];
 
-    return DEFAULT_SIZES.map((size) => {
+    return [...new Set([...DEFAULT_SIZES, ...selectedSizes, ...structuredSizes.map(item => item.label)])].map((size) => {
       const structured = structuredSizes.find((item) => item?.label === size);
       if (structured) {
         return {
@@ -322,7 +322,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       return;
     }
 
-    addItem(product, { size, color, quantity: 1 });
+    if (!addItem(product, { size, color, quantity: 1 })) return;
     toast.success("Added to bag");
   }
 
@@ -332,7 +332,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       return;
     }
 
-    addItem(product, { size, color, quantity: 1 });
+    if (!addItem(product, { size, color, quantity: 1 })) return;
     router.push("/checkout");
   }
 

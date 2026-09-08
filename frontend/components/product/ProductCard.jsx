@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
@@ -18,6 +19,7 @@ function slugify(value) {
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
+  const router = useRouter();
   const primaryImage = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
   const secondaryImage = normalizeImageUrl(product.images?.[1]) || primaryImage;
   const onSale = product.compareAtPrice && product.compareAtPrice > product.price;
@@ -29,6 +31,7 @@ export default function ProductCard({ product }) {
     event.stopPropagation();
 
     if (isSoldOut) return;
+    if (product.sizes?.length || product.sizeOptions?.length || product.colors?.length) { router.push(href); return; }
     addItem(product, { quantity: 1 });
   }
 

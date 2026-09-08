@@ -24,29 +24,11 @@ function getOrderTotal(order) {
   return Number.isFinite(amount) ? amount : 0;
 }
 
-function shouldSubtractFromActualRevenue(order) {
-  const status = String(order?.status || "").trim().toLowerCase();
-  const paymentStatus = String(order?.paymentStatus || "").trim().toLowerCase();
-
-  return (
-    status === "cancelled" ||
-    status === "cancel" ||
-    status === "returned" ||
-    status === "return" ||
-    status.startsWith("return-") ||
-    status.startsWith("returned-") ||
-    paymentStatus === "refunded"
-  );
-}
-
 function getActualRevenue(orders) {
-  return Math.max(
-    0,
-    toArray(orders).reduce((sum, order) => {
-      const amount = getOrderTotal(order);
-      return shouldSubtractFromActualRevenue(order) ? sum - amount : sum + amount;
-    }, 0)
-  );
+  return toArray(orders).reduce((sum, order) => {
+    if (order.paymentStatus !== "paid" || order.status === "cancelled") return sum;
+    return sum + getOrderTotal(order);
+  }, 0);
 }
 
 export default function AdminDashboard() {
@@ -109,8 +91,8 @@ export default function AdminDashboard() {
     { label: "Orders", value: stats.orders },
     { label: "Reached Customers", value: stats.messages },
     { label: "Notifications", value: stats.notifications || 0 },
-    { label: "Revenue", value: formatINR(stats.revenue) },
-    { label: "Actual Revenue", value: formatINR(stats.actualRevenue) },
+    { label: "Order Value", value: formatINR(stats.revenue) },
+    { label: "Collected Revenue", value: formatINR(stats.actualRevenue) },
     { label: "Blogs", value: stats.blogs },
     { label: "Gallery", value: stats.gallery },
     { label: "Users", value: stats.users },

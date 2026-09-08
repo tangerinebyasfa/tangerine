@@ -58,7 +58,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if isOwner(userId)
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "customer";
 
       allow read: if isOwner(userId) || isAdmin();
 
@@ -89,13 +90,12 @@ service cloud.firestore {
 
     // Orders belong to the signed-in user who created them; admins can read all.
     match /orders/{orderId} {
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+      allow create: if false; // Orders are created only by the validated server transaction.
 
       allow read: if isSignedIn()
         && (resource.data.userId == request.auth.uid || isAdmin());
 
-      allow update, delete: if isAdmin();
+      allow update, delete: if false; // Status/inventory/payment changes use the server.
     }
 
     // Public product review feed contains only customer-facing review data.

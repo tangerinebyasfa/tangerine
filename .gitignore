@@ -1,0 +1,21 @@
+# Local environment files at every directory level. Commit templates only.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies and generated output
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.log
+.vercel/
+
+# Service account credentials and private keys
+*firebase-adminsdk*.json
+*service-account*.json
+*serviceAccount*.json
+*.pem
+*.key

@@ -1,6 +1,8 @@
 const { db, admin } = require("../config/firebaseAdmin");
 
 const couponsRef = db.collection("coupons");
+const ordersRef = db.collection("orders");
+const cod = require("../lib/cod");
 
 function text(value) {
   return String(value ?? "").trim();
@@ -87,7 +89,7 @@ function getEligibleSubtotal(coupon, items, productMap) {
   return items.reduce((sum, item) => {
     const product = productMap.get(item.productId);
     return product && couponAppliesToProduct(coupon, { id: item.productId, ...product })
-      ? sum + number(product.price) * Number(item.quantity || 1)
+      ? sum + cod.price(product) * item.quantity
       : sum;
   }, 0);
 }
@@ -181,11 +183,11 @@ exports.getPublicCoupons = async (req, res) => {
 
 exports.validateCoupon = async (req, res) => {
   try {
-    const { items = [] } = req.body || {};
+    const items = cod.normalizeItems(req.body?.items);
     const productIds = [...new Set(items.map((item) => text(item.productId)).filter(Boolean))];
     const productSnapshots = await Promise.all(productIds.map((id) => db.collection("products").doc(id).get()));
     const productMap = new Map(productSnapshots.filter((snap) => snap.exists).map((snap) => [snap.id, snap.data()]));
-    const actualSubtotal = items.reduce((sum, item) => sum + number(productMap.get(item.productId)?.price) * Number(item.quantity || 1), 0);
+    const actualSubtotal = items.reduce((sum, item) => sum + cod.price(productMap.get(item.productId)) * item.quantity, 0);
     const result = await validateCouponForOrder({ code: req.body?.code, userId: req.user.uid, items, productMap, subtotal: actualSubtotal });
     res.json(result);
   } catch (err) {

@@ -71,7 +71,7 @@ export default function OrderDetailsView({
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Payment</p>
           <p className="mt-2 font-medium text-ink">{String(order?.paymentMethod || "cod").toUpperCase()}</p>
-          <p className="mt-1 text-sm text-ink/55">{String(order?.paymentStatus || "pending")}</p>
+          <p className="mt-1 text-sm text-ink/55">{order?.paymentMethod === "cod" ? (order.status === "cancelled" ? "Cancelled ? no payment due" : order.paymentStatus === "paid" ? "Cash collected" : "Pay cash on delivery") : String(order?.paymentStatus || "pending")}</p>
         </div>
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Status</p>

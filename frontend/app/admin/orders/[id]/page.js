@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Loader2, Save, Trash2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, Download, Loader2, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import OrderDetailsView from "../../../../components/order/OrderDetailsView";
 import { api } from "../../../../lib/api";
-import { formatOrderDateTime, getOrderDisplayId, ORDER_STATUSES, normalizeOrderStatus, summarizeShippingAddress } from "../../../../lib/order";
+import { formatOrderDateTime, getOrderDisplayId, allowedOrderTransitions, normalizeOrderStatus, summarizeShippingAddress } from "../../../../lib/order";
 import { formatINR } from "../../../../lib/currency";
 
 function escapeHtml(value) {
@@ -21,13 +21,14 @@ function escapeHtml(value) {
 
 export default function AdminOrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const orderId = params?.id ? String(params.id) : "";
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("pending");
+  const [cashCollected, setCashCollected] = useState(false);
+  const [amountCollected, setAmountCollected] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -66,30 +67,14 @@ export default function AdminOrderDetailPage() {
 
     setSaving(true);
     try {
-      const updated = await api.updateOrderStatus(order.id, status);
+      const updated = await api.updateOrderStatus(order.id, status, { cashCollected, amountCollected: Number(amountCollected) });
       setOrder(updated);
+      setCashCollected(false);
+      setAmountCollected("");
       setStatus(normalizeOrderStatus(updated?.status));
       toast.success("Order status updated");
     } catch (err) {
       toast.error(err?.message || "Unable to update status");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDeleteOrder() {
-    const confirmed = window.confirm(
-      `Delete order ${order?.orderId || order?.id}? This cannot be undone.`
-    );
-    if (!confirmed) return;
-
-    setSaving(true);
-    try {
-      await api.deleteOrder(order.id);
-      toast.success("Order deleted");
-      router.push("/admin/orders");
-    } catch (err) {
-      toast.error(err?.message || "Unable to delete order");
     } finally {
       setSaving(false);
     }
@@ -198,7 +183,7 @@ export default function AdminOrderDetailPage() {
                     onChange={(event) => setStatus(normalizeOrderStatus(event.target.value))}
                     className="min-w-[220px] border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none"
                   >
-                    {ORDER_STATUSES.map((item) => (
+                    {[order.status, ...allowedOrderTransitions(order.status)].map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>
@@ -206,26 +191,23 @@ export default function AdminOrderDetailPage() {
                   </select>
                 </label>
 
+                {status === "delivered" && order.status !== "delivered" ? <div className="space-y-2 text-sm">
+                  <label className="block">Cash collected (expected {formatINR(order.total)})
+                    <input aria-label="Cash amount collected" type="number" min="0" step="0.01" value={amountCollected} onChange={e => setAmountCollected(e.target.value)} className="block border p-2" />
+                  </label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={cashCollected} onChange={e => setCashCollected(e.target.checked)} /> I confirm delivery and receipt of the cash.</label>
+                </div> : null}
                 <button
                   type="button"
                   onClick={handleSaveStatus}
-                  disabled={saving || !dirty}
+                  disabled={saving || !dirty || (status === "delivered" && (!cashCollected || amountCollected === ""))}
                   className="inline-flex items-center justify-center gap-2 bg-tangerine px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-tangerine-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Save Status
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleDeleteOrder}
-                  disabled={saving}
-                  aria-label="Delete order"
-                  title="Delete order"
-                  className="inline-flex h-11 w-11 items-center justify-center border border-rose-200 bg-white text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+
               </div>
             </div>
           </div>
@@ -235,7 +217,7 @@ export default function AdminOrderDetailPage() {
           <div className="border border-ink/10 bg-white p-4 sm:p-6">
             <p className="font-display text-2xl text-ink">Admin Notes</p>
             <p className="mt-2 text-sm leading-6 text-ink/60">
-              Use the status selector above to keep Firestore and the storefront aligned. All status changes are written through the secure update endpoint.
+              Move orders forward as they are fulfilled. Cancel only before shipment. Confirm the exact cash amount when marking an order delivered; completed orders are retained for your records.
             </p>
           </div>
         </div>

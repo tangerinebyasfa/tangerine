@@ -172,6 +172,10 @@ const appConfig = {
 const isPlaceholderValue = (value) => typeof value === 'string' && /YOUR_KEY_HERE|REPLACE_ME|xxxxx/i.test(value);
 const shouldSkipFirebase = process.env.SKIP_FIREBASE === 'true' || process.env.SKIP_FIREBASE === '1' || isPlaceholderValue(process.env.FIREBASE_PRIVATE_KEY) || isPlaceholderValue(process.env.FIREBASE_CLIENT_EMAIL);
 
+if (process.env.NODE_ENV === 'production' && shouldSkipFirebase) {
+  throw new Error('Firebase mock mode is disabled in production. Configure real server credentials.');
+}
+
 // Initialize Admin SDK using best available credentials.
 try {
   // Determine effective project id and expose it for Google libraries

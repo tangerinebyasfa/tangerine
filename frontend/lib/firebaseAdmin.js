@@ -118,7 +118,7 @@ export async function authenticateRequest(request) {
     throw error;
   }
 
-  const decoded = await auth.verifyIdToken(token);
+  const decoded = await auth.verifyIdToken(token, true);
   const db = getAdminDb();
   const userDoc = db ? await db.collection("users").doc(decoded.uid).get() : null;
   const role = userDoc?.exists ? userDoc.data()?.role : "customer";

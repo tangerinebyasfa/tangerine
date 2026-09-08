@@ -15,7 +15,7 @@ async function verifyToken(req, res, next) {
       return res.status(401).json({ error: "No auth token provided" });
     }
 
-    const decoded = await auth.verifyIdToken(token);
+    const decoded = await auth.verifyIdToken(token, true);
 
     const userDoc = await db.collection("users").doc(decoded.uid).get();
     const role = userDoc.exists ? userDoc.data().role : "customer";

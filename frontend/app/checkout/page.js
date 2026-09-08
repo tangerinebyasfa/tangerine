@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
@@ -13,7 +13,6 @@ import { formatINR } from "../../lib/currency";
 import { buildAddressSummary } from "../../lib/accountFirestore";
 import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X } from "lucide-react";
 
-const SHIPPING_FLAT_RATE = 8;
 const ZIP_LOOKUP_MIN_LENGTH = 6;
 
 const PAYMENT_OPTIONS = [
@@ -21,16 +20,10 @@ const PAYMENT_OPTIONS = [
     value: "cod",
     label: "Cash on Delivery",
     description: "Pay when your order is delivered.",
-    meta: "FREE",
+    meta: "Pay on delivery",
     icon: Package,
   },
-  {
-    value: "card",
-    label: "Credit / Debit Card",
-    description: "Secure online payment.",
-    meta: "Instant",
-    icon: CreditCard,
-  },
+
 ];
 
 function addressToForm(address, profile) {
@@ -89,7 +82,7 @@ function getPreferredAddress(addresses, profile, selectedAddressId) {
 }
 
 function CheckoutForm() {
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal: cartSubtotal, clearCart } = useCart();
   const { user, profile } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -109,11 +102,46 @@ function CheckoutForm() {
     country: "India",
     phone: profile?.phone || "",
   });
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const paymentMethod = "cod";
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [quote, setQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
+  const [orderError, setOrderError] = useState("");
+  const [quoteRevision, setQuoteRevision] = useState(0);
+  const placing = useRef(false);
+  const checkoutItems = useMemo(() => items.map(({ productId, quantity, size, color }) => ({ productId, quantity, size, color })), [items]);
+  const quoteKey = JSON.stringify([checkoutItems, appliedCoupon?.code || "", user?.uid, quoteRevision]);
+  const currentQuote = quote?.key === quoteKey ? quote : null;
+
+  useEffect(() => {
+    let active = true;
+    setQuoteError("");
+    if (!user || !checkoutItems.length) { setQuote(null); return; }
+    async function loadQuote() {
+      try {
+        let attempt = null;
+        try { attempt = JSON.parse(sessionStorage.getItem(`cod-checkout-${user.uid}`)); } catch {}
+        if (attempt?.requestId) {
+          const recovered = await api.recoverOrder(attempt.requestId);
+          if (!active) return;
+          if (recovered) {
+            sessionStorage.removeItem(`cod-checkout-${user.uid}`);
+            clearCart();
+            router.push(`/checkout/success/${recovered.id}`);
+            return;
+          }
+        }
+        const result = await api.quoteOrder({ items: checkoutItems, couponCode: appliedCoupon?.code || "" });
+        if (active) setQuote({ ...result, key: quoteKey });
+      } catch (error) { if (active) { setQuote(null); setQuoteError(error.message); } }
+    }
+    loadQuote();
+    return () => { active = false; };
+  }, [quoteKey]);
+
   const selectedPayment = PAYMENT_OPTIONS.find((option) => option.value === paymentMethod) || PAYMENT_OPTIONS[0];
   const hasSavedAddresses = addresses.length > 0;
   const hasMultipleSavedAddresses = addresses.length > 1;
@@ -230,9 +258,10 @@ function CheckoutForm() {
     };
   }, [address.zip]);
 
-  const shipping = items.length ? SHIPPING_FLAT_RATE : 0;
-  const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
-  const total = Math.max(0, subtotal + shipping - couponDiscount);
+  const subtotal = currentQuote?.subtotal ?? cartSubtotal;
+  const shipping = currentQuote?.shipping ?? 8;
+  const couponDiscount = currentQuote?.discount ?? 0;
+  const total = currentQuote?.total ?? subtotal + shipping;
 
   async function handleApplyCoupon() {
     const code = couponCode.trim().toUpperCase();
@@ -244,13 +273,9 @@ function CheckoutForm() {
     setCouponLoading(true);
     setCouponError("");
     try {
-      const result = await api.validateCoupon({
-        code,
-        subtotal,
-        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity, lineTotal: item.price * item.quantity })),
-      });
-      setAppliedCoupon(result);
-      setCouponCode(result.code);
+      const result = await api.quoteOrder({ couponCode: code, items: checkoutItems });
+      setAppliedCoupon({ code: result.couponCode });
+      setCouponCode(result.couponCode);
       toast.success("Coupon applied");
     } catch (error) {
       setAppliedCoupon(null);
@@ -272,42 +297,37 @@ function CheckoutForm() {
       toast.error("Your bag is empty");
       return;
     }
+    if (placing.current || !currentQuote) return;
+    placing.current = true;
     setLoading(true);
+    setOrderError("");
     try {
       const orderPayload = {
-        customerName: address.fullName || profile?.displayName || "",
-        customerEmail: profile?.email || user?.email || "",
-        customerPhone: address.phone || profile?.phone || "",
         shippingAddress: address,
-        paymentMethod,
-        paymentStatus: "pending",
-        items: items.map(({ productId, slug, name, price, size, color, quantity, image, lineId }) => ({
-          productId,
-          slug,
-          name,
-          price,
-          unitPrice: price,
-          size,
-          color,
-          quantity,
-          image,
-          lineId,
-        })),
-        subtotal,
-        shipping,
+        paymentMethod: "cod",
+        items: checkoutItems,
         couponCode: appliedCoupon?.code || "",
-        discount: couponDiscount,
-        total,
-        currency: "INR",
+        quoteId: currentQuote.quoteId,
       };
-
-      const created = await api.createOrder(orderPayload);
+      // Retain the same request after a timeout or page refresh. Store no address.
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(orderPayload)));
+      const fingerprint = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+      const storageKey = `cod-checkout-${user.uid}`;
+      let attempt = null;
+      try { attempt = JSON.parse(sessionStorage.getItem(storageKey)); } catch {}
+      if (attempt?.fingerprint !== fingerprint) {
+        attempt = { fingerprint, requestId: crypto.randomUUID() };
+        sessionStorage.setItem(storageKey, JSON.stringify(attempt));
+      }
+      const created = await api.createOrder({ ...orderPayload, requestId: attempt.requestId });
+      sessionStorage.removeItem(storageKey);
       clearCart();
-      toast.success("Order placed!");
+      toast.success("Cash-on-delivery order placed!");
       router.push(`/checkout/success/${created.orderId || created.id}`);
     } catch (err) {
-      toast.error(err.message || "Could not place order");
+      setOrderError(err.message || "Could not place order. Please retry.");
     } finally {
+      placing.current = false;
       setLoading(false);
     }
   }
@@ -319,7 +339,7 @@ function CheckoutForm() {
           <p className="text-xs tracking-[0.35em] text-tangerine uppercase">Almost there</p>
           <h1 className="font-display text-4xl text-ink sm:text-5xl">Checkout</h1>
           <p className="max-w-2xl text-sm leading-6 text-ink/60 sm:text-base">
-            Review your shipping details, pick a payment method, and place your order securely.
+            Review your delivery details and the confirmed total. Pay cash when your order arrives.
           </p>
         </div>
         <div className="flex items-start gap-3 border border-ink/10 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
@@ -541,7 +561,7 @@ function CheckoutForm() {
               </div>
               <div>
                 <h3 className="font-display text-2xl text-ink">Payment Method</h3>
-                <p className="mt-1 text-sm text-ink/55">Choose your preferred payment option</p>
+                <p className="mt-1 text-sm text-ink/55">Cash on delivery is available for this order.</p>
               </div>
             </div>
 
@@ -563,7 +583,7 @@ function CheckoutForm() {
                       type="radio"
                       name="payment"
                       checked={checked}
-                      onChange={() => setPaymentMethod(option.value)}
+                      readOnly
                       className="mt-1"
                     />
                     <div className={`grid h-11 w-11 shrink-0 place-items-center ${checked ? "bg-tangerine text-white" : "bg-[#fff3ea] text-tangerine"}`}>
@@ -624,7 +644,7 @@ function CheckoutForm() {
                       </p>
                       <p className="mt-1 text-sm text-ink/60">Qty: {item.quantity}</p>
                     </div>
-                    <span className="shrink-0 font-medium text-ink">{formatINR(item.price * item.quantity)}</span>
+                    <span className="shrink-0 font-medium text-ink">{formatINR(currentQuote?.items?.[items.indexOf(item)]?.lineTotal ?? item.price * item.quantity)}</span>
                   </div>
                 </div>
               </div>
@@ -658,8 +678,15 @@ function CheckoutForm() {
             </div>
           </div>
 
-            <Button type="submit" loading={loading} className="mt-6 w-full">
-              Place Order
+            <div className="mt-4 text-sm" aria-live="polite">
+              {!currentQuote && !quoteError && items.length > 0 ? <p>Confirming current prices and stock?</p> : null}
+              {quoteError ? <p className="text-rose-700">{quoteError}</p> : null}
+              {orderError ? <p className="text-rose-700">{orderError}</p> : null}
+              {(quoteError || orderError) ? <button type="button" disabled={loading} onClick={() => { setQuote(null); setQuoteRevision(value => value + 1); }} className="mt-2 underline">Refresh total</button> : null}
+              <p className="mt-2 text-ink/60">You can cancel from your order details before shipment.</p>
+            </div>
+            <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading} className="mt-6 w-full">
+              Place Cash-on-Delivery Order
             </Button>
           </div>
 
@@ -668,8 +695,8 @@ function CheckoutForm() {
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 text-tangerine" />
                 <div>
-                  <p className="font-medium text-ink">Secure Payments</p>
-                  <p className="text-sm text-ink/55">100% secure and encrypted transactions</p>
+                  <p className="font-medium text-ink">Cash on Delivery</p>
+                  <p className="text-sm text-ink/55">No online payment is required. Pay the confirmed total on delivery.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

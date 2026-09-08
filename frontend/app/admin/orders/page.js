@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Filter, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Search, Filter, ExternalLink, Loader2 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { formatINR } from "../../../lib/currency";
 import { formatOrderDate, getOrderDisplayId, getOrderItemCount, normalizeOrderStatus } from "../../../lib/order";
@@ -31,7 +31,6 @@ export default function AdminOrdersPage() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -83,21 +82,6 @@ export default function AdminOrdersPage() {
       return haystack.includes(term);
     });
   }, [orders, query, statusFilter]);
-
-  async function handleDeleteOrder(order) {
-    const confirmed = window.confirm(`Delete order ${getOrderDisplayId(order)}? This cannot be undone.`);
-    if (!confirmed) return;
-
-    setDeletingId(order.id);
-    try {
-      await api.deleteOrder(order.id);
-      setOrders((prev) => prev.filter((item) => item.id !== order.id));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setDeletingId("");
-    }
-  }
 
   const totals = useMemo(
     () => ({
@@ -197,7 +181,7 @@ export default function AdminOrdersPage() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {items.slice(0, 4).map((item, index) => (
                         <span key={`${order.id}-${item.productId || item.name || index}`} className="border border-ink/10 bg-[#fffaf6] px-2 py-1 text-xs text-ink/70">
-                          {item.name || "Product"} x {item.quantity || 1}
+                          {item.productName || item.name || "Product"} x {item.quantity || 1}
                         </span>
                       ))}
                     </div>
@@ -208,16 +192,6 @@ export default function AdminOrdersPage() {
                       <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Shipping</p>
                       <p className="mt-1 max-w-sm text-sm leading-6 text-ink/65">{order.shippingAddressSummary || order.shippingAddress?.line1 || "—"}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteOrder(order)}
-                      disabled={deletingId === order.id}
-                      aria-label="Delete order"
-                      title="Delete order"
-                      className="inline-flex h-11 w-11 items-center justify-center border border-rose-200 bg-white text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
                     <Link
                       href={`/admin/orders/${encodeURIComponent(order.id)}`}
                       aria-label="View order details"

@@ -59,33 +59,6 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function DELETE(request, { params }) {
-  try {
-    const db = getAdminDb();
-    if (!db) {
-      return proxyToBackend(request, `/orders/${params.id}`);
-    }
-
-    await requireAdminRequest(request);
-
-    const id = String(params.id || "").trim();
-    const ref = db.collection("orders").doc(id);
-    const snap = await ref.get();
-
-    if (!snap.exists) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    await ref.delete();
-    return NextResponse.json({ success: true, id });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        error: "Failed to delete order",
-        detail: process.env.NODE_ENV === "production" ? undefined : error.message,
-      },
-      { status: error.status || 500 }
-    );
-  }
+export async function DELETE() {
+  return NextResponse.json({ error: "Orders are retained. Cancel an eligible order instead." }, { status: 405 });
 }

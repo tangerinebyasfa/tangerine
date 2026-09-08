@@ -61,9 +61,8 @@ message form with a preferred-location option.
 - Contact the team or request product availability notifications.
 - Use layouts adapted for desktop and mobile screens.
 
-Prices are displayed in Indian rupees (INR). Checkout includes cash-on-delivery
-and card selections; the card option is currently a placeholder, with no live
-payment gateway integrated.
+Prices are displayed in Indian rupees (INR). Checkout supports cash on delivery, with server-confirmed totals and inventory.
+See [COD_FLOW.md](COD_FLOW.md) for cancellation, delivery, testing, and deployment requirements.
 
 ### For the Tangerine Team
 
@@ -217,11 +216,19 @@ For deployment, configure the frontend origin and API URL for the hosted
 services and provide server credentials in each runtime that needs them.
 Keep the Express service available for features and fallbacks that use it.
 
-The repository currently has no configured standalone ESLint/type-check setup
-or automated test suite. `npm run lint` starts the Next.js ESLint setup prompt.
+Run `npm test` in `backend/` for the cash-on-delivery transaction and API tests.
+There is no configured standalone ESLint/type-check setup; `npm run lint` starts
+the Next.js ESLint setup prompt.
 See [CLEANUP_REPORT.md](CLEANUP_REPORT.md) for the cleanup inventory, validation
 results, and remaining verification limits.
 
 ---
 
 Tangerine brings together fashion, learning, and the confidence to create.
+
+
+
+
+
+
+

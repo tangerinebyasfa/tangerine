@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2, PackageCheck } from "lucide-react";
 import AuthGuard from "../../../components/auth/AuthGuard";
@@ -14,6 +15,15 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  async function cancelOrder() {
+    if (cancelling || !window.confirm("Cancel this order? You will not need to pay.")) return;
+    setCancelling(true);
+    try { setOrder(await api.cancelOrder(order.id)); toast.success("Order cancelled. No payment is due."); }
+    catch (err) { toast.error(err.message); }
+    finally { setCancelling(false); }
+  }
 
   useEffect(() => {
     let active = true;
@@ -67,6 +77,7 @@ export default function OrderDetailPage() {
             title="Order Details"
             subtitle="This is the full receipt for your purchase, including shipping and item breakdown."
             actions={[
+              ["pending", "processing"].includes(order.status) ? <button key="cancel" type="button" disabled={cancelling} onClick={cancelOrder} className="border border-rose-200 px-4 py-2 text-sm text-rose-700 disabled:opacity-50">{cancelling ? "Cancelling?" : "Cancel order"}</button> : null,
               <Link key="back" href="/profile#orders" className="inline-flex items-center gap-2 border border-ink/10 bg-white px-4 py-2 text-sm text-ink transition-colors hover:bg-sand">
                 <ArrowLeft className="h-4 w-4" />
                 Back to profile

@@ -28,10 +28,9 @@ app.use(
       if (!origin) return callback(null, true);
 
       const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
-      const isVercelApp = /^https:\/\/.*\.vercel\.app$/i.test(origin);
-      const isAllowed = allowedOrigins.length === 0 || allowedOrigins.includes(origin);
+      const isAllowed = allowedOrigins.includes(origin);
 
-      if (isLocalhost || isVercelApp || isAllowed) {
+      if ((process.env.NODE_ENV !== "production" && isLocalhost) || isAllowed) {
         return callback(null, true);
       }
 
