@@ -121,7 +121,7 @@ function BrandPills() {
 
 export default function Footer() {
   return (
-    <footer className="mt-0 bg-ink text-paper sm:mt-10 lg:mt-24">
+    <footer className="bg-ink text-paper">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto hidden max-w-4xl flex-col items-center text-center lg:flex">
           <Image

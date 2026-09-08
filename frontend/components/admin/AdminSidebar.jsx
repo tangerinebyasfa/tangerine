@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/gallery", label: "Gallery" },
   { href: "/admin/blog", label: "Blog" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/returns", label: "Returns & Exchanges" },
   { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/reached-customers", label: "Reached Customers" },
   { href: "/admin/notifications", label: "Notifications" },

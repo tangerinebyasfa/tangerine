@@ -26,8 +26,8 @@ function getOrderTotal(order) {
 
 function getActualRevenue(orders) {
   return toArray(orders).reduce((sum, order) => {
-    if (order.paymentStatus !== "paid" || order.status === "cancelled") return sum;
-    return sum + getOrderTotal(order);
+    if (!["paid", "partially_refunded", "refunded"].includes(order.paymentStatus) || order.status === "cancelled") return sum;
+    return sum + Math.max(0, getOrderTotal(order) - Number(order.refundedAmount || 0));
   }, 0);
 }
 

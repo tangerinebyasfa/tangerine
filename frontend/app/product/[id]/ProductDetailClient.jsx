@@ -1,5 +1,7 @@
 "use client";
 
+import SizeGuide from "../../../components/product/SizeGuide";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -408,10 +410,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     {
       id: "size-guide",
       title: "Size Guide",
-      content:
-        product.sizeGuide ||
-        "Size guide information can be added for each product in the admin product form.",
-      kind: "text",
+      content: product.sizeGuide || "",
+      kind: "size-guide",
     },
     {
       id: "additional-info",
@@ -432,7 +432,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       id: "delivery",
       title: "Delivery & Returns",
       content:
-        product.deliveryInfo ||
+        product.returnEligible === false ? "This product is excluded from standard returns and size or colour exchanges. Contact us for help with a damaged or incorrect item." : product.deliveryInfo ||
         "Orders are typically dispatched within 1-3 business days. Delivery timelines may vary by location. Returns can be requested within 7 days of delivery if the product is unused and in original condition.",
       kind: "text",
     },
@@ -486,6 +486,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
         {sizeOptions.length > 0 && (
           <div className="mb-6">
             <p className="text-xs tracking-widest uppercase text-ink/60 mb-3">Size</p>
+            <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide & measuring tips</summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
             <div className="flex flex-wrap gap-2">
               {sizeOptions.map((item) => (
                 <button
@@ -680,6 +681,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   );
 
   function renderAccordionContent(item) {
+    if (item.kind === "size-guide") return <SizeGuide guide={item.content} selectedSize={size} productType={product.productType} />;
     if (item.kind === "table") {
       const rows = Array.isArray(item.content) ? item.content.filter((row) => row?.label || row?.value) : [];
 
@@ -905,6 +907,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
               {sizeOptions.length > 0 && (
                 <div className="mb-6">
                   <p className="text-xs tracking-widest uppercase text-ink/60 mb-3">Size</p>
+            <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide & measuring tips</summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
                   <div className="flex flex-wrap gap-2">
                     {sizeOptions.map((item) => (
                       <button

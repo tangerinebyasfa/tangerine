@@ -130,7 +130,8 @@ export async function PUT(request, { params }) {
       colors,
       availableAt:
         body.availableAt !== undefined ? normalizeList(body.availableAt) : normalizeList(current.availableAt),
-      sizeGuide: normalizeText(body.sizeGuide) || normalizeText(current.sizeGuide),
+      sizeGuide: body.sizeGuide !== undefined ? normalizeText(body.sizeGuide) : normalizeText(current.sizeGuide),
+      returnEligible: body.returnEligible !== undefined ? body.returnEligible !== false : current.returnEligible !== false,
       featured: body.featured !== undefined ? normalizeBoolean(body.featured) : !!current.featured,
       updatedAt: new Date(),
     };

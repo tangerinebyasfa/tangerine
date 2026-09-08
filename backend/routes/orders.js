@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const returns = require("../controllers/returnsController");
 const ctrl = require("../controllers/ordersController");
 const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 // Authenticated user
+router.get("/:id/returns", verifyToken, returns.listForOrder);
+router.post("/:id/returns", verifyToken, returns.create);
 router.get("/attempt/:requestId", verifyToken, ctrl.recoverOrder);
 router.post("/quote", verifyToken, ctrl.quoteOrder);
 router.put("/:id/cancel", verifyToken, ctrl.cancelOrder);

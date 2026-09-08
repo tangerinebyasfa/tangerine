@@ -293,6 +293,11 @@ export const api = {
   updateBlog: (id, body) => request(`/blogs/${id}`, { method: "PUT", body, authRequired: true }),
   deleteBlog: (id) => request(`/blogs/${id}`, { method: "DELETE", authRequired: true }),
 
+  getOrderReturns: (id) => request(`/orders/${encodeURIComponent(id)}/returns`, { authRequired: true }),
+  requestReturn: (id, body) => request(`/orders/${encodeURIComponent(id)}/returns`, { method: "POST", body, authRequired: true }),
+  getReturns: () => request("/returns", { authRequired: true }),
+  updateReturn: (id, body) => request(`/returns/${encodeURIComponent(id)}`, { method: "PUT", body, authRequired: true }),
+
   // Orders
   recoverOrder: (requestId) => request(`/orders/attempt/${encodeURIComponent(requestId)}`, { authRequired: true }),
   quoteOrder: (body) => request("/orders/quote", { method: "POST", body, authRequired: true }),

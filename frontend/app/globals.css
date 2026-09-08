@@ -2,6 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+.newsletter-section {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  min-height: 320px;
+  padding: 36px 20px;
+  background: #645d49;
+}
+.newsletter-photo {
+  position: absolute;
+  z-index: -2;
+  inset: -64px 0;
+  transform: translate3d(0, var(--newsletter-shift, 0px), 0);
+}
+.newsletter-shade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: rgba(14, 20, 19, 0.48);
+}
+.newsletter-panel {
+  width: min(100%, 640px);
+  padding: 28px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(24, 31, 28, 0.13);
+  text-align: center;
+}
+.newsletter-form-row { display: flex; }
+@media (max-width: 639px) {
+  .newsletter-section { min-height: 340px; padding: 28px 16px; }
+  .newsletter-panel { padding: 24px 16px; }
+  .newsletter-form-row { flex-direction: column; gap: 8px; }
+  .newsletter-photo { inset: 0; transform: none; }
+  .newsletter-photo img { object-position: 27% center; }
+  .newsletter-shade { background: rgba(14, 20, 19, 0.58); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .newsletter-photo { transform: none; }
+}
+
 @layer base {
   body {
     @apply overflow-x-hidden bg-paper text-ink font-sans antialiased;

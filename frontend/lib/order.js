@@ -1,6 +1,6 @@
 export const ORDER_PREFIX = "TGNR";
 export const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
-export const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded", "cancelled"];
+export const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded", "partially_refunded", "cancelled"];
 
 function normalizeText(value) {
   return String(value || "").trim();

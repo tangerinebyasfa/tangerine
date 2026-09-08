@@ -98,6 +98,7 @@ export async function POST(request) {
       colors,
       availableAt: normalizeList(body.availableAt),
       sizeGuide: normalizeText(body.sizeGuide),
+      returnEligible: body.returnEligible !== false,
       featured: normalizeBoolean(body.featured),
       createdAt: new Date(),
       updatedAt: new Date(),

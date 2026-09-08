@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import Spinner from "../../components/ui/Spinner";
-import ProductCard from "../../components/product/ProductCard";
+import ProductResults from "../../components/product/ProductResults";
 import { api } from "../../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
@@ -128,11 +128,7 @@ function SearchResultsPage({ searchTerm, products, loading }) {
           No products found for this search.
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <div className="mt-6"><ProductResults products={products} /></div>
       )}
     </div>
   );

@@ -47,6 +47,7 @@ app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/subcategories", subcategoriesRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/returns", require("./routes/returns"));
 app.use("/api/users", usersRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/blogs", blogsRoutes);

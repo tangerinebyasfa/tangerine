@@ -46,7 +46,7 @@ function catalogItems(items, productMap) {
     }
     quantities.set(item.productId, (quantities.get(item.productId) || 0) + item.quantity);
     const unitPrice = price(product);
-    return { ...item, productName: text(product.name) || 'Product', productSlug: text(product.slug), productImage: text(product.image || product.images?.[0]), unitPrice, lineTotal: money(unitPrice * item.quantity) };
+    return { ...item, returnEligible: product.returnEligible !== false, productName: text(product.name) || 'Product', productSlug: text(product.slug), productImage: text(product.image || product.images?.[0]), unitPrice, lineTotal: money(unitPrice * item.quantity) };
   });
   for (const [id, count] of quantities) {
     if (count > 99 || productMap.get(id).stock < count) fail(`Insufficient stock for ${productMap.get(id).name || 'product'}. Please update your bag.`, 409);

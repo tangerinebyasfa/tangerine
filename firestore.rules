@@ -98,6 +98,12 @@ service cloud.firestore {
       allow update, delete: if false; // Status/inventory/payment changes use the server.
     }
 
+    // Return and exchange decisions, stock changes and refunds are server-only.
+    match /returnRequests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
     // Public product review feed contains only customer-facing review data.
     match /productReviews/{productId}/items/{reviewId} {
       allow read: if true;

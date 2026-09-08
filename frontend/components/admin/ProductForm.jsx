@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { api } from "../../lib/api";
 import { normalizeImageUrl } from "../../lib/image";
+import SizeGuide from "../product/SizeGuide";
+import { parseSizeGuide } from "../../lib/sizeGuide.mjs";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 
@@ -28,6 +30,7 @@ const emptyForm = {
   sizes: "",
   colors: "",
   sizeGuide: "",
+  returnEligible: true,
   materials: "",
   washCare: "",
   deliveryInfo: "",
@@ -110,6 +113,7 @@ function normalizeForm(product = null) {
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
     colors: Array.isArray(product.colors) ? product.colors.join(", ") : "",
     sizeGuide: toTextValue(product.sizeGuide),
+    returnEligible: product.returnEligible !== false,
     materials: toTextValue(product.materials),
     washCare: toTextValue(product.washCare),
     deliveryInfo: toTextValue(product.deliveryInfo),
@@ -168,6 +172,7 @@ export default function ProductForm({ initialProduct = null }) {
   }
 
   function buildPayload() {
+    if (parseSizeGuide(form.sizeGuide).error) throw new Error(parseSizeGuide(form.sizeGuide).error);
     const images = toCommaList(form.images).map((image) => normalizeImageUrl(image)).filter(Boolean);
     const sizes = toCommaList(form.sizes);
     const colors = toCommaList(form.colors);
@@ -188,6 +193,7 @@ export default function ProductForm({ initialProduct = null }) {
       sizes,
       colors,
       sizeGuide: trimText(form.sizeGuide),
+      returnEligible: form.returnEligible,
       materials: trimText(form.materials),
       washCare: trimText(form.washCare),
       deliveryInfo: trimText(form.deliveryInfo),
@@ -379,11 +385,15 @@ export default function ProductForm({ initialProduct = null }) {
             onChange={(e) => handleChange("colors", e.target.value)}
           />
           <Input
-            label="Size Guide"
+            label="Size Guide ? notes or measurement table"
+            placeholder={"Body measurements\nSize | Chest (cm) | Waist (cm)\nEnter your product measurements, one size per row."}
             textarea
             value={form.sizeGuide}
             onChange={(e) => handleChange("sizeGuide", e.target.value)}
           />
+          <p className="text-sm text-ink/60">Separate columns with | and put each size on its own line. Label centimetre columns with (cm) to enable inch conversion. State whether these are body or garment measurements; use only verified product measurements.</p>
+          {form.sizeGuide && <details className="border p-3"><summary className="cursor-pointer">Preview size guide</summary><div className="mt-3"><SizeGuide guide={form.sizeGuide} productType={form.productType} /></div></details>}
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.returnEligible} onChange={e => handleChange("returnEligible", e.target.checked)} /> Eligible for standard returns and exchanges</label>
           <Input
             label="Materials"
             textarea

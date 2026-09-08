@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Isolate verification builds from an already-running local dev server.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   async headers() {
     return [
       {

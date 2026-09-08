@@ -212,6 +212,7 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
 
+          <Link href="/admin/returns" className="inline-block text-sm text-tangerine underline">Manage returns and exchanges</Link>
           <OrderDetailsView order={order} title="Full Order" subtitle="Complete customer, delivery, payment, and product information." showCustomer />
 
           <div className="border border-ink/10 bg-white p-4 sm:p-6">

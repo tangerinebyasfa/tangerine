@@ -10,7 +10,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
-import ProductCard from "../../../components/product/ProductCard";
+import ProductResults from "../../../components/product/ProductResults";
 import PageHeader from "../../../components/ui/PageHeader";
 import Spinner from "../../../components/ui/Spinner";
 
@@ -242,11 +242,7 @@ export default function CategoryPage() {
       ) : products.length === 0 ? (
         <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ProductResults products={products} />
       )}
     </div>
   );

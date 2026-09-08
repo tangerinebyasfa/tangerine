@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2, PackageCheck } from "lucide-react";
 import AuthGuard from "../../../components/auth/AuthGuard";
+import OrderReturns from "../../../components/order/OrderReturns";
 import OrderDetailsView from "../../../components/order/OrderDetailsView";
 import { api } from "../../../lib/api";
 
@@ -83,7 +84,8 @@ export default function OrderDetailPage() {
                 Back to profile
               </Link>,
             ]}
-            footer={
+            footer={<>
+              <OrderReturns orderId={order.id} onChange={() => api.getOrder(order.id).then(setOrder).catch(() => {})} />
               <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                 <div className="flex items-start gap-3">
                   <PackageCheck className="mt-0.5 h-5 w-5" />
@@ -95,7 +97,7 @@ export default function OrderDetailPage() {
                   </div>
                 </div>
               </div>
-            }
+            </>}
           />
         ) : null}
       </div>

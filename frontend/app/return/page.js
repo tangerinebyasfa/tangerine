@@ -11,21 +11,22 @@ export default function ReturnsPolicyPage() {
         {
           title: "Return Eligibility",
           paragraphs: [
-            "Returns are generally accepted for unused items in their original condition and packaging within the return window shown on the product or order confirmation.",
+            "Submit a standard return or exchange request within 7 days of delivery. Items must be unused, with their original tags and packaging, and remain subject to store review.",
             "Items that are damaged through normal wear, altered, washed, or missing tags may not be eligible.",
           ],
         },
         {
           title: "How to Request a Return",
           paragraphs: [
-            "Contact our support team with your order details and the reason for the return.",
-            "Once your request is reviewed, we will share the next steps if the item qualifies.",
+            "Sign in, open your order from your profile, and use Returns & exchanges to select a purchased item and describe the reason. Each request covers all units in that purchased line.",
+            "Follow your request status and the store's instructions on the order page. Wait for approval before sending anything back. Contact support if you cannot submit a request online.",
           ],
         },
         {
           title: "Refunds and Exchanges",
           paragraphs: [
-            "Approved returns may be processed as a refund, replacement, or exchange depending on product availability and the reason for return.",
+            "Approved refunds cover the original item price after its share of any order discount; the original shipping charge is excluded from standard item refunds. Refunds are confirmed by the store after receipt and inspection.",
+            "Exchanges are for a different size or colour of the same product, subject to stock and approval. Courier and tracking details appear on your request when the replacement is shipped.",
           ],
         },
         {

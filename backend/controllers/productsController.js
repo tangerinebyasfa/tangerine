@@ -139,6 +139,10 @@ exports.createProduct = async (req, res) => {
       code,
       slug: slugify(body.slug || name || code),
       description: normalizeText(body.description),
+      sizeGuide: normalizeText(body.sizeGuide),
+      returnEligible: body.returnEligible !== false,
+      categorySlug: normalizeText(body.categorySlug),
+      categoryParentType: normalizeText(body.categoryParentType || body.productType),
       additionalInfo: normalizeList(body.additionalInfo),
       sizeOptions: normalizeList(body.sizeOptions),
       materials: normalizeList(body.materials),
@@ -183,6 +187,8 @@ exports.updateProduct = async (req, res) => {
     if ("code" in updates) {
       updates.code = normalizeText(updates.code) || updates.slug || slugify(updates.name || "");
     }
+    if ("sizeGuide" in updates) updates.sizeGuide = normalizeText(updates.sizeGuide);
+    if ("returnEligible" in updates) updates.returnEligible = updates.returnEligible !== false;
     if ("description" in updates) updates.description = normalizeText(updates.description);
     if ("additionalInfo" in updates) updates.additionalInfo = normalizeList(updates.additionalInfo);
     if ("sizeOptions" in updates) updates.sizeOptions = normalizeList(updates.sizeOptions);

@@ -6,6 +6,7 @@ import { CartProvider } from "../context/CartContext";
 import { WishlistProvider } from "../context/WishlistContext";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
+import SiteFooter from "../components/layout/SiteFooter";
 import CartDrawer from "../components/cart/CartDrawer";
 import ScrollToTopButton from "../components/ui/ScrollToTopButton";
 import { Toaster } from "react-hot-toast";
@@ -50,7 +51,7 @@ export default function RootLayout({ children }) {
               <Navbar />
               <CartDrawer />
               <main className="min-h-[70vh]">{children}</main>
-              <Footer />
+              <SiteFooter><Footer /></SiteFooter>
               <Toaster position="bottom-right" />
               <ScrollToTopButton />
             </CartProvider>

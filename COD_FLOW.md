@@ -37,8 +37,9 @@ actor, amount, timestamp and status history are recorded. Duplicate delivery
 updates do not append duplicate history. Collected revenue excludes unpaid COD
 orders. Orders cannot be deleted or reopened through these routes.
 
-After-shipment returns, failed-delivery reconciliation and refunds are separate
-store workflows, not pre-shipment cancellation. Existing non-COD or already-paid
+After-shipment returns and exchanges now have a separate request workflow; see
+[RETURNS_AND_SHOPPING.md](RETURNS_AND_SHOPPING.md). Failed-delivery reconciliation
+remains a store workflow, separate from pre-shipment cancellation. Existing non-COD or already-paid
 legacy orders require manual payment review before using this status flow.
 
 ## Server guarantees and boundaries
