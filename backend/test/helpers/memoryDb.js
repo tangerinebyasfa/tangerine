@@ -2,11 +2,11 @@ const assert = require('node:assert/strict');
 // Atomic in-memory Firestore adapter: staged writes roll back on failure and
 // concurrent transactions serialize. Rejects reads after writes like Firestore.
 class MemoryDb {
-  constructor() { this.data = new Map(); this.queue = Promise.resolve(); }
+  constructor() { this.data = new Map(); this.queue = Promise.resolve(); this.nextId = 0; }
   collection(name) { return this.query(name); }
   query(name, filters = [], max = Infinity) {
     return {
-      doc: id => this.ref(`${name}/${id}`),
+      doc: id => this.ref(`${name}/${id || `auto-${++this.nextId}`}`),
       where: (field, op, value) => this.query(name, [...filters, [field, value]], max),
       limit: value => this.query(name, filters, value),
       get: async () => {
@@ -24,8 +24,9 @@ class MemoryDb {
         get: async ref => { assert.equal(writes.length, 0, 'transaction reads must precede writes'); return ref.get(); },
         update: (ref, data) => { assert(this.data.has(ref.path)); writes.push([ref.path, { ...this.data.get(ref.path), ...data }]); },
         set: (ref, data) => writes.push([ref.path, data]),
+        delete: ref => writes.push([ref.path, undefined]),
       });
-      writes.forEach(([key, value]) => this.data.set(key, structuredClone(value)));
+      writes.forEach(([key, value]) => value === undefined ? this.data.delete(key) : this.data.set(key, structuredClone(value)));
       return result;
     });
     this.queue = run.catch(() => {});

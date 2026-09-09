@@ -35,12 +35,15 @@ export default function AdminCouponsPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
   async function load() {
     setLoading(true);
+    setLoadError("");
     try {
       const [couponItems, productItems, categoryItems] = await Promise.all([
         api.getCoupons(),
@@ -51,7 +54,7 @@ export default function AdminCouponsPage() {
       setProducts(Array.isArray(productItems) ? productItems : []);
       setCategories(Array.isArray(categoryItems) ? categoryItems : []);
     } catch (error) {
-      toast.error(error.message || "Unable to load coupons");
+      setLoadError(error.message || "Unable to load coupons");
     } finally {
       setLoading(false);
     }
@@ -83,6 +86,7 @@ export default function AdminCouponsPage() {
     try {
       const payload = {
         ...form,
+        expiresAt: new Date(form.expiresAt).toISOString(),
         code: form.code.trim().toUpperCase(),
         discountValue: Number(form.discountValue),
         minimumOrderValue: form.minimumOrderValue === "" ? 0 : Number(form.minimumOrderValue),
@@ -108,24 +112,26 @@ export default function AdminCouponsPage() {
   }
 
   async function toggleCoupon(coupon) {
+    setBusyId(coupon.id);
     try {
-      await api.updateCoupon(coupon.id, { ...coupon, active: !coupon.active });
+      await api.updateCoupon(coupon.id, { active: !coupon.active });
       toast.success(coupon.active ? "Coupon deactivated" : "Coupon activated");
-      load();
+      await load();
     } catch (error) {
       toast.error(error.message || "Unable to update coupon");
-    }
+    } finally { setBusyId(null); }
   }
 
   async function deleteCoupon(coupon) {
     if (!window.confirm(`Delete coupon ${coupon.code}? This cannot be undone.`)) return;
+    setBusyId(coupon.id);
     try {
       await api.deleteCoupon(coupon.id);
       toast.success("Coupon deleted");
-      load();
+      await load();
     } catch (error) {
       toast.error(error.message || "Unable to delete coupon");
-    }
+    } finally { setBusyId(null); }
   }
 
   return (
@@ -151,14 +157,24 @@ export default function AdminCouponsPage() {
           <Input label="Expiry Date" type="datetime-local" required value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
           <div className="grid grid-cols-2 gap-3"><Input label="Total Uses" type="number" min="0" step="1" placeholder="Unlimited" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} /><Input label="Uses / User" type="number" min="0" step="1" placeholder="Unlimited" value={form.perUserLimit} onChange={(e) => setForm({ ...form, perUserLimit: e.target.value })} /></div>
           <label className="mb-4 block"><span className="mb-2 block text-xs uppercase tracking-widest text-ink/60">Applies To</span><select className="input-field" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}><option value="storewide">Entire store</option><option value="products">Specific products</option><option value="categories">Specific categories</option></select></label>
-          {form.scope === "products" ? <Input label="Product IDs (comma separated)" required value={form.productIds} onChange={(e) => setForm({ ...form, productIds: e.target.value })} placeholder={products.slice(0, 2).map((p) => p.id).join(", ")} /> : null}
-          {form.scope === "categories" ? <Input label="Category slugs (comma separated)" required value={form.categorySlugs} onChange={(e) => setForm({ ...form, categorySlugs: e.target.value })} placeholder={categories.slice(0, 2).map((c) => c.slug).join(", ")} /> : null}
+          {form.scope !== "storewide" ? <fieldset className="mb-4">
+            <legend className="mb-2 text-xs uppercase tracking-widest text-ink/60">Select {form.scope === "products" ? "products" : "categories"}</legend>
+            <div className="max-h-48 space-y-2 overflow-y-auto border border-ink/15 p-3">
+              {(form.scope === "products" ? products : categories).map(item => {
+                const field = form.scope === "products" ? "productIds" : "categorySlugs";
+                const value = form.scope === "products" ? item.id : item.slug;
+                const selected = form[field].split(",").map(value => value.trim()).filter(Boolean);
+                return <label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={selected.includes(value)} onChange={event => setForm({ ...form, [field]: (event.target.checked ? [...selected, value] : selected.filter(id => id !== value)).join(", ") })} />{item.name || value}</label>;
+              })}
+            </div>
+            <p className="mt-2 text-xs text-ink/55">Discount applies only to selected items. Minimum order value uses the whole merchandise subtotal.</p>
+          </fieldset> : null}
           <label className="mb-5 flex items-center gap-3 text-sm text-ink/70"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} /> Active coupon</label>
           <Button type="submit" loading={saving} className="w-full">{editingId ? "Save Coupon" : "Create Coupon"}</Button>
         </form>
 
         <div className="min-w-0">
-          {loading ? <Spinner /> : coupons.length === 0 ? <div className="border border-dashed border-ink/15 p-8 text-sm text-ink/55">No coupons created yet.</div> : <div className="overflow-x-auto border border-ink/10 bg-white"><table className="w-full min-w-[780px] text-sm"><thead><tr className="border-b border-ink/10 text-left text-xs uppercase tracking-widest text-ink/40"><th className="px-4 py-3">Code</th><th className="px-4 py-3">Discount</th><th className="px-4 py-3">Scope</th><th className="px-4 py-3">Usage</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3"></th></tr></thead><tbody className="divide-y divide-ink/10">{coupons.map((coupon) => <tr key={coupon.id} className={!coupon.active ? "opacity-50" : ""}><td className="px-4 py-4"><p className="font-semibold tracking-widest">{coupon.code}</p><p className="mt-1 text-xs text-ink/50">{coupon.active ? "Active" : "Inactive"}</p></td><td className="px-4 py-4">{coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatINR(coupon.discountValue)}<p className="mt-1 text-xs text-ink/50">Min {formatINR(coupon.minimumOrderValue || 0)}</p></td><td className="px-4 py-4 capitalize">{coupon.scope}</td><td className="px-4 py-4">{coupon.usedCount || 0} / {coupon.usageLimit ?? "∞"}</td><td className="px-4 py-4 text-ink/60">{new Date(coupon.expiresAt).toLocaleString()}</td><td className="whitespace-nowrap px-4 py-4 text-right"><button type="button" onClick={() => startEdit(coupon)} className="mr-3 text-tangerine">Edit</button><button type="button" onClick={() => toggleCoupon(coupon)} className="mr-3 text-ink/60">{coupon.active ? "Deactivate" : "Activate"}</button><button type="button" onClick={() => deleteCoupon(coupon)} className="text-rose-600">Delete</button></td></tr>)}</tbody></table></div>}
+          {loading ? <Spinner /> : loadError ? <div role="alert" className="border border-rose-200 p-5 text-sm text-rose-700">{loadError}<button type="button" onClick={load} className="ml-3 underline">Retry</button></div> : coupons.length === 0 ? <div className="border border-dashed border-ink/15 p-8 text-sm text-ink/55">No coupons created yet.</div> : <div className="overflow-x-auto border border-ink/10 bg-white"><table className="w-full min-w-[780px] text-sm"><thead><tr className="border-b border-ink/10 text-left text-xs uppercase tracking-widest text-ink/40"><th className="px-4 py-3">Code</th><th className="px-4 py-3">Discount</th><th className="px-4 py-3">Scope</th><th className="px-4 py-3">Usage</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3"></th></tr></thead><tbody className="divide-y divide-ink/10">{coupons.map((coupon) => <tr key={coupon.id} className={!coupon.active ? "opacity-50" : ""}><td className="px-4 py-4"><p className="font-semibold tracking-widest">{coupon.code}</p><p className="mt-1 text-xs text-ink/50">{coupon.active ? "Active" : "Inactive"}</p></td><td className="px-4 py-4">{coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatINR(coupon.discountValue)}<p className="mt-1 text-xs text-ink/50">Min {formatINR(coupon.minimumOrderValue || 0)}</p></td><td className="px-4 py-4 capitalize">{coupon.scope}</td><td className="px-4 py-4">{coupon.usedCount || 0} / {coupon.usageLimit ?? "∞"}</td><td className="px-4 py-4 text-ink/60">{new Date(coupon.expiresAt).toLocaleString()}</td><td className="whitespace-nowrap px-4 py-4 text-right"><button type="button" disabled={busyId !== null || saving} onClick={() => startEdit(coupon)} className="mr-3 text-tangerine">Edit</button><button type="button" disabled={busyId !== null || saving} onClick={() => toggleCoupon(coupon)} className="mr-3 text-ink/60">{coupon.active ? "Deactivate" : "Activate"}</button><button type="button" disabled={busyId !== null || saving} onClick={() => deleteCoupon(coupon)} className="text-rose-600">Delete</button></td></tr>)}</tbody></table></div>}
         </div>
       </div>
     </div>

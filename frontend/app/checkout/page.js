@@ -297,7 +297,7 @@ function CheckoutForm() {
       toast.error("Your bag is empty");
       return;
     }
-    if (placing.current || !currentQuote) return;
+    if (placing.current || couponLoading || !currentQuote) return;
     placing.current = true;
     setLoading(true);
     setOrderError("");
@@ -654,9 +654,9 @@ function CheckoutForm() {
           <div className="mb-5 border border-ink/10 bg-[#fffaf6] p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-ink"><Tag className="h-4 w-4 text-tangerine" /> Apply Coupon</div>
             {appliedCoupon ? (
-              <div className="mt-3 flex items-center justify-between gap-3 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><span><strong>{appliedCoupon.code}</strong> applied</span><button type="button" onClick={handleRemoveCoupon} aria-label="Remove coupon" className="text-emerald-700"><X className="h-4 w-4" /></button></div>
+              <div className="mt-3 flex items-center justify-between gap-3 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><span><strong>{appliedCoupon.code}</strong> applied</span><button type="button" onClick={handleRemoveCoupon} disabled={loading} aria-label="Remove coupon" className="text-emerald-700"><X className="h-4 w-4" /></button></div>
             ) : (
-              <div className="mt-3 flex gap-2"><input value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-tangerine" /><button type="button" onClick={handleApplyCoupon} disabled={couponLoading} className="border border-tangerine px-3 py-2 text-xs font-semibold uppercase tracking-widest text-tangerine disabled:opacity-50">{couponLoading ? "Checking" : "Apply"}</button></div>
+              <div className="mt-3 flex gap-2"><input aria-label="Coupon code" maxLength={40} disabled={loading || couponLoading} value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-tangerine" /><button type="button" onClick={handleApplyCoupon} disabled={couponLoading || loading || !couponCode.trim()} className="border border-tangerine px-3 py-2 text-xs font-semibold uppercase tracking-widest text-tangerine disabled:opacity-50">{couponLoading ? "Checking" : "Apply"}</button></div>
             )}
             {couponError ? <p className="mt-2 text-xs text-rose-600">{couponError}</p> : null}
             {appliedCoupon ? <p className="mt-2 text-xs text-ink/55">Coupon discount: {formatINR(couponDiscount)}</p> : null}
@@ -673,7 +673,7 @@ function CheckoutForm() {
               <span>{formatINR(shipping)}</span>
             </div>
             <div className="flex justify-between text-base font-medium pt-2">
-              <span>Total</span>
+              <span>Final Total</span>
               <span>{formatINR(total)}</span>
             </div>
           </div>
@@ -685,7 +685,7 @@ function CheckoutForm() {
               {(quoteError || orderError) ? <button type="button" disabled={loading} onClick={() => { setQuote(null); setQuoteRevision(value => value + 1); }} className="mt-2 underline">Refresh total</button> : null}
               <p className="mt-2 text-ink/60">You can cancel from your order details before shipment.</p>
             </div>
-            <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading} className="mt-6 w-full">
+            <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading || couponLoading} className="mt-6 w-full">
               Place Cash-on-Delivery Order
             </Button>
           </div>

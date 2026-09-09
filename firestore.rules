@@ -42,12 +42,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Coupon documents are publicly readable only while active and unexpired.
-    // Creation, edits, deletes, and usage counters are server-admin operations.
+    // Coupon access is mediated by authenticated server APIs; counters and code
+    // reservations must never be writable through a browser SDK.
     match /coupons/{couponId} {
-      allow read: if resource.data.active == true
-        && resource.data.expiresAt > request.time;
-      allow write: if isAdmin();
+      allow read, write: if false;
+    }
+    match /couponCodes/{code} {
+      allow read, write: if false;
     }
 
     // User profiles:

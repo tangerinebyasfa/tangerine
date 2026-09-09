@@ -121,10 +121,6 @@ export default function OrderDetailsView({
                 <span>Subtotal</span>
                 <span>{formatINR(Number(order?.subtotal || 0))}</span>
               </div>
-              <div className="flex justify-between text-ink/70">
-                <span>Shipping</span>
-                <span>{formatINR(Number(order?.shipping || 0))}</span>
-              </div>
               {order?.couponCode || order?.discountCode ? (
                 <>
                   <div className="flex justify-between text-emerald-700">
@@ -142,6 +138,10 @@ export default function OrderDetailsView({
                   <span>- {formatINR(Number(order?.discount || 0))}</span>
                 </div>
               )}
+              <div className="flex justify-between text-ink/70">
+                <span>Shipping</span>
+                <span>{formatINR(Number(order?.shipping || 0))}</span>
+              </div>
               <div className="border-t border-ink/10 pt-3">
                 {Number(order?.refundedAmount) > 0 && <div className="mb-2 flex justify-between text-emerald-700"><span>Refunds recorded</span><span>{formatINR(order.refundedAmount)}</span></div>}
                 <div className="flex justify-between text-base font-medium text-ink">

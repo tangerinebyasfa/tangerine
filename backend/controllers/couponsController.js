@@ -45,13 +45,14 @@ function normalizeCoupon(payload = {}, current = {}) {
   const code = text(payload.code || current.code).toUpperCase();
   const discountType = text(payload.discountType || current.discountType).toLowerCase();
   const discountValue = number(payload.discountValue ?? current.discountValue);
-  const minimumOrderValue = Math.max(0, number(payload.minimumOrderValue ?? current.minimumOrderValue));
+  const minimumOrderValue = Number(payload.minimumOrderValue ?? current.minimumOrderValue ?? 0);
+  if (!Number.isFinite(minimumOrderValue) || minimumOrderValue < 0) throw new Error("Invalid minimum order value.");
   const expiresAt = dateValue(payload.expiresAt ?? current.expiresAt);
   const scope = text(payload.scope || current.scope || "storewide").toLowerCase();
   const productIds = list(payload.productIds ?? current.productIds);
   const categorySlugs = list(payload.categorySlugs ?? current.categorySlugs);
-  const usageLimitValue = payload.usageLimit ?? current.usageLimit;
-  const perUserLimitValue = payload.perUserLimit ?? current.perUserLimit;
+  const usageLimitValue = payload.usageLimit === undefined ? current.usageLimit : payload.usageLimit;
+  const perUserLimitValue = payload.perUserLimit === undefined ? current.perUserLimit : payload.perUserLimit;
 
   if (!/^[A-Z0-9_-]{3,40}$/.test(code)) throw new Error("Coupon code must be 3-40 letters, numbers, hyphens, or underscores.");
   if (!["percentage", "fixed"].includes(discountType)) throw new Error("Discount type must be percentage or fixed.");
@@ -61,6 +62,10 @@ function normalizeCoupon(payload = {}, current = {}) {
   if (scope === "products" && !productIds.length) throw new Error("Select at least one product for this coupon.");
   if (scope === "categories" && !categorySlugs.length) throw new Error("Select at least one category for this coupon.");
 
+  for (const value of [usageLimitValue, perUserLimitValue]) {
+    if (value !== "" && value != null && (!Number.isSafeInteger(Number(value)) || Number(value) < 0)) throw new Error("Usage limits must be non-negative whole numbers.");
+  }
+  if (payload.active !== undefined && typeof payload.active !== "boolean") throw new Error("Active must be a boolean.");
   const usageLimit = usageLimitValue === "" || usageLimitValue === null || usageLimitValue === undefined ? null : Math.max(0, Math.floor(number(usageLimitValue)));
   const perUserLimit = perUserLimitValue === "" || perUserLimitValue === null || perUserLimitValue === undefined ? null : Math.max(0, Math.floor(number(perUserLimitValue)));
 
@@ -81,8 +86,8 @@ function normalizeCoupon(payload = {}, current = {}) {
 
 function couponAppliesToProduct(coupon, product) {
   if (coupon.scope === "storewide") return true;
-  if (coupon.scope === "products") return coupon.productIds.includes(product.id);
-  return coupon.categorySlugs.includes(text(product.categorySlug || product.subType));
+  if (coupon.scope === "products") return (coupon.productIds || []).includes(product.id);
+  return coupon.scope === "categories" && (coupon.categorySlugs || []).includes(text(product.categorySlug || product.subType));
 }
 
 function getEligibleSubtotal(coupon, items, productMap) {
@@ -110,10 +115,12 @@ async function validateCouponForOrder({ code, userId, items, productMap, subtota
   const couponDoc = arguments[0].couponDocument || await findCoupon(code);
   if (!couponDoc) throw Object.assign(new Error("Coupon not found."), { status: 400 });
 
+  if (!userId) cod.fail("Please sign in to use a coupon.", 401);
   const coupon = couponDoc.data() || {};
+  if (!["percentage", "fixed"].includes(coupon.discountType) || typeof coupon.discountValue !== "number" || !Number.isFinite(coupon.discountValue) || coupon.discountValue <= 0 || (coupon.discountType === "percentage" && coupon.discountValue > 100)) cod.fail("Invalid coupon configuration.", 409);
   const now = new Date();
   const expiresAt = dateValue(coupon.expiresAt);
-  if (coupon.active === false) throw Object.assign(new Error("This coupon is inactive."), { status: 400 });
+  if (coupon.active !== true) throw Object.assign(new Error("This coupon is inactive."), { status: 400 });
   if (!expiresAt || expiresAt <= now) throw Object.assign(new Error("This coupon has expired."), { status: 400 });
   if (coupon.usageLimit !== null && coupon.usageLimit !== undefined && number(coupon.usedCount) >= number(coupon.usageLimit)) {
     throw Object.assign(new Error("This coupon has reached its usage limit."), { status: 400 });
@@ -164,15 +171,17 @@ exports.getCoupons = async (req, res) => {
 exports.getPublicCoupons = async (req, res) => {
   try {
     const productId = text(req.query.productId);
-    const categorySlug = text(req.query.categorySlug);
+    const productSnapshot = productId ? await db.collection("products").doc(productId).get() : null;
+    if (!productSnapshot?.exists) return res.json([]);
+    const product = { ...productSnapshot.data(), id: productId };
     const snapshot = await couponsRef.where("active", "==", true).get();
     const now = new Date();
     const coupons = snapshot.docs.map(mapCoupon).filter((coupon) => {
       const expiresAt = dateValue(coupon.expiresAt);
       if (!expiresAt || expiresAt <= now) return false;
-      if (coupon.scope === "products") return productId && coupon.productIds.includes(productId);
-      if (coupon.scope === "categories") return categorySlug && coupon.categorySlugs.includes(categorySlug);
-      return true;
+      if (coupon.usageLimit != null && number(coupon.usedCount) >= number(coupon.usageLimit)) return false;
+      if (coupon.perUserLimit === 0) return false;
+      return couponAppliesToProduct(coupon, product);
     });
     res.json(coupons);
   } catch (err) {
@@ -187,7 +196,8 @@ exports.validateCoupon = async (req, res) => {
     const productIds = [...new Set(items.map((item) => text(item.productId)).filter(Boolean))];
     const productSnapshots = await Promise.all(productIds.map((id) => db.collection("products").doc(id).get()));
     const productMap = new Map(productSnapshots.filter((snap) => snap.exists).map((snap) => [snap.id, snap.data()]));
-    const actualSubtotal = items.reduce((sum, item) => sum + cod.price(productMap.get(item.productId)) * item.quantity, 0);
+    const { lines } = cod.catalogItems(items, productMap);
+    const actualSubtotal = cod.money(lines.reduce((sum, item) => sum + item.lineTotal, 0));
     const result = await validateCouponForOrder({ code: req.body?.code, userId: req.user.uid, items, productMap, subtotal: actualSubtotal });
     res.json(result);
   } catch (err) {
@@ -198,11 +208,16 @@ exports.validateCoupon = async (req, res) => {
 exports.createCoupon = async (req, res) => {
   try {
     const payload = normalizeCoupon(req.body);
-    const existing = await findCoupon(payload.code);
-    if (existing) return res.status(409).json({ error: "Coupon code already exists." });
     const now = admin.firestore.Timestamp.now();
     const ref = couponsRef.doc();
-    await ref.set({ ...payload, usedCount: 0, createdAt: now, updatedAt: now });
+    await db.runTransaction(async tx => {
+      const lock = db.collection("couponCodes").doc(payload.code);
+      const reserved = await tx.get(lock);
+      const existing = await tx.get(couponsRef.where("code", "==", payload.code).limit(1));
+      if (reserved.exists || !existing.empty) cod.fail("Coupon code already exists or was previously used.", 409);
+      tx.set(lock, { couponId: ref.id });
+      tx.set(ref, { ...payload, usedCount: 0, createdAt: now, updatedAt: now });
+    });
     res.status(201).json(mapCoupon(await ref.get()));
   } catch (err) {
     res.status(err.status || 400).json({ error: err.message || "Failed to create coupon" });
@@ -212,12 +227,19 @@ exports.createCoupon = async (req, res) => {
 exports.updateCoupon = async (req, res) => {
   try {
     const ref = couponsRef.doc(req.params.id);
-    const snap = await ref.get();
-    if (!snap.exists) return res.status(404).json({ error: "Coupon not found." });
-    const payload = normalizeCoupon(req.body, snap.data());
-    const duplicate = await findCoupon(payload.code);
-    if (duplicate && duplicate.id !== ref.id) return res.status(409).json({ error: "Coupon code already exists." });
-    await ref.update({ ...payload, updatedAt: admin.firestore.Timestamp.now() });
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) cod.fail("Coupon not found.", 404);
+      const payload = normalizeCoupon(req.body, snap.data());
+      const lock = db.collection("couponCodes").doc(payload.code);
+      const reserved = await tx.get(lock);
+      const duplicate = await tx.get(couponsRef.where("code", "==", payload.code).limit(2));
+      if ((reserved.exists && reserved.data().couponId !== ref.id) || duplicate.docs.some(doc => doc.id !== ref.id)) cod.fail("Coupon code already exists or was previously used.", 409);
+      // Keep previous code reservations so deleted/renamed promotions cannot reset eligibility.
+      tx.set(db.collection("couponCodes").doc(snap.data().code), { couponId: ref.id });
+      tx.set(lock, { couponId: ref.id });
+      tx.update(ref, { ...payload, updatedAt: admin.firestore.Timestamp.now() });
+    });
     res.json(mapCoupon(await ref.get()));
   } catch (err) {
     res.status(err.status || 400).json({ error: err.message || "Failed to update coupon" });
@@ -226,7 +248,13 @@ exports.updateCoupon = async (req, res) => {
 
 exports.deleteCoupon = async (req, res) => {
   try {
-    await couponsRef.doc(req.params.id).delete();
+    const ref = couponsRef.doc(req.params.id);
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) cod.fail("Coupon not found.", 404);
+      tx.set(db.collection("couponCodes").doc(snap.data().code), { couponId: ref.id });
+      tx.delete(ref);
+    });
     res.json({ success: true, id: req.params.id });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete coupon" });

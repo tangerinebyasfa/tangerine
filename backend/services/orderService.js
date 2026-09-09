@@ -15,8 +15,9 @@ function createOrderService({ db, validateCouponForOrder }) {
     let coupon = null;
     let couponDoc = null;
     if (couponCode) {
-      const found = await tx.get(coupons.where('code', '==', couponCode).limit(1));
+      const found = await tx.get(coupons.where('code', '==', couponCode).limit(2));
       if (found.empty) cod.fail('Coupon not found.');
+      if (found.docs.length !== 1) cod.fail('Duplicate coupon configuration. Please contact the store.', 409);
       couponDoc = found.docs[0];
       coupon = await validateCouponForOrder({ code: couponCode, userId: user.uid, items: lines, productMap, subtotal, transaction: tx, couponDocument: couponDoc });
     }
@@ -63,6 +64,7 @@ function createOrderService({ db, validateCouponForOrder }) {
         customerPhone: shippingAddress.phone, userPhone: shippingAddress.phone, shippingAddress,
         shippingAddressSummary: Object.values(shippingAddress).filter(Boolean).join(', '),
         itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+        coupon: coupon || null, couponDiscountType: coupon?.discountType || null, couponDiscountValue: coupon?.discountValue ?? null,
         couponId: coupon?.id || null, discountCode: coupon?.code || null, couponDiscountAmount: quote.discount,
         paymentMethod: 'cod', paymentStatus: 'pending', status: 'pending',
         amountCollected: 0, inventoryReserved: true, requestHash,

@@ -44,7 +44,7 @@ function RatingStars({ rating = 0 }) {
   );
 }
 
-function CouponOffers({ coupons = [] }) {
+function CouponOffers({ coupons = [], loading, error }) {
   const [copiedCode, setCopiedCode] = useState("");
 
   useEffect(() => {
@@ -64,6 +64,8 @@ function CouponOffers({ coupons = [] }) {
     }
   }
 
+  if (loading) return <p role="status" className="mb-4 text-sm text-ink/55">Loading offers...</p>;
+  if (error) return <p role="status" className="mb-4 text-sm text-ink/55">Offers are temporarily unavailable. You can still enter a code at checkout.</p>;
   if (!coupons.length) return null;
 
   return (
@@ -89,9 +91,11 @@ function CouponOffers({ coupons = [] }) {
                 {copiedCode === coupon.code ? "Copied" : "Copy"}
               </button>
             </div>
+            <p className="mt-1 text-xs leading-5 text-ink/60">{coupon.scope === "storewide" ? "Store-wide" : "Selected items only"}. Expires {new Date(coupon.expiresAt).toLocaleString()}.</p>
+            <p className="text-xs leading-5 text-ink/60">{coupon.perUserLimit != null ? `${coupon.perUserLimit} use(s) per customer. ` : ""}One coupon per order. Eligibility checked at checkout.</p>
             {coupon.minimumOrderValue ? (
               <p className="mt-1 text-xs leading-5 text-ink/60">
-                On orders above {formatINR(coupon.minimumOrderValue)}.
+                On orders of at least {formatINR(coupon.minimumOrderValue)}.
               </p>
             ) : null}
           </div>
@@ -123,6 +127,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [notifySubmitting, setNotifySubmitting] = useState(false);
   const [notifySent, setNotifySent] = useState(false);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [couponsError, setCouponsError] = useState(false);
   const [validCoupons, setValidCoupons] = useState([]);
 
   useEffect(() => {
@@ -253,14 +259,17 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   useEffect(() => {
     if (!product?.id) return undefined;
     let active = true;
+    setValidCoupons([]);
+    setCouponsLoading(true);
+    setCouponsError(false);
     api
       .getValidCoupons(product.id, product.categorySlug)
       .then((coupons) => {
         if (active) setValidCoupons(Array.isArray(coupons) ? coupons : []);
       })
       .catch(() => {
-        if (active) setValidCoupons([]);
-      });
+        if (active) { setValidCoupons([]); setCouponsError(true); }
+      }).finally(() => { if (active) setCouponsLoading(false); });
     return () => { active = false; };
   }, [product?.id, product?.categorySlug]);
 
@@ -481,7 +490,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
           <p className="text-sm font-medium text-ink/70">Inclusive Of All Taxes</p>
         </div>
 
-        <CouponOffers coupons={validCoupons} />
+        <CouponOffers coupons={validCoupons} loading={couponsLoading} error={couponsError} />
 
         {sizeOptions.length > 0 && (
           <div className="mb-6">
@@ -902,7 +911,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                 <p className="text-sm font-medium text-ink/70">Inclusive Of All Taxes</p>
               </div>
 
-              <CouponOffers coupons={validCoupons} />
+              <CouponOffers coupons={validCoupons} loading={couponsLoading} error={couponsError} />
 
               {sizeOptions.length > 0 && (
                 <div className="mb-6">
