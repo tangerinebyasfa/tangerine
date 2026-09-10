@@ -2,7 +2,7 @@ import Image from "next/image";
 
 const teamMembers = [
   { id: "sunil-rane", name: "Mr. Sunil Rane", role: "Founder", image: "/Images/about/founder.png" },
-  { id: "varda", name: "Varda", role: "Lead Designer", image: "/Images/about/head.jpeg" },
+  { id: "varda", name: "Miss. Varda Kalburgi", role: "Lead Fashion Designer", image: "/Images/about/head.jpeg" },
 ];
 
 export default function TeamSection() {
