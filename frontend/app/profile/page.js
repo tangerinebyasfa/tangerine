@@ -784,7 +784,7 @@ function ProfileDashboard() {
 
     if (activeSection === "orders") {
       return (
-        <section className="border border-ink/10 bg-white/95 p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
+        <section className="border border-ink/10 bg-white/95 p-3 sm:p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
           <SectionHeader title="Order History" />
 
           {ordersLoading ? (
@@ -812,10 +812,10 @@ function ProfileDashboard() {
                 const productLabel = firstItem?.name || firstItem?.productName || "Order item";
 
                 return (
-                  <article key={order.id} className="border border-ink/10 bg-[#fffaf6] p-4 md:p-5">
+                  <article key={order.id} className="min-w-0 border border-ink/10 bg-[#fffaf6] p-3 sm:p-4 md:p-5">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden border border-ink/10 bg-white">
+                      <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                        <div className="relative h-16 w-16 shrink-0 sm:h-20 sm:w-20 overflow-hidden border border-ink/10 bg-white">
                           <Image
                             src={image}
                             alt={productLabel}
@@ -825,9 +825,9 @@ function ProfileDashboard() {
                           />
                         </div>
 
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-display text-xl text-ink">{productLabel}</h3>
+                            <h3 className="w-full break-words font-display text-base leading-snug text-ink sm:text-xl">{productLabel}</h3>
                             <span
                               className={`inline-flex border px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] ${
                                 orderStatusStyles[status] || "border-ink/10 bg-sand text-ink/70"
@@ -836,7 +836,7 @@ function ProfileDashboard() {
                               {status}
                             </span>
                           </div>
-                          <p className="mt-1 text-sm text-ink/55">
+                          <p className="mt-2 text-xs leading-5 text-ink/55 [overflow-wrap:anywhere] sm:text-sm">
                             Order ID: <span className="text-ink">{displayOrderId || order.id}</span>
                           </p>
                           <p className="mt-1 text-sm text-ink/55">{formatOrderDate(order.createdAt)}</p>
@@ -847,10 +847,10 @@ function ProfileDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 md:justify-end">
+                      <div className="flex shrink-0 flex-wrap items-center gap-3 md:justify-end">
                         <Link
                           href={`/orders/${encodeURIComponent(order.id)}`}
-                          className="inline-flex items-center gap-2 border border-tangerine/30 bg-white px-4 py-2 text-sm text-tangerine transition-colors hover:bg-tangerine hover:text-white"
+                          className="inline-flex w-full items-center justify-center gap-2 border border-tangerine/30 bg-white px-4 py-2 text-sm text-tangerine transition-colors hover:bg-tangerine hover:text-white md:w-auto"
                         >
                           View Details
                           <ChevronRight className="h-4 w-4" />
@@ -956,7 +956,7 @@ function ProfileDashboard() {
 
     if (activeSection === "wishlist") {
       return (
-        <section className="border border-ink/10 bg-white/95 p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
+        <section className="border border-ink/10 bg-white/95 p-3 sm:p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
           <SectionHeader
             title="Wishlist"
             action={
@@ -968,7 +968,7 @@ function ProfileDashboard() {
           />
 
           {wishlistLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 xl:grid-cols-3">
               {[0, 1, 2, 3].map((index) => (
                 <div key={index} className="h-72 animate-pulse border border-ink/10 bg-sand/60" />
               ))}
@@ -982,13 +982,13 @@ function ProfileDashboard() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 xl:grid-cols-3">
               {wishlistRows.map(({ wishlistId, product }) => {
                 const productHref = product?.slug ? `/product/${product.slug}` : product?.id ? `/product/${product.id}` : "/products/all";
                 const image = normalizeImageUrl(product?.image || product?.images?.[0]) || "/placeholder-product.svg";
 
                 return (
-                  <article key={wishlistId} className="border border-ink/10 bg-[#fffaf6] p-4">
+                  <article key={wishlistId} className="min-w-0 border border-ink/10 bg-[#fffaf6] p-2 sm:p-4">
                     <Link href={productHref} className="block">
                       <div className="relative aspect-[4/5] overflow-hidden border border-ink/10 bg-paper">
                         <Image
@@ -1000,21 +1000,21 @@ function ProfileDashboard() {
                         />
                       </div>
 
-                      <div className="mt-4">
-                        <h3 className="line-clamp-2 font-medium text-ink">{product?.name || "Wishlist product"}</h3>
+                      <div className="mt-3 sm:mt-4">
+                        <h3 className="line-clamp-2 text-sm font-medium text-ink sm:text-base">{product?.name || "Wishlist product"}</h3>
                         <p className="mt-2 text-sm text-ink/55">{formatINR(Number(product?.salePrice || product?.price || 0))}</p>
                       </div>
                     </Link>
 
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <Link href={productHref} className="text-xs uppercase tracking-[0.18em] text-tangerine">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 sm:mt-4 sm:gap-3">
+                      <Link href={productHref} className="text-[10px] uppercase tracking-[0.08em] text-tangerine sm:text-xs sm:tracking-[0.18em]">
                         View Product
                       </Link>
                       <button
                         type="button"
                         onClick={() => handleRemoveWishlist(wishlistId)}
                         aria-label="Remove from wishlist"
-                        className="inline-flex h-10 w-10 items-center justify-center border border-rose-200 text-rose-700 transition-colors hover:bg-rose-50"
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-rose-200 text-rose-700 transition-colors hover:bg-rose-50"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1140,7 +1140,7 @@ function ProfileDashboard() {
           </Link>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
           <aside className="border border-ink/10 bg-white/90 p-4 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
             <div className="space-y-2 px-2 pb-4 pt-1">
               <p className="text-[11px] uppercase tracking-[0.34em] text-ink/40">Menu</p>
@@ -1185,7 +1185,7 @@ function ProfileDashboard() {
             </div>
           </aside>
 
-          <div ref={contentRef} className="space-y-6 transition-all duration-300 ease-out">
+          <div ref={contentRef} className="min-w-0 space-y-6 transition-all duration-300 ease-out">
             {renderActiveSection()}
           </div>
         </div>
