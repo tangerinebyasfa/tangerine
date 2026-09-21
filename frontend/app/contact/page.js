@@ -19,8 +19,8 @@ const CONTACT_CHANNELS = [
   {
     icon: Mail,
     label: "Email us",
-    value: "hello@tangerine.in",
-    href: "mailto:hello@tangerine.in",
+    value: "tangerinebyasfa@gmail.com",
+    href: "mailto:tangerinebyasfa@gmail.com",
     // note: "We reply within 24 hours",
   },
   {
