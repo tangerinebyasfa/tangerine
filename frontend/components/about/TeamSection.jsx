@@ -1,8 +1,9 @@
 import Image from "next/image";
 
 const teamMembers = [
-  { id: "sunil-rane", name: "Mr. Sunil Rane", role: "Founder", image: "/Images/about/founder.png" },
-  { id: "varda", name: "Miss. Varda Kalburgi", role: "Lead Fashion Designer", image: "/Images/about/head.jpeg" },
+  { id: "sunil-rane", name: "Shri. Sunil Rane", role: "Founder & Chancellor of Atharva University Mumbai", image: "/Images/about/founder.png" },
+  { id: "sanchita-vishwakarma", name: "Miss. Sanchita Vishwakarma", role: "Fashion Designer", image: "/Images/about/designer.jpeg" },
+  { id: "varda", name: "Miss. Varda Kalburgi", role: "Fashion Designer", image: "/Images/about/head.jpeg" },
 ];
 
 export default function TeamSection() {
@@ -15,7 +16,7 @@ export default function TeamSection() {
         </h2>
         <div aria-hidden="true" className="mx-auto mt-4 h-0.5 w-10 bg-tangerine" />
       </div>
-      <ul className="relative mx-auto mt-8 grid max-w-xl grid-cols-1 gap-8 min-[380px]:grid-cols-2 sm:gap-16">
+      <ul className="relative mx-auto mt-8 grid max-w-xl grid-cols-1 gap-8 min-[380px]:grid-cols-2 min-[768px]:grid-cols-3 sm:gap-16">
         {teamMembers.map((member) => (
           <li key={member.id} className="min-w-0 text-center">
             <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-sand sm:h-36 sm:w-36">

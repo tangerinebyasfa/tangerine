@@ -41,9 +41,9 @@ const CONTACT_CHANNELS = [
 
 const LOCATIONS = [
   {
-    name: "Atharva University",
+    name: "Atharva University Mumbai",
     tag: "Flagship outlet",
-    address: ["Atharva University", "Malad West", "Mumbai, Maharashtra"],
+    address: ["Atharva University Mumbai", "Malad West", "Mumbai, Maharashtra"],
     hours: "Mon - Sat | 10:30 AM - 9:00 PM",
     phone: "+91 98765 43210",
     directions: "https://www.google.com/maps/search/?api=1&query=Atharva%20University%20Mumbai",
@@ -130,7 +130,7 @@ export default function ContactPage() {
           })}
         </section>
 
-        <section className="mt-8">
+        <section className="mt-8 hidden">
           <div className="border border-ink/10 bg-white p-6 sm:p-8">
             <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
               <div>
