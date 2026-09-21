@@ -21,7 +21,7 @@ const CONTACT_CHANNELS = [
     label: "Email us",
     value: "hello@tangerine.in",
     href: "mailto:hello@tangerine.in",
-    note: "We reply within 24 hours",
+    // note: "We reply within 24 hours",
   },
   {
     icon: MapPin,
