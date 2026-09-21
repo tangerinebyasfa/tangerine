@@ -22,8 +22,8 @@ export default function AboutPage() {
         <div>
           <h2 id="story-heading" className="font-display text-3xl leading-tight sm:text-4xl">Where fashion inspires learning</h2>
           <div className="mt-6 space-y-5 text-base leading-8 text-ink/70">
-            <p>Tangerine is the in-house store of the School of Design at Atharva University, Mumbai. It was introduced by Honourable Shri Sunil Rane, Founder and Chancellor of Atharva University, Mumbai.</p>
-            <p>Tangerine provides real-world experience in entrepreneurship and boutique management, nurturing the next generation of professionals.</p>
+            <p>Tangerine is the in-house store of the School of Design at Atharva University Mumbai. It was introduced by Honourable Shri Sunil Rane, Founder and Chancellor of Atharva University, Mumbai.</p>
+            <p>Tangerine provides real-time experience in entrepreneurship and boutique management, nurturing the next generation of professionals.</p>
             <p>The founder aims to give students the opportunity to learn alongside professional designers and entrepreneurs. This combined journey of study and entrepreneurship encourages creative and critical thinking.</p>
             <p>Tangerine is a brand run by students under the guidance of professional designers.</p>
           </div>
