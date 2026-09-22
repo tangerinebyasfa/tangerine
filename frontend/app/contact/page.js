@@ -12,8 +12,8 @@ const CONTACT_CHANNELS = [
   {
     icon: Phone,
     label: "Call us",
-    value: "+91 98765 43210",
-    href: "tel:+919876543210",
+    value: "+91 77387 28078",
+    href: "tel:+917738728078",
     note: "Mon - Sat | 10:00 AM - 7:00 PM",
   },
   {
@@ -43,17 +43,17 @@ const LOCATIONS = [
   {
     name: "Atharva University Mumbai",
     tag: "Flagship outlet",
-    address: ["Atharva University Mumbai", "Malad West", "Mumbai, Maharashtra"],
+    address: ["Atharva University Mumbai,", "Malad West,", "Mumbai, Maharashtra"],
     hours: "Mon - Sat | 10:30 AM - 9:00 PM",
-    phone: "+91 98765 43210",
+    phone: "+91 77387 28078",
     directions: "https://www.google.com/maps/search/?api=1&query=Atharva%20University%20Mumbai",
   },
   {
     name: "Blue Ocean Resort",
     tag: "Boutique outlet",
-    address: ["Blue Ocean Resort", "Ganpatipule", "Ratnagiri, Maharashtra"],
+    address: ["Blue Ocean Resort,", "Ganpatipule,", "Ratnagiri, Maharashtra"],
     hours: "Mon - Sat | 11:00 AM - 8:30 PM",
-    phone: "+91 98765 43211",
+    phone: "+91 94211 74383",
     directions:
       "https://www.google.com/maps/search/?api=1&query=Blue%20Ocean%20Resort%20Ganpatipule%20Ratnagiri",
   },
@@ -360,7 +360,11 @@ export default function ContactPage() {
                     <Phone className="mt-0.5 h-4 w-4 text-tangerine" />
                     <div>
                       <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Phone</p>
-                      <p className="mt-1 text-sm leading-6 text-ink/70">{location.phone}</p>
+                      <a href={`tel:${location.phone.replace(/\s+/g, "")}`} className="mt-1 text-sm leading-6 text-ink/70">
+                        {location.phone}
+                      </a>
+                      {/* <p className="mt-1 text-sm leading-6 text-ink/70">{location.phone}</p> */}
+
                     </div>
                   </div>
 
