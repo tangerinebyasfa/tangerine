@@ -17,8 +17,11 @@ export default function TeamSection() {
         <div aria-hidden="true" className="mx-auto mt-4 h-0.5 w-10 bg-tangerine" />
       </div>
       <ul className="relative mx-auto mt-8 grid max-w-xl grid-cols-1 gap-8 min-[380px]:grid-cols-2 min-[768px]:grid-cols-3 sm:gap-16">
-        {teamMembers.map((member) => (
-          <li key={member.id} className="min-w-0 text-center">
+        {teamMembers.map((member, index) => (
+          <li
+            key={member.id}
+            className={`min-w-0 text-center ${index === teamMembers.length - 1 ? "min-[380px]:max-md:col-span-2" : ""}`}
+          >
             <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-sand sm:h-36 sm:w-36">
               <Image
                 src={member.image}
