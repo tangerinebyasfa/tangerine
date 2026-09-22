@@ -126,7 +126,7 @@ export default function ContactPage() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="mt-4 text-xs uppercase tracking-[0.28em] text-ink/40">{item.label}</p>
-              <p className="mt-2 font-display text-xl text-ink">{item.value}</p>
+              <p className="mt-2 font-display text-xl text-ink break-all">{item.value}</p>
               <p className="mt-2 text-sm leading-6 text-ink/55">{item.note}</p>
             </a>
           );
