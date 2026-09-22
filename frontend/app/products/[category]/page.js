@@ -33,29 +33,29 @@ const TYPE_COPY = {
 
 const OUTLET_LOCATIONS = [
   {
-    name: "Atharva University",
+    name: "Atharva University Mumbai",
     label: "Flagship Outlet",
     address: [
-      "Atharva University",
+      "Atharva University Mumbai,",
       "Malad West, Mumbai",
     ],
-    phone: "+91 98765 43210",
-    whatsapp: "+91 98765 43210",
-    hours: ["Mon - Sat: 10:30 AM - 9:00 PM", "Sunday: 11:00 AM - 8:00 PM"],
+    phone: " +91 77387 28078",
+    whatsapp: "+91 77387 28078",
+    hours: ["Mon - Sat: 10:30 AM - 9:00 PM" ],
     mapSrc:
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d941.9848015891606!2d72.82593776963357!3d19.197857465401317!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7b72b40faf091%3A0x372093a6375172fa!2sAtharva%20University%20Mumbai!5e0!3m2!1sen!2sin!4v1788167211768!5m2!1sen!2sin",
   },
   {
     name: "Blue Ocean Resort",
-    label: "City Boutique Outlet",
+    label: " Boutique Outlet",
     address: [
-      "Blue Ocean Resort",
-      "Ganpatipule, Ratnagiri",
+      "Blue Ocean Resort,",
+      "Ganpatipule, Ratnagiri,",
       "Maharashtra, 415612",
     ],
-    phone: "+91 98765 43211",
-    whatsapp: "+91 98765 43211",
-    hours: ["Mon - Sat: 11:00 AM - 8:30 PM", "Sunday: 11:30 AM - 7:30 PM"],
+    phone: "+91 94211 74383",
+    whatsapp: "+91 94211 74383",
+    hours: ["Mon - Sat: 11:00 AM - 8:30 PM"],
     mapSrc:
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3811.80749379707!2d73.25541007607045!3d17.179573108756795!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bea0d22b314f62f%3A0xd7222cf5ca7e771b!2sBlue%20Ocean%20The%20Fern%20Resort%20%26%20Spa%20Ganpatipule%2C%20Series%20by%20Marriott!5e0!3m2!1sen!2sin!4v1788167283728!5m2!1sen!2sin",
   },
