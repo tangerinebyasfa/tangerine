@@ -132,7 +132,7 @@ export default function ContactPage() {
           );
         })}
         <div className="hidden sm:col-start-3 sm:row-start-1 sm:row-span-2 sm:block">
-           <Image width={500} height={300} src={'/images/contact/shop-contact.png'} alt="Inside the Tangerine boutique, with fashion displays and a seating area" className="h-full w-full object-cover" />
+           <Image width={500} height={300} src='/images/contact/shop-contact.png' alt="Inside the Tangerine boutique, with fashion displays and a seating area" className="h-full w-full object-cover" />
         </div>
       </section>
 
