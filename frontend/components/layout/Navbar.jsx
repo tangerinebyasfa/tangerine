@@ -34,6 +34,16 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+function getActiveLinkHref(pathname, links) {
+  let best = null;
+  for (const link of links) {
+    const href = link.href;
+    const matches = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+    if (matches && (!best || href.length > best.length)) best = href;
+  }
+  return best;
+}
+
 const mobileFeatureCards = [
   { href: "/products/all", label: "All Products", image: "/Images/HomePage/1mobile.png" },
   { href: "/products/outlet", label: "All Outlet", image: "/Images/HomePage/2mobile.png" },
@@ -133,7 +143,7 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-ink/10">
         <div className="max-w-7xl mx-auto px-6 h-20 xl:h-24 flex items-center justify-between">
-          <Link href="/products/outlet" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <span className="sr-only">Outlet</span>
             <Image
               src="/Images/logo.png"
@@ -146,15 +156,21 @@ export default function Navbar() {
           </Link>
 
           <nav className="hidden xl:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs tracking-widest uppercase text-ink/70 hover:text-burgundy transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = getActiveLinkHref(pathname, navLinks) === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-xs tracking-widest uppercase transition-colors ${
+                    isActive ? "text-tangerine" : "text-ink/70 hover:text-burgundy"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             {isAdmin && (
               <Link
                 href="/admin"
@@ -425,16 +441,22 @@ export default function Navbar() {
 
               <div className="mt-6 flex-1 overflow-y-auto pb-20">
                 <div className="space-y-6 pr-2">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={closeMobileMenu}
-                      className="block text-sm font-medium uppercase tracking-[0.06em] text-ink/90"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                  {navLinks.map((link) => {
+                    const isActive = getActiveLinkHref(pathname, navLinks) === link.href;
+
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={closeMobileMenu}
+                        className={`block text-sm font-medium uppercase tracking-[0.06em] ${
+                          isActive ? "text-tangerine" : "text-ink/90"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
                   {isAdmin && (
                     <Link href="/admin" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-burgundy">
                       Admin Panel

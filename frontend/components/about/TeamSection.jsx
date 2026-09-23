@@ -2,8 +2,8 @@ import Image from "next/image";
 
 const teamMembers = [
   { id: "sunil-rane", name: "Shri. Sunil Rane", role: "Founder & Chancellor of Atharva University Mumbai", image: "/Images/about/fonder-gray-background.png" },
-  { id: "sanchita-vishwakarma", name: "Miss. Sanchita Vishwakarma", role: "Fashion Designer", image: "/Images/about/designer.jpeg" },
   { id: "varda", name: "Miss. Varda Kalaburgi", role: "Fashion Designer", image: "/Images/about/head.jpeg" },
+  { id: "sanchita-vishwakarma", name: "Miss. Sanchita Vishwakarma", role: "Fashion Designer", image: "/Images/about/designer.jpeg" },
 ];
 
 export default function TeamSection() {

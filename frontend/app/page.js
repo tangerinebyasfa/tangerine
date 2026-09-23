@@ -109,13 +109,13 @@ export default function HomePage() {
         </Link>
 
         {featuredProducts.length > 0 && (
-          <section className="mx-auto w-[90%] py-14 md:w-4/5">
+          <section className="mx-auto w-[96%] py-14 md:w-5/5">
             <div className="mb-4 flex items-center justify-end gap-4">
               <Link
                 href="/products/all"
                 className="ml-auto inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
               >
-                Show Now
+                See All
               </Link>
             </div>
 
@@ -146,7 +146,7 @@ export default function HomePage() {
                   {featuredProducts.map((product) => (
                     <div
                       key={product.id}
-                      className="w-[78vw] shrink-0 snap-start sm:w-[58vw] md:w-[34vw] lg:w-[26vw] xl:w-[22vw]"
+                      className="w-[78vw] shrink-0 snap-start sm:w-[58vw] md:w-[34vw] lg:w-[26vw] xl:w-[17.7vw]"
                     >
                       <ProductCard product={product} />
                     </div>

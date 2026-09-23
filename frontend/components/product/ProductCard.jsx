@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
     <article className="group flex h-full min-w-0 flex-col">
       <div className="relative w-full">
         <Link href={href} className="block w-full">
-          <div className="relative aspect-[4/5] w-full overflow-hidden bg-paper">
+          <div className="relative aspect-[4/5.9] w-full overflow-hidden bg-paper">
             <div className="absolute inset-0 flex w-[200%] transition-transform duration-700 ease-out motion-reduce:transition-none group-hover:-translate-x-1/2">
               <div className="relative h-full w-1/2 shrink-0">
                 <Image
