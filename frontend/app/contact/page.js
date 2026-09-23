@@ -15,7 +15,7 @@ const CONTACT_CHANNELS = [
     label: "Call us",
     value: "+91 77387 28078",
     href: "tel:+917738728078",
-    note: "Mon - Sat | 10:00 AM - 9:00 PM",
+    note: "Mon - Sat | 10:30 AM - 9:00 PM",
   },
   {
     icon: Mail,
