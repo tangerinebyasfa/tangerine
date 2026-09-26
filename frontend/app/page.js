@@ -162,7 +162,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/bloomscape-high-low-maxi-dress" className="block max-w-full">
+        <Link href="/product/red-embroidered-anarkali-kurta-set-with-dupatta" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
             mobile={homeImages[1].mobile}
@@ -226,7 +226,7 @@ export default function HomePage() {
           />
         </Link>
 
-        <Link href="/products/all" className="block max-w-full">
+        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[3].desktop}
             mobile={homeImages[3].mobile}
