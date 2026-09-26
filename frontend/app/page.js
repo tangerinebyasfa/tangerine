@@ -10,19 +10,24 @@ import ProductCard from "../components/product/ProductCard";
 
 const homeImages = [
   {
-    desktop: "/Images/HomePage/1.png",
-    mobile: "/Images/HomePage/1mobile.png",
+    desktop: "/Images/HomePage/corporate.png",
+    mobile: "/Images/HomePage/corporateMobile.png",
     alt: "Homepage image 1",
   },
   {
-    desktop: "/Images/HomePage/2.png",
-    mobile: "/Images/HomePage/2mobile.png",
+    desktop: "/Images/HomePage/indian.png",
+    mobile: "/Images/HomePage/indianMobile.png",
     alt: "Homepage image 2",
   },
   {
     desktop: "/Images/HomePage/3.png",
     mobile: "/Images/HomePage/3mobile.png",
     alt: "Homepage image 3",
+  },
+  {
+    desktop: "/Images/HomePage/western.png",
+    mobile: "/Images/HomePage/westernMobile.png",
+    alt: "New Arrivals",
   },
 ];
 
@@ -99,7 +104,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <Link href="/product/royal-blue-lace-co-ord-set" className="block max-w-full">
+        <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[0].desktop}
             mobile={homeImages[0].mobile}
@@ -218,6 +223,14 @@ export default function HomePage() {
             desktop={homeImages[2].desktop}
             mobile={homeImages[2].mobile}
             alt={homeImages[2].alt}
+          />
+        </Link>
+
+        <Link href="/products/all" className="block max-w-full">
+          <HomepageImage
+            desktop={homeImages[3].desktop}
+            mobile={homeImages[3].mobile}
+            alt={homeImages[3].alt}
           />
         </Link>
       </div>
