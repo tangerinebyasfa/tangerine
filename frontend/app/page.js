@@ -10,12 +10,12 @@ import ProductCard from "../components/product/ProductCard";
 
 const homeImages = [
   {
-    desktop: "/Images/HomePage/corporate.png",
+    desktop: "/Images/HomePage/corporate-dress.jpeg",
     mobile: "/Images/HomePage/corporateMobile.png",
     alt: "Homepage image 1",
   },
   {
-    desktop: "/Images/HomePage/indian.png",
+    desktop: "/Images/HomePage/indian-dress.jpeg",
     mobile: "/Images/HomePage/indianMobile.png",
     alt: "Homepage image 2",
   },
@@ -25,7 +25,7 @@ const homeImages = [
     alt: "Homepage image 3",
   },
   {
-    desktop: "/Images/HomePage/western.png",
+    desktop: "/Images/HomePage/western-dress.jpeg",
     mobile: "/Images/HomePage/westernMobile.png",
     alt: "New Arrivals",
   },
@@ -106,9 +106,9 @@ export default function HomePage() {
       <div className="flex flex-col">
         <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full">
           <HomepageImage
-            desktop={homeImages[0].desktop}
-            mobile={homeImages[0].mobile}
-            alt={homeImages[0].alt}
+            desktop={homeImages[1].desktop}
+            mobile={homeImages[1].mobile}
+            alt={homeImages[1].alt}
             priority
           />
         </Link>
@@ -164,13 +164,24 @@ export default function HomePage() {
 
         <Link href="/product/red-embroidered-anarkali-kurta-set-with-dupatta" className="block max-w-full">
           <HomepageImage
-            desktop={homeImages[1].desktop}
-            mobile={homeImages[1].mobile}
-            alt={homeImages[1].alt}
+            desktop={homeImages[3].desktop}
+            mobile={homeImages[3].mobile}
+            alt={homeImages[3].alt}
           />
         </Link>
 
-        {categories.length > 0 && (
+       
+
+        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full mt-14">
+          <HomepageImage
+            desktop={homeImages[0].desktop}
+            mobile={homeImages[0].mobile}
+            alt={homeImages[0].alt}
+          />
+        </Link>
+
+
+         {categories.length > 0 && (
           <section className="w-full py-14">
             <div className="mx-auto w-full max-w-[1920px] px-0">
               <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[90%] md:max-w-7xl md:w-4/5">
@@ -223,14 +234,6 @@ export default function HomePage() {
             desktop={homeImages[2].desktop}
             mobile={homeImages[2].mobile}
             alt={homeImages[2].alt}
-          />
-        </Link>
-
-        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full">
-          <HomepageImage
-            desktop={homeImages[3].desktop}
-            mobile={homeImages[3].mobile}
-            alt={homeImages[3].alt}
           />
         </Link>
       </div>
