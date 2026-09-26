@@ -104,7 +104,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full">
+        <Link href="/product/red-embroidered-anarkali-kurta-set-with-dupatta" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
             mobile={homeImages[1].mobile}
@@ -162,7 +162,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/red-embroidered-anarkali-kurta-set-with-dupatta" className="block max-w-full">
+        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[3].desktop}
             mobile={homeImages[3].mobile}
@@ -172,7 +172,7 @@ export default function HomePage() {
 
        
 
-        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full mt-14">
+        <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full mt-14">
           <HomepageImage
             desktop={homeImages[0].desktop}
             mobile={homeImages[0].mobile}
