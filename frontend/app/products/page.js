@@ -19,13 +19,13 @@ const MAIN_CATEGORIES = [
     href: "/products/clothes",
     image: "/Images/HomePage/1.png",
   },
-  {
-    key: "accessories",
-    title: "Accessories",
-    description: "Finishing pieces and styling extras to complete the look.",
-    href: "/products/accessories",
-    image: "/Images/HomePage/2.png",
-  },
+  // {
+  //   key: "accessories",
+  //   title: "Accessories",
+  //   description: "Finishing pieces and styling extras to complete the look.",
+  //   href: "/products/accessories",
+  //   image: "/Images/HomePage/2.png",
+  // },
   {
     key: "footwear",
     title: "Footwear",
@@ -33,13 +33,13 @@ const MAIN_CATEGORIES = [
     href: "/products/footwear",
     image: "/Images/HomePage/3.png",
   },
-  {
-    key: "outlet",
-    title: "Outlet",
-    description: "Outlet stories, location details, and special offers.",
-    href: "/products/outlet",
-    image: normalizeImageUrl("https://drive.google.com/file/d/1Vnq7R6KcCC83SSksmoJLgmQj_dK2M2n7/view?usp=sharing"),
-  },
+  // {
+  //   key: "outlet",
+  //   title: "Outlet",
+  //   description: "Outlet stories, location details, and special offers.",
+  //   href: "/products/outlet",
+  //   image: normalizeImageUrl("https://drive.google.com/file/d/1Vnq7R6KcCC83SSksmoJLgmQj_dK2M2n7/view?usp=sharing"),
+  // },
 ];
 
 function CategoryHeroCard({ category }) {
