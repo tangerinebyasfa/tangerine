@@ -11,12 +11,12 @@ import ProductCard from "../components/product/ProductCard";
 const homeImages = [
   {
     desktop: "/Images/HomePage/corporate-dress.jpeg",
-    mobile: "/Images/HomePage/corporateMobile.png",
+    mobile: "/Images/HomePage/corporate-dress-mob.png",
     alt: "Homepage image 1",
   },
   {
     desktop: "/Images/HomePage/indian-dress.jpeg",
-    mobile: "/Images/HomePage/indianMobile.png",
+    mobile: "/Images/HomePage/indian-dress-mob.png",
     alt: "Homepage image 2",
   },
   {
@@ -26,7 +26,7 @@ const homeImages = [
   },
   {
     desktop: "/Images/HomePage/western-dress.jpeg",
-    mobile: "/Images/HomePage/westernMobile.png",
+    mobile: "/Images/HomePage/western-dress-mob.png",
     alt: "New Arrivals",
   },
 ];
