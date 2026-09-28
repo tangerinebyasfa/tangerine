@@ -204,6 +204,20 @@ export default function Navbar() {
               )}
             </button>
 
+            <button
+                type="button"
+                onClick={() => router.push("/profile#wishlist")}
+                className="relative hidden xl:inline-flex text-ink hover:text-tangerine transition-colors"
+                aria-label="Open wishlist"
+              >
+                <Heart className="h-5 w-5" strokeWidth={2} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -right-2 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-burgundy px-1 text-[9px] font-semibold leading-none text-paper">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+
             <div className="relative hidden xl:block">
               {user ? (
                 <button
