@@ -22,7 +22,7 @@ const CONTACT_CHANNELS = [
     label: "Email us",
     value: "tangerinebyasfa@gmail.com",
     href: "mailto:tangerinebyasfa@gmail.com",
-    // note: "We reply within 24 hours",
+    note: "We're hapy to assist you",
   },
   {
     icon: MapPin,
