@@ -120,7 +120,7 @@ export default function HomePage() {
                 href="/products/all"
                 className="ml-auto inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
               >
-                See All
+                View All
               </Link>
             </div>
 

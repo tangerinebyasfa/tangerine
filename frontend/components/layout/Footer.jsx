@@ -11,9 +11,7 @@ import {
 const quickLinks = [
   { href: "/", label: "Home" },
   { href: "/products/all", label: "Shop" },
-  { href: "/blog", label: "Blog" },
   { href: "/gallery", label: "Gallery" },
-  { href: "/contact", label: "Contact" },
 ];
 
 const companyLinks = [
@@ -23,23 +21,21 @@ const companyLinks = [
 
 const supportLinks = [
   { href: "/contact", label: "Contact Us" },
+  { href: "/faq", label: "FAQ" },
   { href: "/termsandcondition", label: "Terms & Conditions" },
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/return", label: "Returns Policy" },
   { href: "/shippingpolicy", label: "Shipping Policy" },
-  { href: "/faq", label: "FAQ" },
 ];
 
 const socialItems = [
-  { label: "Instagram", src: "/Images/instagram.png" },
-  { label: "Facebook", src: "/Images/facebook.webp" },
-  { label: "YouTube", src: "/Images/youtube.png" },
-  { label: "LinkedIn", src: "/Images/linkedin.webp" },
+  { label: "Instagram", src: "/Images/instagram.png", href: "https://www.instagram.com/_tangerine_by_aum_sod?stkn=MXU5MWUxN2Z1dWNyeA==" },
+  { label: "Facebook", src: "/Images/facebook.webp", href: "https://www.facebook.com/share/1Hor7jtrrV/" },
 ];
 
 const locations = [
-  { label: "Location One", lines: ["Atharva University", "Mumbai, Maharashtra"] },
-  { label: "Location Two", lines: ["Blue Ocean Resort", "Ratnagiri, Maharashtra"] },
+  { label: "Location One", lines: ["Atharva University Mumbai,", "Maharashtra"] },
+  { label: "Location Two", lines: ["Blue Ocean Resort,", "Ratnagiri, Maharashtra"] },
 ];
 
 function SectionTitle({ children }) {
@@ -84,22 +80,35 @@ function ContactLine({ icon: Icon, children }) {
 function SocialRow() {
   return (
     <div className="flex flex-wrap gap-3">
-      {socialItems.map(({ label, src }) => (
+      {socialItems.map(({ label, src, href }) => {
+        const content = (
+          <>
+            <Image
+              src={src}
+              alt={label}
+              width={40}
+              height={40}
+              className="h-full w-full object-contain"
+            />
+          </>
+        );
+        const className = "inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:-translate-y-0.5 sm:h-11 sm:w-11";
+
+        return href ? (
+          <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>
+            {content}
+          </a>
+        ) : (
         <span
           key={label}
           aria-label={label}
           title={label}
-          className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:-translate-y-0.5 sm:h-11 sm:w-11"
+          className={className}
         >
-          <Image
-            src={src}
-            alt={label}
-            width={40}
-            height={40}
-            className="h-full w-full object-contain"
-          />
+          {content}
         </span>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -161,8 +170,8 @@ export default function Footer() {
 
               <div className="space-y-3">
                 <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
-                <ContactLine icon={Mail}>hello@tangerine.in</ContactLine>
-                <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 7:00 PM</ContactLine>
+                <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
+                <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
               </div>
 
               <div className="space-y-3">
@@ -250,8 +259,8 @@ export default function Footer() {
 
                 <div className="space-y-3">
                   <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
-                  <ContactLine icon={Mail}>hello@tangerine.in</ContactLine>
-                  <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 7:00 PM</ContactLine>
+                  <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
+                  <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
                 </div>
 
                 <div className="space-y-3">

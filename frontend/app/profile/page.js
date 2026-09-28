@@ -77,6 +77,10 @@ const EMPTY_ADDRESS_FORM = {
 
 const ZIP_LOOKUP_MIN_LENGTH = 6;
 
+const SECTION_KEYS = ["profile", "orders", "addresses", "wishlist", "reviews"];
+const STACKED_NAV_BREAKPOINT = 1280;
+const SECTION_SCROLL_OFFSET = 88;
+
 function normalizeText(value) {
   return String(value || "").trim();
 }
@@ -198,6 +202,7 @@ function ProfileDashboard() {
   const { user, profile, refreshProfile, logout } = useAuth();
   const { wishlistItems, removeFromWishlist, wishlistCount } = useWishlist();
   const contentRef = useRef(null);
+  const pendingSectionScrollRef = useRef(false);
   const [activeSection, setActiveSection] = useState("profile");
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -351,7 +356,7 @@ function ProfileDashboard() {
 
     const syncSectionFromHash = () => {
       const hash = window.location.hash.replace("#", "").trim();
-      if (["profile", "orders", "addresses", "wishlist", "reviews"].includes(hash)) {
+      if (SECTION_KEYS.includes(hash)) {
         setActiveSection(hash);
       }
     };
@@ -366,14 +371,20 @@ function ProfileDashboard() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.innerWidth >= 768) return;
-    if (!contentRef.current) return;
+    if (window.innerWidth >= STACKED_NAV_BREAKPOINT) return;
 
-    const hash = window.location.hash.replace("#", "").trim();
-    if (!["profile", "orders", "addresses", "wishlist", "reviews"].includes(hash)) return;
+    const requestedFromHash = SECTION_KEYS.includes(window.location.hash.replace("#", "").trim());
+    if (!requestedFromHash && !pendingSectionScrollRef.current) return;
 
-    const top = contentRef.current.getBoundingClientRect().top + window.scrollY - 12;
-    window.scrollTo({ top, behavior: "smooth" });
+    pendingSectionScrollRef.current = false;
+
+    const frame = window.requestAnimationFrame(() => {
+      if (!contentRef.current) return;
+      const top = contentRef.current.getBoundingClientRect().top + window.scrollY - SECTION_SCROLL_OFFSET;
+      window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [activeSection]);
 
   const productMap = useMemo(() => new Map(wishlistProducts.map((product) => [String(product.id), product])), [wishlistProducts]);
@@ -605,6 +616,31 @@ function ProfileDashboard() {
       console.error(error);
       toast.error("Could not sign out");
     }
+  }
+
+  function scrollActiveContentIntoView() {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth >= STACKED_NAV_BREAKPOINT) return;
+    if (!contentRef.current) return;
+
+    const top = contentRef.current.getBoundingClientRect().top + window.scrollY - SECTION_SCROLL_OFFSET;
+    window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+  }
+
+  function handleSelectSection(key) {
+    pendingSectionScrollRef.current = true;
+
+    if (typeof window !== "undefined" && window.location.hash.replace("#", "").trim() !== key) {
+      window.history.replaceState(null, "", `#${key}`);
+    }
+
+    if (activeSection === key) {
+      pendingSectionScrollRef.current = false;
+      scrollActiveContentIntoView();
+      return;
+    }
+
+    setActiveSection(key);
   }
 
   const sectionButtonItems = [
@@ -1126,7 +1162,7 @@ function ProfileDashboard() {
       <div className="absolute right-[-4rem] top-44 h-64 w-64 bg-amber-100/60 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:block hidden">
           <div>
             <p className="eyebrow mb-3">Account Center</p>
             <h1 className="font-display text-4xl text-ink sm:text-5xl">My Profile</h1>
@@ -1153,7 +1189,7 @@ function ProfileDashboard() {
                   key={item.key}
                   item={{
                     ...item,
-                    onClick: () => setActiveSection(item.key),
+                    onClick: () => handleSelectSection(item.key),
                   }}
                 />
               ))}
