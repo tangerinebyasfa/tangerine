@@ -146,7 +146,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center">
             <span className="sr-only">Outlet</span>
             <Image
-              src="/Images/logo-new-updated.png"
+              src="/Images/logo-transparent.png"
               alt="Tangerine"
               width={180}
               height={60}
