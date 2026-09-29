@@ -9,9 +9,10 @@ export default function FaqPage() {
       effectiveDate="August 31, 2026"
       sections={[
         {
-          title: "How do I place an order?",
+          title: "ORDERS & SHOPPING",
           paragraphs: [
-            "Browse products, choose your size if needed, add items to the cart, and complete checkout with your shipping details.",
+            "How can I place an order?",
+            "Browse our collection, select your preferred size, and add the product to your cart. Proceed to checkout, enter your delivery details, and complete the payment to place your order."
           ],
         },
         {

@@ -30,40 +30,8 @@ export default function ProductResults({ products }) {
     <div className="space-y-4 border border-ink/10 bg-[#fffaf6] p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3"><h2 className="font-display text-2xl">Find your fit</h2>{active.length > 0 && <button type="button" onClick={clear} className="text-sm underline">Clear filters</button>}</div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-{[
-  ['size', 'Size', facets.sizes],
-  ['color', 'Colour', facets.colors],
-  [
-    'categoryFilter',
-    'Category',
-    pathname === '/products/clothes'
-      ? ['Casual', 'Indian', 'Western', 'Corporate']
-      : facets.categories
-  ]
-].map(([field, label, values]) => (
-  <label key={field} className="text-sm">
-    {label}
-    <select
-      className={inputStyle}
-      value={filters[field]}
-      onChange={e => change(field, e.target.value)}
-    >
-      <option value="">All</option>
-
-      {filters[field] && !values.includes(filters[field]) && (
-        <option value={filters[field]}>
-          {filters[field]}
-        </option>
-      )}
-
-      {values.map(value => (
-        <option key={value} value={value}>
-          {value.replaceAll('-', ' ')}
-        </option>
-      ))}
-    </select>
-  </label>
-))}        <label className="text-sm">Min price (₹)<input type="number" min="0" step="0.01" value={filters.minPrice} onChange={e => change('minPrice', e.target.value)} className={inputStyle} /></label>
+ {[['size', 'Size', facets.sizes], ['color', 'Colour', facets.colors], ['categoryFilter', 'Category', facets.categories]].map(([field, label, values]) => <label key={field} className="text-sm">{label}<select className={inputStyle} value={filters[field]} onChange={e => change(field, e.target.value)}><option value="">All</option>{filters[field] && !values.includes(filters[field]) && <option value={filters[field]}>{filters[field]}</option>}{values.map(value => <option key={value} value={value}>{value.replaceAll('-', ' ')}</option>)}</select></label>)}
+        <label className="text-sm">Min price (₹)<input type="number" min="0" step="0.01" value={filters.minPrice} onChange={e => change('minPrice', e.target.value)} className={inputStyle} /></label>
         <label className="text-sm">Max price (₹)<input type="number" min="0" step="0.01" value={filters.maxPrice} onChange={e => change('maxPrice', e.target.value)} className={inputStyle} /></label>
         <label className="text-sm">Sort by<select value={filters.sort} onChange={e => change('sort', e.target.value)} className={inputStyle}><option value="">Recommended</option><option value="newest">Newest</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="name">Name: A–Z</option></select></label>
       </div>

@@ -10,13 +10,13 @@ import ProductCard from "../components/product/ProductCard";
 
 const homeImages = [
   {
-    desktop: "/Images/HomePage/corporate-dress.jpeg",
-    mobile: "/Images/HomePage/corporate-dress-mob.png",
+    desktop: "/Images/HomePage/corporate-dress-new.jpeg",
+    mobile: "/Images/HomePage/corporate-dress-mob-new.jpeg",
     alt: "Homepage image 1",
   },
   {
-    desktop: "/Images/HomePage/indian-dress.jpeg",
-    mobile: "/Images/HomePage/indian-dress-mob.png",
+    desktop: "/Images/HomePage/indian-dress-new.jpeg",
+    mobile: "/Images/HomePage/indian-dress-mob-new.jpeg",
     alt: "Homepage image 2",
   },
   {
@@ -25,8 +25,8 @@ const homeImages = [
     alt: "Homepage image 3",
   },
   {
-    desktop: "/Images/HomePage/western-dress.jpeg",
-    mobile: "/Images/HomePage/western-dress-mob.png",
+    desktop: "/Images/HomePage/western-dress-new.jpeg",
+    mobile: "/Images/HomePage/western-dress-mob-new.jpeg",
     alt: "New Arrivals",
   },
 ];
@@ -184,7 +184,7 @@ export default function HomePage() {
          {categories.length > 0 && (
           <section className="w-full py-14">
             <div className="mx-auto w-full max-w-[1920px] px-0">
-              <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[90%] md:max-w-7xl md:w-4/5">
+              <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[95%] md:max-w-8xl md:w-4/5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.2em] text-tangerine">Shop by category</p>
                   <h2 className="font-display text-3xl mt-2">Explore the edit</h2>
@@ -200,7 +200,7 @@ export default function HomePage() {
               <div className="grid grid-cols-2 gap-0 md:grid-cols-4">
                 {categories.slice(0, 4).map((category) => {
                   const image = normalizeImageUrl(category.image) || "/placeholder-category.svg";
-
+                  console.log(categories, 'utkarsh categories');
                   return (
                     <Link
                       key={category.id}

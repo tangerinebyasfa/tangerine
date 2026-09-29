@@ -290,9 +290,9 @@ export default function Footer() {
               </ul>
             </MobileSection>  
 
-            <MobileSection title="Associated Brands">
+            {/* <MobileSection title="Associated Brands">
               <BrandPills />
-            </MobileSection>
+            </MobileSection> */}
 
             <div className="px-1 pb-2 pt-4 text-center">
               <p className="text-[11px] uppercase tracking-[0.34em] text-paper/65">

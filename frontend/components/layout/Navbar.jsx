@@ -45,8 +45,8 @@ function getActiveLinkHref(pathname, links) {
 }
 
 const mobileFeatureCards = [
-  { href: "/products/all", label: "All Products", image: "/Images/HomePage/1mobile.png" },
-  { href: "/products/outlet", label: "All Outlet", image: "/Images/HomePage/2mobile.png" },
+  { href: "/products/all", label: "All Products", image: "/Images/HomePage/corporate-dress-mob-new.jpeg" },
+  { href: "/products/outlet", label: "All Outlet", image: "/Images/contact/shop-contact.png" },
   { href: "/gallery", label: "Gallery", image: "/Images/HomePage/3mobile.png" },
 ];
 
@@ -146,7 +146,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center">
             <span className="sr-only">Outlet</span>
             <Image
-              src="/Images/logo.png"
+              src="/Images/logo-new-updated.png"
               alt="Tangerine"
               width={180}
               height={60}

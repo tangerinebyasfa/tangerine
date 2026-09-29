@@ -11,26 +11,51 @@ export default function PrivacyPolicyPage() {
         {
           title: "Information We Collect",
           paragraphs: [
-            "We may collect your name, email address, phone number, shipping address, order history, and account details when you interact with our store.",
-            "We may also collect technical information such as browser type, device information, and usage data to improve site performance.",
+            "When you interact with Tangerine, we may collect information such as your name, email address, phone number, shipping and billing details, account information, and order history.",
+            "We may also collect limited technical information, including your device type, browser, IP address, and website activity. This helps us understand how our website is used and allows us to continually improve your experience.",
           ],
         },
         {
           title: "How We Use Information",
           paragraphs: [
-            "We use your information to process orders, provide customer support, improve the website, and send important updates about your purchases.",
+            "Your information allows us to provide a seamless experience from browsing to delivery. We may use it to:",
+          ],
+          items: [
+            "Process and fulfil your orders",
+            "Arrange shipping, returns, and exchanges",
+            "Respond to enquiries and provide customer support",
+            "Maintain and improve our website and services",
+            "Send important order and account updates",
+            "Share collection updates or offers where you have chosen to receive them",
+            "Protect our website and customers from fraud or misuse"
           ],
         },
         {
           title: "Sharing Information",
           paragraphs: [
-            "We do not sell your personal information. We may share limited data with service providers who help us operate the store, such as payment or delivery partners.",
+            "Your privacy matters to us. Tangerine does not sell or rent your personal information.",
+            "We may share necessary information with trusted partners who help us operate our business, such as payment processors, delivery partners, technology providers, and customer-support services. These partners receive only the information required to perform their services.",
+            "We may also disclose information when required by law or when necessary to protect our customers, business, or legal rights."
           ],
         },
         {
-          title: "Your Choices",
+          title: "Cookies",
           paragraphs: [
-            "You may request access, correction, or deletion of certain information where applicable by contacting our support team.",
+            "Our website may use cookies and similar technologies to remember your preferences, keep your shopping experience seamless, understand website usage, and improve our services.",
+            "You can manage cookie preferences through your browser settings. Some website features may not function as intended if certain cookies are disabled."
+          ],
+        },
+         {
+          title: "Your Privacy Choices",
+          paragraphs: [
+            "You may contact us to request access to, correction of, or deletion of certain personal information, where applicable.",
+            "You may also choose to unsubscribe from promotional communications at any time. Transactional communications, such as order confirmations and delivery updates, may still be sent when necessary."
+          ],
+        },
+          {
+          title: "Data Security",
+          paragraphs: [
+            "We take reasonable measures to safeguard the information entrusted to us. While we work to protect your personal information, no method of online transmission or storage can be guaranteed to be completely secure.",
           ],
         },
       ]}

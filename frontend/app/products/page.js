@@ -19,20 +19,20 @@ const MAIN_CATEGORIES = [
     href: "/products/clothes",
     image: "/Images/HomePage/1.png",
   },
-  // {
-  //   key: "accessories",
-  //   title: "Accessories",
-  //   description: "Finishing pieces and styling extras to complete the look.",
-  //   href: "/products/accessories",
-  //   image: "/Images/HomePage/2.png",
-  // },
   {
-    key: "footwear",
-    title: "Footwear",
-    description: "Step into the footwear edit with every size and style.",
-    href: "/products/footwear",
-    image: "/Images/HomePage/3.png",
+    key: "accessories",
+    title: "Accessories",
+    description: "Finishing pieces and styling extras to complete the look.",
+    href: "/products/accessories",
+    image: "/Images/HomePage/2.png",
   },
+  // {
+  //   key: "footwear",
+  //   title: "Footwear",
+  //   description: "Step into the footwear edit with every size and style.",
+  //   href: "/products/footwear",
+  //   image: "/Images/HomePage/3.png",
+  // },
   // {
   //   key: "outlet",
   //   title: "Outlet",
@@ -281,7 +281,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-            {subcategories.map((item) => (
+            {subcategories.map((item, index) => (
               <SubcategoryCard key={item.id} item={item} />
             ))}
           </div>
