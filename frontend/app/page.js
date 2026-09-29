@@ -8,6 +8,8 @@ import { api } from "../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../lib/image";
 import ProductCard from "../components/product/ProductCard";
 
+const HIDDEN_HOMEPAGE_CATEGORY_SLUGS = ["corporate", "western"];
+
 const homeImages = [
   {
     desktop: "/Images/HomePage/corporate-dress-new.jpeg",
@@ -64,6 +66,10 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const featuredScrollRef = useRef(null);
+
+  const homepageCategories = categories
+    .filter((category) => !HIDDEN_HOMEPAGE_CATEGORY_SLUGS.includes(String(category.slug || "").toLowerCase()))
+    .slice(0, 4);
 
   function scrollFeatured(direction) {
     const node = featuredScrollRef.current;
@@ -181,7 +187,7 @@ export default function HomePage() {
         </Link>
 
 
-         {categories.length > 0 && (
+         {homepageCategories.length > 0 && (
           <section className="w-full py-14">
             <div className="mx-auto w-full max-w-[1920px] px-0">
               <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[95%] md:max-w-8xl md:w-4/5">
@@ -198,9 +204,9 @@ export default function HomePage() {
               </div>
 
               <div className="grid grid-cols-2 gap-0 md:grid-cols-4">
-                {categories.slice(0, 4).map((category) => {
+                {homepageCategories.map((category) => {
                   const image = normalizeImageUrl(category.image) || "/placeholder-category.svg";
-                  console.log(categories, 'utkarsh categories');
+
                   return (
                     <Link
                       key={category.id}
