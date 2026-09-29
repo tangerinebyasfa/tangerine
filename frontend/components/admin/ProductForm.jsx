@@ -13,7 +13,7 @@ import Button from "../ui/Button";
 const PRODUCT_TYPES = [
   { value: "accessories", label: "Accessories" },
   { value: "clothes", label: "Clothes" },
-  { value: "footwear", label: "Footwear" },
+  // { value: "footwear", label: "Footwear" },
 ];
 
 const emptyForm = {
