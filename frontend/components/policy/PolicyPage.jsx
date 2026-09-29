@@ -5,9 +5,15 @@ function PolicySection({ section }) {
     <section className="border border-ink/10 bg-white p-6 sm:p-8">
       <h2 className="font-display text-2xl text-ink">{section.title}</h2>
       <div className="mt-4 space-y-4 text-sm leading-7 text-ink/70">
-        {section.paragraphs?.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
+        {section.paragraphs?.map((paragraph) =>
+          paragraph.trim().endsWith("?") ? (
+            <p key={paragraph} className="font-semibold text-ink">
+              {paragraph}
+            </p>
+          ) : (
+            <p key={paragraph}>{paragraph}</p>
+          )
+        )}
         {section.items?.length ? (
           <ul className="space-y-3 pl-5">
             {section.items.map((item) => (
