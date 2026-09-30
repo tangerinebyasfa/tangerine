@@ -19,7 +19,7 @@ const MAIN_TYPES = ["accessories", "clothes", "footwear"];
 const TYPE_COPY = {
   accessories: {
     title: "Accessories",
-    description: "Browse all accessories from the current edit.",
+    // description: "Browse all accessories from the current edit.",
   },
   clothes: {
     title: "Clothes",
@@ -250,7 +250,9 @@ export default function CategoryPage() {
         ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
         : isAll
           ? "Browse the full range from this edit."
-          : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
+          : category === "accessories"
+            ? categoryInfo?.description || typeCopy?.description || ""
+            : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
@@ -267,7 +269,13 @@ export default function CategoryPage() {
       ) : loading ? (
         <Spinner />
       ) : products.length === 0 ? (
-        <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>
+        category === "accessories" ? (
+          <p className="text-ink/50 text-sm">
+            We’re curating something special to complete your look! It will be worth your wait!
+          </p>
+        ) : (
+          <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>
+        )
       ) : (
         <ProductResults
           products={products}
