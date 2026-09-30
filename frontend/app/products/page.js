@@ -77,9 +77,9 @@ const SUBCATEGORY_ORDER = [
   "western",
   "casual",
   "corporate",
-  "bangles",
-  "earrings",
 ];
+
+const HIDDEN_SUBCATEGORY_SLUGS = ["bangles", "earings", "earrings"];
 
 function SubcategoryCard({ item }) {
   const image = normalizeImageUrl(item.image) || "/placeholder-category.svg";
@@ -215,11 +215,13 @@ export default function ProductsPage() {
       return index === -1 ? SUBCATEGORY_ORDER.length : index;
     };
 
-    return [...subcategories].sort((a, b) => {
-      const diff = rank(a.slug || a.name) - rank(b.slug || b.name);
-      if (diff !== 0) return diff;
-      return String(a.name || "").localeCompare(String(b.name || ""));
-    });
+    return subcategories
+      .filter((item) => !HIDDEN_SUBCATEGORY_SLUGS.includes(String(item.slug || item.name || "").trim().toLowerCase()))
+      .sort((a, b) => {
+        const diff = rank(a.slug || a.name) - rank(b.slug || b.name);
+        if (diff !== 0) return diff;
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
   }, [subcategories]);
 
   const groupedSubcategories = useMemo(() => {
@@ -273,7 +275,7 @@ export default function ProductsPage() {
         description="Choose a category to jump into the matching product page. Each category page will show only the products for that section."
       />
 
-      <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+      <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-2">
         {categoryCards.map((category) => (
           <CategoryHeroCard key={category.key} category={category} />
         ))}
