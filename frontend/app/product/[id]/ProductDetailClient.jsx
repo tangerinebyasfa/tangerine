@@ -916,7 +916,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
               {sizeOptions.length > 0 && (
                 <div className="mb-6">
                   <p className="text-xs tracking-widest uppercase text-ink/60 mb-3">Size</p>
-            <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide & measuring tips</summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
+            <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide  </summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
                   <div className="flex flex-wrap gap-2">
                     {sizeOptions.map((item) => (
                       <button
