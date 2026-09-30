@@ -31,6 +31,13 @@ const TYPE_COPY = {
   },
 };
 
+const SUBCATEGORY_DESCRIPTIONS = {
+  indian: "Wear your perspective.",
+  western: "Wear your perspective.",
+  casual: "Wear your perspective.",
+  corporate: "Wear your perspective.",
+};
+
 const OUTLET_LOCATIONS = [
   {
     name: "Atharva University Mumbai",
@@ -74,10 +81,10 @@ function OutletCard({ outlet }) {
             <Store className="h-5 w-5" />
           </div>
         </div>
-        <p className="mt-5 max-w-xl text-sm leading-7 text-ink/60">
+        {/* <p className="mt-5 max-w-xl text-sm leading-7 text-ink/60">
           This space can hold the exact address, store-specific notes, offers, appointment info,
           parking guidance, or any other outlet details you want to communicate clearly.
-        </p>
+        </p> */}
       </div>
 
       <div className="grid gap-6 p-6 md:p-7 md:grid-cols-[1.2fr_0.8fr]">
@@ -154,6 +161,9 @@ export default function CategoryPage() {
   const isMainType = MAIN_TYPES.includes(category);
   const isOutlet = category === "outlet";
   const isAll = category === "all";
+  const categorySlug = String(category || "")
+    .trim()
+    .toLowerCase();
 
   useEffect(() => {
     if (isOutlet) {
@@ -250,9 +260,11 @@ export default function CategoryPage() {
         ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
         : isAll
           ? "Browse the full range from this edit."
-          : category === "accessories"
-            ? categoryInfo?.description || typeCopy?.description || ""
-            : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
+          : SUBCATEGORY_DESCRIPTIONS[categorySlug]
+            ? SUBCATEGORY_DESCRIPTIONS[categorySlug]
+            : categorySlug === "accessories"
+              ? categoryInfo?.description || typeCopy?.description || ""
+              : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
@@ -270,8 +282,8 @@ export default function CategoryPage() {
         <Spinner />
       ) : products.length === 0 ? (
         category === "accessories" ? (
-          <p className="text-ink/50 text-sm">
-            We’re curating something special to complete your look! It will be worth your wait!
+          <p className="text-ink/50 text-md text-center">
+            We’re curating something special to complete your look!<br/> It will be worth your wait!
           </p>
         ) : (
           <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>
