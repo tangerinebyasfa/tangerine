@@ -48,7 +48,7 @@ function CategoryHeroCard({ category }) {
       href={category.href}
       className="group relative overflow-hidden border border-ink/10 bg-paper shadow-[0_10px_30px_rgba(0,0,0,0.04)] transition-transform duration-300 hover:-translate-y-1"
     >
-      <div className="relative lg:aspect-[3/1.5] aspect-[3/4] bg-sand overflow-hidden">
+      <div className="relative lg:aspect-[3/1.2] aspect-[3/4] bg-sand overflow-hidden">
         <Image
           src={category.image}
           alt={category.title}
