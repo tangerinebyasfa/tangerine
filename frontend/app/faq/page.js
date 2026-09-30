@@ -6,7 +6,8 @@ export default function FaqPage() {
       eyebrow="Help"
       title="FAQ"
       description="Quick answers to common shopping, order, and support questions."
-      effectiveDate="August 31, 2026"
+      sectionTitleClassName="text-tangerine"
+      // effectiveDate="August 31, 2026"
       sections={[
         {
           title: "ORDERS & SHOPPING",

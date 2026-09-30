@@ -6,7 +6,8 @@ export default function TermsAndConditionsPage() {
       eyebrow="Legal"
       title="Terms & Conditions"
       description="Welcome to Tangerine. These Terms & Conditions govern your access to and use of the Tangerine website, including browsing, purchasing products, creating an account, and interacting with our services. By accessing or using our website, you agree to be bound by these Terms & Conditions. If you do not agree with any part of these Terms, please discontinue use of the website."
-      effectiveDate="August 31, 2026"
+      // effectiveDate="August 31, 2026"
+      sectionTitleClassName="text-tangerine"
       sections={[
         {
           title: "Use of Our Website",

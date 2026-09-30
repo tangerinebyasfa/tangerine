@@ -1,9 +1,9 @@
 import PageHeader from "../ui/PageHeader";
 
-function PolicySection({ section }) {
+function PolicySection({ section, sectionTitleClassName = "text-ink" }) {
   return (
     <section className="border border-ink/10 bg-white p-6 sm:p-8">
-      <h2 className="font-display text-2xl text-ink">{section.title}</h2>
+      <h2 className={`font-display text-2xl ${sectionTitleClassName}`}>{section.title}</h2>
       <div className="mt-4 space-y-4 text-sm leading-7 text-ink/70">
         {section.paragraphs?.map((paragraph) =>
           paragraph.trim().endsWith("?") ? (
@@ -28,7 +28,7 @@ function PolicySection({ section }) {
   );
 }
 
-export default function PolicyPage({ eyebrow, title, description, effectiveDate, sections }) {
+export default function PolicyPage({ eyebrow, title, description, effectiveDate, sections, sectionTitleClassName }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <PageHeader eyebrow={eyebrow} title={title} description={description} />
@@ -41,7 +41,7 @@ export default function PolicyPage({ eyebrow, title, description, effectiveDate,
 
       <div className="space-y-5">
         {sections.map((section) => (
-          <PolicySection key={section.title} section={section} />
+          <PolicySection key={section.title} section={section} sectionTitleClassName={sectionTitleClassName} />
         ))}
       </div>
     </div>

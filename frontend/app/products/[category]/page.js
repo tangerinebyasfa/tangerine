@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   Clock3,
@@ -149,12 +149,17 @@ export default function CategoryPage() {
   const searchTerm = searchParams.get("q")?.trim() || searchParams.get("search")?.trim() || "";
   const [products, setProducts] = useState([]);
   const [categoryInfo, setCategoryInfo] = useState(null);
+  const [siblings, setSiblings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isMainType = MAIN_TYPES.includes(category);
+  const isOutlet = category === "outlet";
+  const isAll = category === "all";
 
   useEffect(() => {
-    if (category === "outlet") {
+    if (isOutlet) {
       setProducts([]);
       setCategoryInfo(null);
+      setSiblings([]);
       setLoading(false);
       return undefined;
     }
@@ -164,20 +169,31 @@ export default function CategoryPage() {
     async function loadProducts() {
       setLoading(true);
       try {
-        const isAll = category === "all";
-        const isMainType = MAIN_TYPES.includes(category);
-        const [productList, info] = await Promise.all([
-          api.getProducts(
-            {
-              ...(isAll ? {} : isMainType ? { type: category } : { category }),
-              ...(searchTerm ? { search: searchTerm } : {}),
-            }
-          ),
-          isAll || isMainType ? Promise.resolve(null) : api.getSubcategory(category).catch(() => null),
-        ]);
+        const info = isAll || isMainType ? null : await api.getSubcategory(category).catch(() => null);
+        const parentType = String(info?.parentType || "").toLowerCase();
+
+        let siblingList = [];
+        if (isAll) {
+          const allSubcategories = await api.getSubcategories().catch(() => []);
+          siblingList = Array.isArray(allSubcategories) ? allSubcategories : [];
+        } else if (parentType) {
+          const allSubcategories = await api.getSubcategories().catch(() => []);
+          siblingList = (Array.isArray(allSubcategories) ? allSubcategories : []).filter(
+            (item) => String(item.parentType || "").toLowerCase() === parentType
+          );
+        }
+
+        const productList = await api.getProducts(
+          {
+            ...(isAll ? {} : parentType ? { type: parentType } : isMainType ? { type: category } : { category }),
+            ...(searchTerm ? { search: searchTerm } : {}),
+          }
+        );
+
         if (!active) return;
-        setProducts(productList);
+        setProducts(Array.isArray(productList) ? productList : []);
         setCategoryInfo(info);
+        setSiblings(siblingList);
       } catch (err) {
         console.error(err);
       } finally {
@@ -204,32 +220,43 @@ export default function CategoryPage() {
       window.removeEventListener("focus", refreshProducts);
       document.removeEventListener("visibilitychange", refreshProducts);
     };
-  }, [category, searchTerm]);
+  }, [category, searchTerm, isOutlet, isAll, isMainType]);
 
-  const isMainType = MAIN_TYPES.includes(category);
+  const categoryOptions = useMemo(
+    () =>
+      siblings
+        .map((item) => item.slug || item.name)
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase()),
+    [siblings]
+  );
+
+  const isSubcategory = !isOutlet && !isAll && !isMainType && categoryOptions.includes(String(category).toLowerCase());
+  const defaultCategoryFilter = isSubcategory ? String(category).toLowerCase() : "";
+
   const typeCopy = TYPE_COPY[category];
   const title =
     searchTerm
       ? `Search results for "${searchTerm}"`
-      : category === "outlet"
+      : isOutlet
         ? "Outlet"
-        : category === "all"
+        : isAll
           ? "All Products"
           : categoryInfo?.name || typeCopy?.title || category;
   const description =
     searchTerm
       ? `Showing products that match "${searchTerm}".`
-      : category === "outlet"
+      : isOutlet
         ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
-        : category === "all"
+        : isAll
           ? "Browse the full range from this edit."
           : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
-      <PageHeader eyebrow={category === "outlet" ? "Visit Us" : "Shop"} title={title} description={description} />
+      <PageHeader eyebrow={isOutlet ? "Visit Us" : "Shop"} title={title} description={description} />
 
-      {category === "outlet" ? (
+      {isOutlet ? (
         <div className="space-y-8">
           <section id="locations" className="space-y-6">
             {OUTLET_LOCATIONS.map((outlet) => (
@@ -242,7 +269,11 @@ export default function CategoryPage() {
       ) : products.length === 0 ? (
         <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>
       ) : (
-        <ProductResults products={products} />
+        <ProductResults
+          products={products}
+          categoryOptions={categoryOptions}
+          defaultCategoryFilter={defaultCategoryFilter}
+        />
       )}
     </div>
   );
