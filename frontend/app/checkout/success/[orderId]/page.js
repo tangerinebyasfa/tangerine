@@ -82,7 +82,7 @@ export default function OrderSuccessPage() {
   const shipping = Number(order?.shipping || 0);
   const discount = Number(order?.discount || 0);
   const total = Number(order?.total || 0);
-  const paymentMethod = String(order?.paymentMethod || "cod").toLowerCase() === "cod" ? "Cash on Delivery" : "Online Payment";
+  const paymentMethod = "Online Payment";
   const paymentDetails = order?.paymentProvider ? `${paymentMethod} (${order.paymentProvider})` : paymentMethod;
   const shippingMethod = shipping > 0 ? "Standard Delivery" : "Free Shipping";
   const shippingEta = shipping > 0 ? "3 - 5 business days" : "Free";
@@ -254,8 +254,8 @@ export default function OrderSuccessPage() {
                       <div className="flex items-start gap-3">
                         <ShieldCheck className="mt-0.5 h-5 w-5 text-tangerine" />
                         <div>
-                          <p className="font-medium text-ink">Cash on Delivery</p>
-                          <p className="mt-1 text-sm leading-6 text-ink/60">Pay the confirmed total when your order arrives.</p>
+                          <p className="font-medium text-ink">Paid Online</p>
+                          <p className="mt-1 text-sm leading-6 text-ink/60">Paid securely via Razorpay. Refunds go back to the same payment method.</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">

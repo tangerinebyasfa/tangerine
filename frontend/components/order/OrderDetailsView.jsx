@@ -12,6 +12,21 @@ import {
 } from "../../lib/order";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
+const PAYMENT_STATE_LABELS = {
+  pending: "Awaiting payment",
+  paid: "Paid online",
+  refunded: "Refunded in full",
+  partially_refunded: "Partly refunded",
+  failed: "Payment failed",
+};
+
+function describePaymentState(order) {
+  const status = String(order?.paymentStatus || "pending").toLowerCase();
+  if (order?.status === "cancelled" && status === "pending") return "Cancelled before payment";
+  if (order?.refundPending) return "Refund pending";
+  return PAYMENT_STATE_LABELS[status] || status;
+}
+
 function StatusBadge({ status }) {
   const value = String(status || "pending").toLowerCase();
   const tone =
@@ -70,8 +85,10 @@ export default function OrderDetailsView({
         </div>
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Payment</p>
-          <p className="mt-2 font-medium text-ink">{String(order?.paymentMethod || "cod").toUpperCase()}</p>
-          <p className="mt-1 text-sm text-ink/55">{order?.paymentMethod === "cod" ? (order.status === "cancelled" ? "Cancelled ? no payment due" : order.paymentStatus === "refunded" ? "Refund recorded" : order.paymentStatus === "partially_refunded" ? "Partial refund recorded" : order.paymentStatus === "paid" ? "Cash collected" : "Pay cash on delivery") : String(order?.paymentStatus || "pending")}</p>
+          <p className="mt-2 font-medium text-ink">{order?.paymentMethod === "razorpay" ? "Razorpay" : String(order?.paymentMethod || "Razorpay").toUpperCase()}</p>
+          <p className="mt-1 text-sm text-ink/55">{describePaymentState(order)}</p>
+          {order?.razorpayPaymentId ? <p className="mt-1 break-all text-xs text-ink/45">Ref: {order.razorpayPaymentId}</p> : null}
+          {order?.refundPending ? <p className="mt-1 text-xs text-amber-700">Automatic refund failed. Refund this payment manually.</p> : null}
         </div>
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Status</p>

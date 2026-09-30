@@ -10,21 +10,12 @@ import AuthGuard from "../../components/auth/AuthGuard";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { formatINR } from "../../lib/currency";
+import { loadRazorpayCheckout, razorpayKeyId } from "../../lib/razorpay";
 import { buildAddressSummary } from "../../lib/accountFirestore";
-import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X } from "lucide-react";
+import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X, Zap } from "lucide-react";
 
 const ZIP_LOOKUP_MIN_LENGTH = 6;
-
-const PAYMENT_OPTIONS = [
-  {
-    value: "cod",
-    label: "Cash on Delivery",
-    description: "Pay when your order is delivered.",
-    meta: "Pay on delivery",
-    icon: Package,
-  },
-
-];
+const CHECKOUT_STORAGE_PREFIX = "razorpay-checkout";
 
 function addressToForm(address, profile) {
   if (typeof address === "string") {
@@ -102,7 +93,7 @@ function CheckoutForm() {
     country: "India",
     phone: profile?.phone || "",
   });
-  const paymentMethod = "cod";
+  const paymentMethod = "razorpay";
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
@@ -122,17 +113,20 @@ function CheckoutForm() {
     if (!user || !checkoutItems.length) { setQuote(null); return; }
     async function loadQuote() {
       try {
+        const storageKey = `${CHECKOUT_STORAGE_PREFIX}-${user.uid}`;
         let attempt = null;
-        try { attempt = JSON.parse(sessionStorage.getItem(`cod-checkout-${user.uid}`)); } catch {}
+        try { attempt = JSON.parse(sessionStorage.getItem(storageKey)); } catch {}
         if (attempt?.requestId) {
           const recovered = await api.recoverOrder(attempt.requestId);
           if (!active) return;
-          if (recovered) {
-            sessionStorage.removeItem(`cod-checkout-${user.uid}`);
+          // A paid attempt is recovered as-is; a released one starts fresh.
+          if (recovered?.paymentStatus === "paid") {
+            sessionStorage.removeItem(storageKey);
             clearCart();
             router.push(`/checkout/success/${recovered.id}`);
             return;
           }
+          if (recovered) sessionStorage.removeItem(storageKey);
         }
         const result = await api.quoteOrder({ items: checkoutItems, couponCode: appliedCoupon?.code || "" });
         if (active) setQuote({ ...result, key: quoteKey });
@@ -142,7 +136,6 @@ function CheckoutForm() {
     return () => { active = false; };
   }, [quoteKey]);
 
-  const selectedPayment = PAYMENT_OPTIONS.find((option) => option.value === paymentMethod) || PAYMENT_OPTIONS[0];
   const hasSavedAddresses = addresses.length > 0;
   const hasMultipleSavedAddresses = addresses.length > 1;
 
@@ -291,6 +284,17 @@ function CheckoutForm() {
     setCouponError("");
   }
 
+  // Frees the reserved stock and coupon when the customer never completes payment.
+  async function releaseAttempt(orderId, storageKey) {
+    if (!orderId) return;
+    try { await api.releaseUnpaidOrder(orderId); } catch (error) {
+      console.warn("Could not release the unpaid order:", error);
+    } finally {
+      // A new attempt must not reuse a released order id.
+      try { sessionStorage.removeItem(storageKey); } catch {}
+    }
+  }
+
   async function handlePlaceOrder(e) {
     e.preventDefault();
     if (items.length === 0) {
@@ -301,10 +305,13 @@ function CheckoutForm() {
     placing.current = true;
     setLoading(true);
     setOrderError("");
+    const storageKey = `${CHECKOUT_STORAGE_PREFIX}-${user.uid}`;
+    let createdOrder = null;
+    let paymentCaptured = false;
     try {
       const orderPayload = {
         shippingAddress: address,
-        paymentMethod: "cod",
+        paymentMethod,
         items: checkoutItems,
         couponCode: appliedCoupon?.code || "",
         quoteId: currentQuote.quoteId,
@@ -312,7 +319,6 @@ function CheckoutForm() {
       // Retain the same request after a timeout or page refresh. Store no address.
       const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(orderPayload)));
       const fingerprint = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-      const storageKey = `cod-checkout-${user.uid}`;
       let attempt = null;
       try { attempt = JSON.parse(sessionStorage.getItem(storageKey)); } catch {}
       if (attempt?.fingerprint !== fingerprint) {
@@ -320,12 +326,73 @@ function CheckoutForm() {
         sessionStorage.setItem(storageKey, JSON.stringify(attempt));
       }
       const created = await api.createOrder({ ...orderPayload, requestId: attempt.requestId });
+      createdOrder = created;
+      const razorpayPublicKey = razorpayKeyId(created.razorpayKeyId);
+      if (!created.razorpayOrderId || !razorpayPublicKey) {
+        throw new Error("Online payment is unavailable right now. Please contact us or try again shortly.");
+      }
+
+      const Razorpay = await loadRazorpayCheckout();
+      const success = await new Promise((resolve, reject) => {
+        const instance = new Razorpay({
+          key: razorpayPublicKey,
+          amount: Math.round(Number(currentQuote.total) * 100),
+          currency: "INR",
+          name: "Tangerine",
+          description: `Order ${created.displayOrderId || created.id}`,
+          order_id: created.razorpayOrderId,
+          prefill: {
+            name: address.fullName,
+            contact: address.phone,
+            email: user.email || "",
+          },
+          notes: { orderId: created.id },
+          theme: { color: "#ff6a00" },
+          retry: { enabled: false },
+          modal: {
+            // The user abandoned or declined payment: give the stock back.
+            ondismiss: () => reject(new Error("Payment window closed before the order was paid.")),
+          },
+          handler: (response) => resolve(response),
+        });
+        instance.on("payment.failed", (payload) => {
+          const reason = payload?.error?.description || "Payment was declined.";
+          reject(new Error(reason));
+        });
+        instance.open();
+      });
+
+      // The signature is verified server-side against the stored order id.
+      paymentCaptured = true;
+      const verified = await api.verifyOrderPayment(created.id, {
+        razorpayPaymentId: success.razorpay_payment_id,
+        razorpaySignature: success.razorpay_signature,
+      });
       sessionStorage.removeItem(storageKey);
       clearCart();
-      toast.success("Cash-on-delivery order placed!");
-      router.push(`/checkout/success/${created.orderId || created.id}`);
+      toast.success("Payment received. Your order is confirmed!");
+      router.push(`/checkout/success/${verified?.id || created.id}`);
     } catch (err) {
-      setOrderError(err.message || "Could not place order. Please retry.");
+      // A captured payment is never released: the webhook will settle it.
+      if (paymentCaptured) {
+        setOrderError("We received your payment and are confirming it. This page updates in a moment.");
+        try {
+          const settled = await api.getOrder(createdOrder.id);
+          if (settled?.paymentStatus === "paid") {
+            sessionStorage.removeItem(storageKey);
+            clearCart();
+            router.push(`/checkout/success/${createdOrder.id}`);
+          }
+        } catch {}
+        return;
+      }
+      if (createdOrder) {
+        await releaseAttempt(createdOrder.id, storageKey);
+      } else {
+        try { sessionStorage.removeItem(storageKey); } catch {}
+      }
+      setOrderError(err.message || "Could not complete your payment. Please retry.");
+      setQuoteRevision((value) => value + 1);
     } finally {
       placing.current = false;
       setLoading(false);
@@ -339,7 +406,7 @@ function CheckoutForm() {
           <p className="text-xs tracking-[0.35em] text-tangerine uppercase">Almost there</p>
           <h1 className="font-display text-4xl text-ink sm:text-5xl">Checkout</h1>
           <p className="max-w-2xl text-sm leading-6 text-ink/60 sm:text-base">
-            Review your delivery details and the confirmed total. Pay cash when your order arrives.
+            Review your delivery details and the confirmed total. Pay securely online with UPI, cards, netbanking or wallets.
           </p>
         </div>
         <div className="flex items-start gap-3 border border-ink/10 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
@@ -561,53 +628,40 @@ function CheckoutForm() {
               </div>
               <div>
                 <h3 className="font-display text-2xl text-ink">Payment Method</h3>
-                <p className="mt-1 text-sm text-ink/55">Cash on delivery is available for this order.</p>
+                <p className="mt-1 text-sm text-ink/55">Pay online in a secure Razorpay window.</p>
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-2">
-              {PAYMENT_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const checked = paymentMethod === option.value;
-
-                return (
-                  <label
-                    key={option.value}
-                    className={`flex cursor-pointer items-stretch gap-3 border p-4 transition-all ${
-                      checked
-                        ? "border-tangerine bg-[#fff7f0] shadow-[0_8px_24px_rgba(255,106,0,0.08)]"
-                        : "border-ink/15 bg-white hover:bg-[#fffaf6]"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={checked}
-                      readOnly
-                      className="mt-1"
-                    />
-                    <div className={`grid h-11 w-11 shrink-0 place-items-center ${checked ? "bg-tangerine text-white" : "bg-[#fff3ea] text-tangerine"}`}>
-                      <Icon className="h-5 w-5" />
+            <div className="border border-tangerine bg-[#fff7f0] p-4 shadow-[0_8px_24px_rgba(255,106,0,0.08)]">
+              <div className="flex items-stretch gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center bg-tangerine text-white">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-ink">Pay Online</p>
+                      <p className="mt-1 text-sm text-ink/60">
+                        UPI, cards, netbanking and wallets. Your order is confirmed only after the payment succeeds.
+                      </p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-ink">{option.label}</p>
-                          <p className="mt-1 text-sm text-ink/60">{option.description}</p>
-                        </div>
-                        <span className="text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
-                          {option.meta}
-                        </span>
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
+                    <span className="shrink-0 text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
+                      Secured
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center gap-2 text-xs text-ink/55">
-              <ShieldCheck className="h-4 w-4 text-tangerine" />
-              <span>Selected payment method: {selectedPayment.label}</span>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink/55">
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-tangerine" />
+                Razorpay encrypted checkout
+              </span>
+              <span className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-tangerine" />
+                We never store card or UPI details
+              </span>
             </div>
           </section>
         </div>
@@ -683,29 +737,24 @@ function CheckoutForm() {
               {quoteError ? <p className="text-rose-700">{quoteError}</p> : null}
               {orderError ? <p className="text-rose-700">{orderError}</p> : null}
               {(quoteError || orderError) ? <button type="button" disabled={loading} onClick={() => { setQuote(null); setQuoteRevision(value => value + 1); }} className="mt-2 underline">Refresh total</button> : null}
-              <p className="mt-2 text-ink/60">You can cancel from your order details before shipment.</p>
+              <p className="mt-2 text-ink/60">You can cancel from your order details before shipment, and prepaid amounts are refunded to the original payment method.</p>
             </div>
             <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading || couponLoading} className="mt-6 w-full">
-              Place Cash-on-Delivery Order
+              {loading ? "Opening secure payment..." : `Pay ${formatINR(total)} Securely`}
             </Button>
           </div>
 
           <div className="border border-ink/10 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-5 w-5 text-tangerine" />
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
                 <div>
-                  <p className="font-medium text-ink">Cash on Delivery</p>
-                  <p className="text-sm text-ink/55">No online payment is required. Pay the confirmed total on delivery.</p>
+                  <p className="font-medium text-ink">Secure Online Payment</p>
+                  <p className="text-sm text-ink/55">
+                    Payments open in a Razorpay window. If you close it without paying, your reserved items are released straight away.
+                  </p>
                 </div>
               </div>
-              {/* <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 text-tangerine" />
-                <div>
-                  <p className="font-medium text-ink">Easy Returns</p>
-                  <p className="text-sm text-ink/55">Hassle-free support after purchase</p>
-                </div>
-              </div> */}
             </div>
           </div>
         </aside>

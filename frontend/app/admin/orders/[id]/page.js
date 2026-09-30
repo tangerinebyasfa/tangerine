@@ -27,8 +27,6 @@ export default function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("pending");
-  const [cashCollected, setCashCollected] = useState(false);
-  const [amountCollected, setAmountCollected] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -67,10 +65,8 @@ export default function AdminOrderDetailPage() {
 
     setSaving(true);
     try {
-      const updated = await api.updateOrderStatus(order.id, status, { cashCollected, amountCollected: Number(amountCollected) });
+      const updated = await api.updateOrderStatus(order.id, status);
       setOrder(updated);
-      setCashCollected(false);
-      setAmountCollected("");
       setStatus(normalizeOrderStatus(updated?.status));
       toast.success("Order status updated");
     } catch (err) {
@@ -131,7 +127,7 @@ export default function AdminOrderDetailPage() {
           <section><div class="orange">Ship To</div><div class="muted">${escapeHtml(summarizeShippingAddress(shippingAddress) || "No address available.")}</div></section></div>
         <table><thead><tr><th>Product</th><th>Size / Color</th><th>Qty</th><th class="amount">Price</th></tr></thead><tbody>${itemRows}</tbody></table>
         <div class="totals"><div><span>Subtotal</span><span>${escapeHtml(formatINR(Number(order.subtotal || 0)))}</span></div>${order.couponCode || order.discountCode ? `<div><span>Coupon Code</span><span>${escapeHtml(order.couponCode || order.discountCode)}</span></div><div><span>Coupon Discount</span><span>- ${escapeHtml(formatINR(Number(order.couponDiscountAmount ?? order.discount ?? 0)))}</span></div>` : `<div><span>Discount</span><span>- ${escapeHtml(formatINR(Number(order.discount || 0)))}</span></div>`}<div><span>Shipping</span><span>${escapeHtml(formatINR(Number(order.shipping || 0)))}</span></div><div class="total"><span>Final Total</span><span>${escapeHtml(formatINR(Number(order.total || 0)))}</span></div></div>
-        <footer>Payment method: ${escapeHtml(String(order.paymentMethod || "COD").toUpperCase())} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}</footer>
+        <footer>Payment method: ${escapeHtml(String(order.paymentMethod || "razorpay").toUpperCase())} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}</footer>
       </main><script>window.onload = function () { window.print(); };</script></body></html>`);
     invoiceWindow.document.close();
   }
@@ -191,16 +187,10 @@ export default function AdminOrderDetailPage() {
                   </select>
                 </label>
 
-                {status === "delivered" && order.status !== "delivered" ? <div className="space-y-2 text-sm">
-                  <label className="block">Cash collected (expected {formatINR(order.total)})
-                    <input aria-label="Cash amount collected" type="number" min="0" step="0.01" value={amountCollected} onChange={e => setAmountCollected(e.target.value)} className="block border p-2" />
-                  </label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={cashCollected} onChange={e => setCashCollected(e.target.checked)} /> I confirm delivery and receipt of the cash.</label>
-                </div> : null}
                 <button
                   type="button"
                   onClick={handleSaveStatus}
-                  disabled={saving || !dirty || (status === "delivered" && (!cashCollected || amountCollected === ""))}
+                  disabled={saving || !dirty}
                   className="inline-flex items-center justify-center gap-2 bg-tangerine px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-tangerine-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -218,7 +208,7 @@ export default function AdminOrderDetailPage() {
           <div className="border border-ink/10 bg-white p-4 sm:p-6">
             <p className="font-display text-2xl text-ink">Admin Notes</p>
             <p className="mt-2 text-sm leading-6 text-ink/60">
-              Move orders forward as they are fulfilled. Cancel only before shipment. Confirm the exact cash amount when marking an order delivered; completed orders are retained for your records.
+              Move orders forward as they are fulfilled. Cancel only before shipment; cancelling a paid order issues a refund to the original payment method automatically. Completed orders are retained for your records.
             </p>
           </div>
         </div>
