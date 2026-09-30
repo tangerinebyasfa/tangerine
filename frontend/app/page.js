@@ -8,7 +8,7 @@ import { api } from "../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../lib/image";
 import ProductCard from "../components/product/ProductCard";
 
-const HIDDEN_HOMEPAGE_CATEGORY_SLUGS = ["corporate", "western"];
+const HOMEPAGE_CATEGORY_SLUGS = ["indian", "casual", "western", "corporate"];
 
 const homeImages = [
   {
@@ -68,8 +68,12 @@ export default function HomePage() {
   const featuredScrollRef = useRef(null);
 
   const homepageCategories = categories
-    .filter((category) => !HIDDEN_HOMEPAGE_CATEGORY_SLUGS.includes(String(category.slug || "").toLowerCase()))
-    .slice(0, 4);
+    .filter((category) => HOMEPAGE_CATEGORY_SLUGS.includes(String(category.slug || "").trim().toLowerCase()))
+    .sort(
+      (a, b) =>
+        HOMEPAGE_CATEGORY_SLUGS.indexOf(String(a.slug || "").trim().toLowerCase()) -
+        HOMEPAGE_CATEGORY_SLUGS.indexOf(String(b.slug || "").trim().toLowerCase())
+    );
 
   function scrollFeatured(direction) {
     const node = featuredScrollRef.current;
