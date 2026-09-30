@@ -169,7 +169,7 @@ export default function AdminOrdersPage() {
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="font-display text-2xl text-ink">{getOrderDisplayId(order)}</h2>
+                      <h2 className="font-display text-2xl text-ink break-all">{getOrderDisplayId(order)}</h2>
                       <StatusBadge status={order.status} />
                     </div>
                     <p className="mt-1 text-sm text-ink/55">

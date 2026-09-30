@@ -114,7 +114,68 @@ export default function ReachedCustomersPage() {
           </p>
         </div>
       ) : (
-        <div className="mt-8 overflow-hidden border border-ink/10 bg-white">
+        <>
+          <div className="mt-8 space-y-3 lg:hidden">
+            {messages.map((item) => (
+              <article key={item.id} className="border border-ink/10 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-ink">{item.name || "Unknown customer"}</p>
+                  <p className="shrink-0 text-xs uppercase tracking-[0.18em] text-ink/40">
+                    {normalizeText(item.status) || "new"}
+                  </p>
+                </div>
+
+                <div className="mt-3 space-y-2 text-ink/70">
+                  {item.email ? (
+                    <a href={`mailto:${item.email}`} className="flex items-center gap-2 hover:text-tangerine">
+                      <Mail className="h-4 w-4 shrink-0" />
+                      <span className="min-w-0 break-all">{item.email}</span>
+                    </a>
+                  ) : null}
+                  {item.phone ? (
+                    <a href={`tel:${String(item.phone).replace(/\s+/g, "")}`} className="flex items-center gap-2 hover:text-tangerine">
+                      <Phone className="h-4 w-4 shrink-0" />
+                      <span>{item.phone}</span>
+                    </a>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 border-t border-ink/10 pt-4">
+                  <p className="font-medium text-ink">{item.subject || "No subject"}</p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink/60">
+                    {item.message || "No message provided."}
+                  </p>
+                </div>
+
+                <div className="mt-4 space-y-2 border-t border-ink/10 pt-4 text-sm">
+                  <div className="flex items-start gap-2 text-ink/70">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-tangerine" />
+                    <span>{item.preferredLocation || "Unspecified"}</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-ink/70">
+                    <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-tangerine" />
+                    <span>{formatDate(item.createdAt)}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex justify-end border-t border-ink/10 pt-4">
+                  {item.email ? (
+                    <a
+                      href={`mailto:${item.email}`}
+                      className="inline-flex items-center gap-2 border border-ink/10 bg-white px-4 py-2 text-sm text-ink transition-colors hover:bg-sand"
+                    >
+                      Reply
+                      <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span className="text-ink/40">-</span>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 hidden overflow-hidden border border-ink/10 bg-white lg:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-ink/10 text-left text-xs uppercase tracking-widest text-ink/40">
@@ -187,6 +248,7 @@ export default function ReachedCustomersPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

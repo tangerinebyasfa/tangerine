@@ -214,7 +214,7 @@ export default function AdminCategoriesPage() {
                 </select>
               </label>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button type="submit" loading={saving}>
                   {editingId ? "Save Changes" : "Add Subtype"}
                 </Button>
@@ -245,7 +245,35 @@ export default function AdminCategoriesPage() {
                 ))}
               </div>
 
-              <div className="overflow-x-auto border border-ink/10">
+              <div className="space-y-3 lg:hidden">
+                {categories.map((category) => (
+                  <article key={category.id} className="border border-ink/10 p-4">
+                    <p className="text-sm text-ink">{category.name}</p>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <div>
+                        <dt className="uppercase tracking-widest text-ink/40">Type</dt>
+                        <dd className="mt-0.5 capitalize text-ink/60">
+                          {category.parentType || "Unassigned"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="uppercase tracking-widest text-ink/40">Slug</dt>
+                        <dd className="mt-0.5 text-ink/50">{category.slug}</dd>
+                      </div>
+                    </dl>
+                    <div className="mt-3 flex items-center justify-end gap-4 border-t border-ink/10 pt-3 text-xs uppercase tracking-widest">
+                      <button onClick={() => startEdit(category)} className="text-burgundy">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(category.id)} className="text-ink/50 hover:text-burgundy">
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="hidden overflow-x-auto border border-ink/10 lg:block">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">

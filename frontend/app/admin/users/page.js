@@ -47,34 +47,61 @@ export default function AdminUsersPage() {
       {loading ? (
         <Spinner />
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">
-              <th className="py-3 pr-4">Name</th>
-              <th className="py-3 pr-4">Email</th>
-              <th className="py-3 pr-4">Role</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ink/10">
+        <>
+          <div className="space-y-3 lg:hidden">
             {users.map((u) => (
-              <tr key={u.id}>
-                <td className="py-3 pr-4">{u.displayName || "—"}</td>
-                <td className="py-3 pr-4">{u.email}</td>
-                <td className="py-3 pr-4">
+              <article key={u.id} className="border border-ink/10 bg-white p-4">
+                <div className="min-w-0">
+                  <p className="text-sm text-ink">{u.displayName || "—"}</p>
+                  <p className="mt-1 break-all text-xs text-ink/60">{u.email}</p>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-ink/10 pt-3">
+                  <span className="text-xs uppercase tracking-widest text-ink/40">Role</span>
                   <select
                     value={u.role}
                     disabled={u.id === user?.uid}
                     onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                    className="input-field w-36"
+                    className="input-field w-32"
                   >
                     <option value="customer">Customer</option>
                     <option value="admin">Admin</option>
                   </select>
-                </td>
-              </tr>
+                </div>
+              </article>
             ))}
-          </tbody>
-        </table>
+          </div>
+
+          <div className="hidden lg:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-ink/10 text-xs uppercase tracking-widest text-ink/40">
+                  <th className="py-3 pr-4">Name</th>
+                  <th className="py-3 pr-4">Email</th>
+                  <th className="py-3 pr-4">Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink/10">
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td className="py-3 pr-4">{u.displayName || "—"}</td>
+                    <td className="py-3 pr-4">{u.email}</td>
+                    <td className="py-3 pr-4">
+                      <select
+                        value={u.role}
+                        disabled={u.id === user?.uid}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        className="input-field w-36"
+                      >
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
