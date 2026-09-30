@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { filterProducts, catalogFacets } from '../lib/catalogFilters.mjs';
-import { parseSizeGuide, displayMeasurement } from '../lib/sizeGuide.mjs';
+import { parseSizeGuide, displayMeasurement, resolveSizeGuide } from '../lib/sizeGuide.mjs';
 const products = [
   { id: 'a', name: 'Dress', price: 200, compareAtPrice: 300, stock: 2, sizes: ['S', 'M'], colors: ['Blue'], categorySlug: 'dresses', createdAt: '2026-01-01' },
   { id: 'b', name: 'Top', price: 100, stock: 0, sizes: ['M'], colors: ['Red'], categorySlug: 'tops', createdAt: '2026-02-01' },
@@ -37,4 +37,21 @@ test('unit conversion only changes explicitly labelled numeric cm measurements',
   assert.equal(displayMeasurement('42', 'EU size', true), '42');
   assert.equal(displayMeasurement('N/A', 'Waist (cm)', true), 'N/A');
   assert.equal(displayMeasurement('25.4', 'Length (cm)', false), '25.4');
+});
+test('clothes without a chart fall back to the standard womens chart, footwear does not', () => {
+  const fallback = resolveSizeGuide('', 'clothes');
+  assert.deepEqual(fallback.headers, ['Size', 'Bust (in)', 'Waist (in)', 'Hips (in)']);
+  assert.deepEqual(fallback.rows.map(row => row[0]), ['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+  assert.deepEqual(fallback.rows.find(row => row[0] === 'M').slice(1), ['36"', '30"', '39"']);
+  assert.equal(resolveSizeGuide('', 'footwear').headers.length, 0);
+  assert.equal(resolveSizeGuide(undefined, undefined).rows.length, 6);
+});
+test('a product specific chart always wins over the fallback chart', () => {
+  const guide = resolveSizeGuide('| Size | Chest (cm) |\n| --- | --- |\n| S | 86 |', 'clothes');
+  assert.deepEqual(guide.headers, ['Size', 'Chest (cm)']);
+  assert.deepEqual(guide.rows, [['S', '86']]);
+});
+test('notes-only guides are replaced by the fallback chart for clothes', () => {
+  assert.equal(resolveSizeGuide('Ask for fit advice.', 'clothes').rows.length, 6);
+  assert.equal(resolveSizeGuide('Ask for fit advice.', 'footwear').notes, 'Ask for fit advice.');
 });
