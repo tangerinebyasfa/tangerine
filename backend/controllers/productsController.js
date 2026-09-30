@@ -98,7 +98,18 @@ exports.getProducts = async (req, res) => {
   try {
     const snapshot = await productsRef.orderBy("createdAt", "desc").get();
     const searchTerm = normalizeSearchTerm(req.query?.search);
-    const products = snapshot.docs.map(mapProduct).filter((product) => productMatchesSearch(product, searchTerm));
+    const category = normalizeText(req.query?.category).toLowerCase();
+    const type = normalizeText(req.query?.type).toLowerCase();
+    const featuredOnly = normalizeBoolean(req.query?.featured);
+    const products = snapshot.docs
+      .map(mapProduct)
+      .filter((product) => {
+        if (category && normalizeText(product.categorySlug).toLowerCase() !== category) return false;
+        if (type && normalizeText(product.categoryParentType || product.productType).toLowerCase() !== type)
+          return false;
+        if (featuredOnly && !normalizeBoolean(product.featured)) return false;
+        return productMatchesSearch(product, searchTerm);
+      });
     res.json(products);
   } catch (err) {
     console.error(err);
