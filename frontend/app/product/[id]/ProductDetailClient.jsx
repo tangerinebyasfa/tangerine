@@ -416,12 +416,12 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
         "A considered piece designed to move with you through the day. Crafted for comfort, styling ease, and everyday wear.",
       kind: "text",
     },
-    {
-      id: "size-guide",
-      title: "Size Guide",
-      content: product.sizeGuide || "",
-      kind: "size-guide",
-    },
+    // {
+    //   id: "size-guide",
+    //   title: "Size Guide",
+    //   content: product.sizeGuide || "",
+    //   kind: "size-guide",
+    // },
     {
       id: "additional-info",
       title: "Additional Information",
