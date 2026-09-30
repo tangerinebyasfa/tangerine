@@ -23,7 +23,7 @@ const TYPE_COPY = {
   },
   clothes: {
     title: "Clothes",
-    description: "Browse all clothing pieces from the current edit.",
+    description: "Wear your perspective.",
   },
   footwear: {
     title: "Footwear",
