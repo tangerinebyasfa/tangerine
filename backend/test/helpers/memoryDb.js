@@ -15,7 +15,20 @@ class MemoryDb {
       },
     };
   }
-  ref(path) { return { path, id: path.split('/').pop(), get: async () => this.snapshot(path) }; }
+  // Mirrors DocumentReference: reads and non-transactional updates, like the
+  // gateway-order and refund writes the payment flow performs after a commit.
+  ref(path) {
+    return {
+      path,
+      id: path.split('/').pop(),
+      get: async () => this.snapshot(path),
+      update: async data => {
+        assert(this.data.has(path), `cannot update missing document ${path}`);
+        this.data.set(path, structuredClone({ ...this.data.get(path), ...data }));
+      },
+      set: async (data) => this.data.set(path, structuredClone(data)),
+    };
+  }
   snapshot(path) { return { id: path.split('/').pop(), ref: this.ref(path), exists: this.data.has(path), data: () => structuredClone(this.data.get(path)) }; }
   runTransaction(fn) {
     const run = this.queue.then(async () => {

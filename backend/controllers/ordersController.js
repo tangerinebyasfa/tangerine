@@ -1,8 +1,9 @@
 const { db } = require("../config/firebaseAdmin");
-const { validateCouponForOrder } = require("./couponsController");
+const { validateCouponForOrder } = require("../controllers/couponsController");
 const { createOrderService } = require("../services/orderService");
+const razorpay = require("../lib/razorpay");
 const ordersRef = db.collection("orders");
-const service = createOrderService({ db, validateCouponForOrder });
+const service = createOrderService({ db, validateCouponForOrder, razorpay });
 
 function failure(res, err) {
   const status = err.status || 500;
@@ -30,6 +31,8 @@ function serializeOrder(doc) {
         }))
       : [],
     displayOrderId: data.orderId || doc.id,
+    // Public key id, so the browser can open Checkout without a second env var.
+    razorpayKeyId: razorpay.keyId() || null,
   };
 }
 
@@ -46,6 +49,16 @@ exports.recoverOrder = async (req, res) => {
 };
 exports.createOrder = async (req, res) => {
   try { res.status(201).json(serializeOrder(await service.create(req.body || {}, req.user))); }
+  catch (err) { failure(res, err); }
+};
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { razorpayPaymentId, razorpaySignature } = req.body || {};
+    res.json(serializeOrder(await service.markPaid(req.params.id, { razorpayOrderId: null, razorpayPaymentId, razorpaySignature, source: "checkout" }, req.user)));
+  } catch (err) { failure(res, err); }
+};
+exports.releaseUnpaidOrder = async (req, res) => {
+  try { res.json(serializeOrder(await service.releaseUnpaid(req.params.id, req.user))); }
   catch (err) { failure(res, err); }
 };
 exports.updateOrderStatus = async (req, res) => {

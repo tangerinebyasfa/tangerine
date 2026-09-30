@@ -10,6 +10,8 @@ router.post("/:id/returns", verifyToken, returns.create);
 router.get("/attempt/:requestId", verifyToken, ctrl.recoverOrder);
 router.post("/quote", verifyToken, ctrl.quoteOrder);
 router.put("/:id/cancel", verifyToken, ctrl.cancelOrder);
+router.post("/:id/verify-payment", verifyToken, ctrl.verifyPayment);
+router.post("/:id/release", verifyToken, ctrl.releaseUnpaidOrder);
 router.post("/", verifyToken, ctrl.createOrder);
 router.get("/mine", verifyToken, ctrl.getMyOrders);
 router.get("/:id", verifyToken, ctrl.getOrderById);

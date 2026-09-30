@@ -15,7 +15,9 @@ function setup() {
     return res;
   };
   const coupon = { code: 'SAVE10', discountType: 'percentage', discountValue: 10, expiresAt: new Date(Date.now() + 86400000).toISOString(), active: true, scope: 'storewide', usageLimit: 1, perUserLimit: 1 };
-  return { db, ctrl, call, coupon, service: createOrderService({ db, validateCouponForOrder: ctrl.validateCouponForOrder }) };
+  // Stand-in for the gateway so order creation never calls the network.
+  const razorpay = { isConfigured: () => true, createOrder: async () => ({ id: 'order_TEST123' }), refundPayment: async () => ({ id: 'rfnd_1' }) };
+  return { db, ctrl, call, coupon, service: createOrderService({ db, validateCouponForOrder: ctrl.validateCouponForOrder, razorpay }) };
 }
 test('concurrent coupon creation reserves a unique code; deleted codes cannot reset history', async () => {
   const { call, coupon } = setup();
@@ -52,7 +54,7 @@ test('scoped discounts, immutable snapshots and competing redemptions are transa
   const quote = await service.quote({ items, couponCode: 'SAVE10' }, user);
   assert.equal(quote.discount, 100);
   assert.equal(quote.total, 208);
-  const body = { items, couponCode: 'SAVE10', quoteId: quote.quoteId, requestId: 'request_1234567890', paymentMethod: 'cod', shippingAddress: { fullName: 'Test Buyer', line1: '12 Test Road', city: 'Mumbai', state: 'Maharashtra', zip: '400001', country: 'India', phone: '9876543210' } };
+  const body = { items, couponCode: 'SAVE10', quoteId: quote.quoteId, requestId: 'request_1234567890', paymentMethod: 'razorpay', shippingAddress: { fullName: 'Test Buyer', line1: '12 Test Road', city: 'Mumbai', state: 'Maharashtra', zip: '400001', country: 'India', phone: '9876543210' } };
   const results = await Promise.allSettled([service.create(body, user), service.create(body, { uid: 'other' })]);
   assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
   const order = results.find(r => r.status === 'fulfilled').value.data();

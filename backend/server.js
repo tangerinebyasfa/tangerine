@@ -38,6 +38,9 @@ app.use(
     },
   })
 );
+// Webhooks verify an HMAC over the exact raw body, so this must be registered
+// before express.json() consumes and re-serializes the payload.
+app.use("/api/webhooks", express.raw({ type: "application/json" }), require("./routes/webhooks"));
 app.use(express.json());
 app.use(morgan("dev"));
 

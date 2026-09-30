@@ -41,7 +41,7 @@ function validateExchange(product, replacement, original) {
   if (replacement.size === (original.size || '') && replacement.color === (original.color || '')) fail('Choose a different size or colour for an exchange.');
 }
 
-function createReturnService({ db }) {
+function createReturnService({ db, razorpay }) {
   const orders = db.collection('orders');
   const requests = db.collection('returnRequests');
   const products = db.collection('products');
@@ -110,6 +110,8 @@ function createReturnService({ db }) {
     const note = text(payload.note);
     if (note.length > 1000) fail('Keep the update within 1,000 characters.');
     const ref = requests.doc(id);
+    // Scoped outside the transaction: a gateway call must never run inside one.
+    let gatewayRefund = null;
     await db.runTransaction(async tx => {
       const snap = await tx.get(ref);
       if (!snap.exists) fail('Request not found.', 404);
@@ -147,28 +149,51 @@ function createReturnService({ db }) {
         Object.assign(updates, { trackingNumber, carrier });
       }
       if (next === 'completed' && request.type === 'return') {
-        const reference = text(payload.refundReference);
-        if (payload.refundConfirmed !== true || payload.refundAmount !== request.refundAmount || !reference || reference.length > 200) fail('Confirm the exact refund amount and enter the manual refund reference.');
+        if (payload.refundConfirmed !== true || payload.refundAmount !== request.refundAmount) fail('Confirm the exact refund amount before completing this return.');
         const orderRef = orders.doc(request.orderId);
         const orderSnap = await tx.get(orderRef);
         if (!orderSnap.exists) fail('Order not found.', 404);
         const order = orderSnap.data();
         const refundedAmount = money((order.refundedAmount || 0) + request.refundAmount);
         if (!Number.isFinite(refundedAmount) || refundedAmount > order.total) fail('Refund exceeds the remaining order balance.', 409);
+        // Prepaid orders refund through Razorpay; the reference comes from the API.
+        const needsGateway = Boolean(order.razorpayPaymentId);
+        if (needsGateway && !razorpay?.isConfigured()) fail('Refunds are not configured yet.', 503);
+        if (!needsGateway && (!text(payload.refundReference) || text(payload.refundReference).length > 200)) fail('Enter the manual refund reference for this order.');
         tx.update(orderRef, { refundedAmount, paymentStatus: refundedAmount >= order.total ? 'refunded' : 'partially_refunded', updatedAt: now });
-        Object.assign(updates, { refundReference: reference, refundedAt: now, refundedBy: user.uid });
+        if (needsGateway) gatewayRefund = { orderRef, order, amount: request.refundAmount, reference: text(payload.refundReference) };
+        Object.assign(updates, { refundReference: text(payload.refundReference) || null, refundedAt: now, refundedBy: user.uid });
       }
       if (next === 'completed' && request.type === 'exchange' && payload.deliveryConfirmed !== true) fail('Confirm that the replacement was delivered.');
       tx.update(ref, { ...updates, status: next, updatedAt: now,
         history: [...request.history, { status: next, at: now, by: user.uid, note: note || `Request ${next.replaceAll('_', ' ')}.` }],
       });
     });
+    if (gatewayRefund) {
+      try {
+        const receipt = await razorpay.refundPayment({
+          paymentId: gatewayRefund.order.razorpayPaymentId,
+          amount: gatewayRefund.amount,
+          notes: { orderId: gatewayRefund.order.orderId, returnId: request.id || ref.id },
+        });
+        await gatewayRefund.orderRef.update({ razorpayRefundId: receipt.id, refundPending: false, updatedAt: new Date() });
+        await ref.update({ refundReference: receipt.id, updatedAt: new Date() });
+      } catch (err) {
+        // Keep the return completed but flag it so staff can refund manually.
+        await gatewayRefund.orderRef.update({ refundPending: true, refundError: `Automatic refund failed: ${err.message}`, updatedAt: new Date() });
+      }
+    }
     return serialize(await ref.get());
   }
 
   async function listAll(user) {
     if (user.role !== 'admin') fail('Admin access required.', 403);
-    return (await requests.get()).docs.map(serialize).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    // Flag prepaid orders so the admin form can explain that Razorpay refunds
+    // them automatically instead of asking staff for a manual reference.
+    const listed = (await requests.get()).docs.map(serialize).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const orderSnaps = await Promise.all([...new Set(listed.map(item => item.orderId))].map(id => orders.doc(id).get()));
+    const modes = new Map(orderSnaps.map(snap => [snap.id, snap.exists && Boolean(snap.data().razorpayPaymentId) ? 'gateway' : 'manual']));
+    return listed.map(item => ({ ...item, refundMode: modes.get(item.orderId) || 'manual' }));
   }
   return { create, update, listForOrder, listAll };
 }
