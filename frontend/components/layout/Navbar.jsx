@@ -28,7 +28,7 @@ import { normalizeImageUrl } from "../../lib/image";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Shop by Category" },
-  { href: "/gallery", label: "Gallery" },
+  // { href: "/gallery", label: "Gallery" },
   { href: "/products/outlet", label: "Outlet" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

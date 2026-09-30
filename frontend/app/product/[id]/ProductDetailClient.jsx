@@ -466,7 +466,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   ) : (
     <div className="grid grid-cols-2 gap-3">
       <Button onClick={handleAddToCart} className="w-full">
-        Add to Bag
+        Add to Cart
       </Button>
       <Button onClick={handleBuyNow} className="w-full bg-tangerine text-white hover:bg-tangerine/90">
         Buy Now
