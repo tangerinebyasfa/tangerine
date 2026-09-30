@@ -699,13 +699,13 @@ function CheckoutForm() {
                   <p className="text-sm text-ink/55">No online payment is required. Pay the confirmed total on delivery.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
+              {/* <div className="flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-tangerine" />
                 <div>
                   <p className="font-medium text-ink">Easy Returns</p>
                   <p className="text-sm text-ink/55">Hassle-free support after purchase</p>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </aside>

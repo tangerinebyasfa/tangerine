@@ -134,7 +134,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto hidden max-w-4xl flex-col items-center text-center lg:flex">
           <Image
-            src="/Images/logo.png"
+            src="/Images/logo-transparent.png"
             alt="Tangerine"
             width={260}
             height={100}

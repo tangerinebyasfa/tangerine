@@ -48,7 +48,7 @@ function CategoryHeroCard({ category }) {
       href={category.href}
       className="group relative overflow-hidden border border-ink/10 bg-paper shadow-[0_10px_30px_rgba(0,0,0,0.04)] transition-transform duration-300 hover:-translate-y-1"
     >
-      <div className="relative aspect-[4/5] bg-sand">
+      <div className="relative aspect-[4/5] bg-sand overflow-hidden">
         <Image
           src={category.image}
           alt={category.title}
@@ -71,6 +71,15 @@ function CategoryHeroCard({ category }) {
     </Link>
   );
 }
+
+const SUBCATEGORY_ORDER = [
+  "indian",
+  "western",
+  "casual",
+  "corporate",
+  "bangles",
+  "earrings",
+];
 
 function SubcategoryCard({ item }) {
   const image = normalizeImageUrl(item.image) || "/placeholder-category.svg";
@@ -200,6 +209,19 @@ export default function ProductsPage() {
     };
   }, [searchTerm]);
 
+  const orderedSubcategories = useMemo(() => {
+    const rank = (value) => {
+      const index = SUBCATEGORY_ORDER.indexOf(String(value || "").trim().toLowerCase());
+      return index === -1 ? SUBCATEGORY_ORDER.length : index;
+    };
+
+    return [...subcategories].sort((a, b) => {
+      const diff = rank(a.slug || a.name) - rank(b.slug || b.name);
+      if (diff !== 0) return diff;
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+  }, [subcategories]);
+
   const groupedSubcategories = useMemo(() => {
     const groups = {
       clothes: [],
@@ -275,13 +297,13 @@ export default function ProductsPage() {
           <div className="border border-ink/10 bg-white p-8">
             <Spinner />
           </div>
-        ) : subcategories.length === 0 ? (
+        ) : orderedSubcategories.length === 0 ? (
           <div className="border border-dashed border-ink/10 bg-white p-8 text-sm text-ink/50">
             No subcategories found yet.
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
-            {subcategories.map((item, index) => (
+            {orderedSubcategories.map((item) => (
               <SubcategoryCard key={item.id} item={item} />
             ))}
           </div>
