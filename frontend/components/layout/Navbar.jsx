@@ -127,6 +127,7 @@ export default function Navbar() {
   }, [pathname]);
 
   const searchResults = useMemo(() => searchProducts.slice(0, 6), [searchProducts]);
+  const isAdminPanelActive = pathname === "/admin" || pathname.startsWith("/admin/");
 
   function handleSearchSubmit(event) {
     event.preventDefault();
@@ -174,7 +175,9 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="text-xs tracking-widest uppercase text-burgundy hover:text-ink transition-colors"
+                className={`text-xs tracking-widest uppercase transition-colors ${
+                  isAdminPanelActive ? "text-tangerine" : "text-ink/70 hover:text-burgundy"
+                }`}
               >
                 Admin Panel
               </Link>
@@ -472,7 +475,13 @@ export default function Navbar() {
                     );
                   })}
                   {isAdmin && (
-                    <Link href="/admin" onClick={closeMobileMenu} className="block text-sm font-medium uppercase tracking-[0.06em] text-burgundy">
+                    <Link
+                      href="/admin"
+                      onClick={closeMobileMenu}
+                      className={`block text-sm font-medium uppercase tracking-[0.06em] ${
+                        isAdminPanelActive ? "text-tangerine" : "text-ink/90"
+                      }`}
+                    >
                       Admin Panel
                     </Link>
                   )}

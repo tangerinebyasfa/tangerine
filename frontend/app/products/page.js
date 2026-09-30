@@ -58,9 +58,9 @@ function CategoryHeroCard({ category }) {
           priority={category.key === "clothes"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-5">
+        <div className="absolute inset-x-0 bottom-0 lg:p-5 p-2">
           <p className="text-[11px] uppercase tracking-[0.24em] text-paper/75">Browse Category</p>
-          <h3 className="mt-2 font-display text-3xl leading-tight text-white">{category.title}</h3>
+          <h3 className="mt-2 font-display lg:text-3xl text-[20px] leading-tight text-white  break-all">{category.title}</h3>
         </div>
       </div>
 

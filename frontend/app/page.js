@@ -188,7 +188,7 @@ export default function HomePage() {
 
 
          {homepageCategories.length > 0 && (
-          <section className="w-full py-14">
+          <section className="w-full py-14 pb-0">
             <div className="mx-auto w-full max-w-[1920px] px-0">
               <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[95%] md:max-w-8xl md:w-4/5">
                 <div>
@@ -235,13 +235,13 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/crimson-cascade-high-low-skirt" className="block max-w-full">
+        {/* <Link href="/product/crimson-cascade-high-low-skirt" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[2].desktop}
             mobile={homeImages[2].mobile}
             alt={homeImages[2].alt}
           />
-        </Link>
+        </Link> */}
       </div>
     </div>
   );
