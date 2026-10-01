@@ -493,7 +493,7 @@ export default function Navbar() {
       )}
 
       <div className="xl:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-paper">
-        <div className="mx-auto grid w-full min-w-0 max-w-md grid-cols-5 items-center gap-1 overflow-hidden px-2 py-2 text-center text-[10px] uppercase tracking-[0.12em] text-ink/70">
+        <div className="mx-auto grid w-full min-w-0 max-w-md grid-cols-4 items-center gap-1 overflow-hidden px-2 py-2 text-center text-[10px] uppercase tracking-[0.12em] text-ink/70">
           <button
             type="button"
             onClick={() => {
@@ -530,7 +530,7 @@ export default function Navbar() {
             <LayoutGrid className="h-5 w-5" strokeWidth={2} />
             Category
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               closeMobileMenu();
@@ -541,7 +541,7 @@ export default function Navbar() {
           >
             <Images className="h-5 w-5" strokeWidth={2} />
             Gallery
-          </button>
+          </button> */}
           <button
             type="button"
             onClick={() => {

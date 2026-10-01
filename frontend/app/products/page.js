@@ -285,7 +285,7 @@ export default function ProductsPage() {
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-tangerine">Subcategories</p>
-            <h2 className="font-display text-3xl mt-2">Explore the edit</h2>
+            <h2 className="font-display text-3xl mt-2">Explore Our Collections</h2>
           </div>
           <Link
             href="/products/all"
