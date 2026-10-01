@@ -1,4 +1,5 @@
 const { fail, text, hash, money } = require('../lib/cod');
+const gatewayErrors = require('../lib/razorpay');
 
 const RETURN_DAYS = 7;
 const states = {
@@ -176,11 +177,11 @@ function createReturnService({ db, razorpay }) {
           amount: gatewayRefund.amount,
           notes: { orderId: gatewayRefund.order.orderId, returnId: request.id || ref.id },
         });
-        await gatewayRefund.orderRef.update({ razorpayRefundId: receipt.id, refundPending: false, updatedAt: new Date() });
+        await gatewayRefund.orderRef.update({ razorpayRefundId: receipt.id, refundPending: false, refundError: null, updatedAt: new Date() });
         await ref.update({ refundReference: receipt.id, updatedAt: new Date() });
       } catch (err) {
         // Keep the return completed but flag it so staff can refund manually.
-        await gatewayRefund.orderRef.update({ refundPending: true, refundError: `Automatic refund failed: ${err.message}`, updatedAt: new Date() });
+        await gatewayRefund.orderRef.update({ refundPending: true, refundError: gatewayErrors.describeGatewayError(err), updatedAt: new Date() });
       }
     }
     return serialize(await ref.get());

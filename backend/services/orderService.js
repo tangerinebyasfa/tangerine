@@ -241,7 +241,7 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
         else if (!order.razorpayPaymentId) refund = { manual: true };
       }
       tx.update(ref, {
-        status: next, paymentStatus: next === 'cancelled' ? 'refunded' : cashCollected ? 'paid' : order.paymentStatus,
+        status: next, paymentStatus: next === 'cancelled' ? 'cancelled' : cashCollected ? 'paid' : order.paymentStatus,
         ...(next === 'cancelled' ? { inventoryReserved: false, cancelledAt: now } : {}),
         ...(cashCollected ? { amountCollected: order.total, paidAt: now, paymentConfirmedBy: 'cash_on_delivery' } : {}),
         ...(next === 'delivered' ? { deliveredAt: now } : {}),
@@ -256,10 +256,11 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
       } else {
         try {
           const receipt = await razorpay.refundPayment({ paymentId: refund.paymentId, amount: refund.amount, notes: { orderId: id, reason: 'order_cancelled' } });
-          await ref.update({ razorpayRefundId: receipt.id, refundedAmount: refund.amount, refundPending: false, updatedAt: new Date() });
+          // Only claim the money is back once the gateway has confirmed it.
+          await ref.update({ paymentStatus: 'refunded', razorpayRefundId: receipt.id, refundedAmount: refund.amount, refundPending: false, refundError: null, updatedAt: new Date() });
         } catch (err) {
           // The cancellation stands; flag it so staff can refund from the dashboard.
-          await ref.update({ refundPending: true, refundError: `Automatic refund failed: ${err.message}`, updatedAt: new Date() });
+          await ref.update({ paymentStatus: 'cancelled', refundPending: true, refundError: razorpay.describeGatewayError(err), updatedAt: new Date() });
         }
       }
     }

@@ -69,8 +69,29 @@ async function fetchPayment(paymentId) {
   return getClient().payments.fetch(paymentId);
 }
 
-async function refundPayment({ paymentId, amount, notes }) {
-  return getClient().refunds.create({
+// Razorpay SDK errors are plain objects ({ statusCode, error }) with no
+// message, so unwrap the nested fields into one readable string for staff.
+function describeGatewayError(err) {
+  if (!err) return 'Unknown Razorpay error';
+  const inner = err.error && typeof err.error === 'object' ? err.error : null;
+  const code = inner?.code || err.code || '';
+  const description = inner?.description || err.description || err.message || '';
+  const parts = [code, description].map(part => String(part).trim()).filter(Boolean);
+  const detail = parts.join(': ') || String(err.statusCode ? `HTTP ${err.statusCode}` : '').trim();
+  return detail || 'Unknown Razorpay error';
+}
+
+// `sdk` is injectable so the SDK-shape fallback can be tested without a network call.
+async function refundPayment({ paymentId, amount, notes, sdk } = {}) {
+  const client = sdk || getClient();
+  // razorpay 2.9.x exposes `refunds` with only all/edit/fetch. Refunds are
+  // actually created through `payments.refund`, which accepts the same body.
+  // Prefer `refunds.create` so a future SDK that restores it keeps working.
+  const create = client.refunds && typeof client.refunds.create === 'function'
+    ? client.refunds.create.bind(client.refunds)
+    : client.payments.refund.bind(client.payments);
+
+  return create({
     payment_id: paymentId,
     ...(Number.isFinite(Number(amount)) ? { amount: toPaise(amount) } : {}),
     notes: notes || undefined,
@@ -84,6 +105,7 @@ module.exports = {
   toPaise,
   toRupees,
   safeEqual,
+  describeGatewayError,
   verifyPaymentSignature,
   verifyWebhookSignature,
   createOrder,

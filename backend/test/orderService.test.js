@@ -15,6 +15,8 @@ const shippingAddress = { fullName: 'Test Buyer', line1: '12 Test Road', line2: 
 const items = [{ productId: 'dress', quantity: 1, size: 'M', color: 'Orange' }];
 
 // Stands in for the gateway so tests never make network calls.
+// Loaded lazily-safe: razorpay.js has no side effects at import.
+const realRazorpayLib = require('../lib/razorpay');
 function fakeRazorpay(overrides = {}) {
   const state = { orders: [], refunds: [], created: 0, payments: { [RAZORPAY_PAYMENT]: { id: RAZORPAY_PAYMENT, order_id: RAZORPAY_ORDER, status: 'captured', amount: 20795 } } };
   return {
@@ -27,6 +29,8 @@ function fakeRazorpay(overrides = {}) {
     fetchPayment: async paymentId => (state.payments[paymentId] || null),
     toPaise: rupees => Math.round(Number(rupees) * 100),
     toRupees: paise => Math.round(Number(paise)) / 100,
+    // Use the real extractor so tests cover its actual output.
+    describeGatewayError: (...args) => realRazorpayLib.describeGatewayError(...args),
     verifyPaymentSignature: ({ razorpayOrderId, razorpayPaymentId, razorpaySignature }) => {
       if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) return false;
       const expected = createHmac('sha256', KEY_SECRET).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest('hex');
@@ -157,6 +161,27 @@ test('customer cancellation is owner-only, atomic, restores stock once and refun
   assert.equal(razorpay.state.refunds.length, 1, 'a retry must not refund twice');
   assert.equal(razorpay.state.refunds[0].amount, 207.95);
   await assert.rejects(service.update(order.id, { status: 'processing' }, admin), { status: 409 });
+});
+
+test('a failed automatic refund never reports the payment as refunded', async () => {
+  // The real SDK shape: a bare object with a nested code/description, no message.
+  const gatewayError = { statusCode: 400, error: { code: 'BAD_REQUEST_ERROR', description: 'The api key provided does not have access to the refund' } };
+  const { db, service, payload } = setup(5, fakeRazorpay({
+    refundPayment: async () => { throw gatewayError; },
+  }));
+  const order = await paidOrder(service, payload);
+  await service.update(order.id, {}, user, true);
+
+  const cancelled = (await order.ref.get()).data();
+  assert.equal(cancelled.status, 'cancelled', 'cancellation must still stand');
+  assert.equal(cancelled.inventoryReserved, false, 'stock is still released');
+  assert.equal(cancelled.refundPending, true, 'the failed refund must be flagged');
+  assert.equal(cancelled.paymentStatus, 'cancelled', 'must not claim the money was returned');
+  assert.equal(cancelled.razorpayRefundId, undefined, 'no gateway receipt exists');
+  assert.equal(cancelled.refundedAmount, undefined, 'no refund was recorded');
+  assert.match(cancelled.refundError, /BAD_REQUEST_ERROR/, 'the real reason is stored for staff');
+  assert.match(cancelled.refundError, /does not have access to the refund/, 'the gateway description is kept, not a placeholder');
+  assert.doesNotMatch(cancelled.refundError, /Unknown|undefined/, 'no placeholder or blank reason is stored');
 });
 
 test('delivery requires payment and ordered transitions; final states cannot reopen', async () => {
@@ -400,6 +425,32 @@ test('a delivered cash order is eligible for a return and refunds manually', asy
   assert.equal(eligibility((await order.ref.get()).data()).eligible, true);
 });
 
+test('refundPayment calls a method the installed razorpay SDK actually exposes', async () => {
+  // razorpay 2.9.x has no `refunds.create`; refunds go through `payments.refund`.
+  // This guards against the SDK shape changing again under us.
+  const razorpayPath = require.resolve('../lib/razorpay');
+  delete require.cache[razorpayPath];
+  const { refundPayment } = require(razorpayPath);
+
+  const Razorpay = require('razorpay');
+  const sdk = new Razorpay({ key_id: 'rzp_test_key', key_secret: process.env.RAZORPAY_KEY_SECRET });
+  assert.equal(typeof sdk.refunds.create, 'undefined', 'SDK assumption changed; re-check the refund path');
+  assert.equal(typeof sdk.payments.refund, 'function');
+
+  // Drive refundPayment against a stub client that only has payments.refund,
+  // mirroring the real 2.9.x shape.
+  const calls = [];
+  const stubbed = { payments: { refund: async (body) => { calls.push(body); return { id: 'rfnd_stub' }; } }, refunds: {} };
+
+  const receipt = await refundPayment({ paymentId: RAZORPAY_PAYMENT, amount: 207.95, notes: { orderId: 'order-1' }, sdk: stubbed });
+
+  assert.equal(receipt.id, 'rfnd_stub');
+  assert.equal(calls.length, 1, 'refund must be attempted exactly once');
+  assert.equal(calls[0].payment_id, RAZORPAY_PAYMENT);
+  assert.equal(calls[0].amount, 20795, 'rupees must be converted to paise');
+  assert.deepEqual(calls[0].notes, { orderId: 'order-1' });
+});
+
 test('razorpay signature helpers reject tampering and use constant-time comparison', async () => {
   const { verifyPaymentSignature, verifyWebhookSignature, safeEqual } = require('../lib/razorpay');
   assert.equal(verifyPaymentSignature({ razorpayOrderId: RAZORPAY_ORDER, razorpayPaymentId: RAZORPAY_PAYMENT, razorpaySignature: sign(RAZORPAY_ORDER, RAZORPAY_PAYMENT) }), true);
@@ -422,6 +473,22 @@ test('razorpay signature helpers reject tampering and use constant-time comparis
   assert.equal(safeEqual('abc', 'abcd'), false);
   assert.equal(safeEqual('', ''), false);
   assert.equal(createHash('sha256').update('x').digest('hex').length, 64);
+});
+
+test('describeGatewayError unwraps the razorpay error object shapes', async () => {
+  const { describeGatewayError } = require('../lib/razorpay');
+  // The SDK throws a bare object with nested error.code/description and no message.
+  assert.equal(describeGatewayError({ statusCode: 400, error: { code: 'BAD_REQUEST_ERROR', description: 'The api key provided does not have access to the refund' } }), 'BAD_REQUEST_ERROR: The api key provided does not have access to the refund');
+  // Description-only shape.
+  assert.equal(describeGatewayError({ description: 'Payment already refunded' }), 'Payment already refunded');
+  // Standard Error shape.
+  assert.equal(describeGatewayError(new Error('socket hang up')), 'socket hang up');
+  // Status code only, with no usable text.
+  assert.equal(describeGatewayError({ statusCode: 500, error: undefined }), 'HTTP 500');
+  assert.equal(describeGatewayError(null), 'Unknown Razorpay error');
+  assert.equal(describeGatewayError(undefined), 'Unknown Razorpay error');
+  // Never leaks "undefined" or a blank reason into stored order data.
+  assert.ok(describeGatewayError({ statusCode: 0 }).length > 0);
 });
 
 test('the webhook route verifies signatures and reconciles a captured payment', async () => {
