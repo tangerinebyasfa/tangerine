@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Trash2, Minus, Plus } from "lucide-react";
@@ -23,6 +23,9 @@ function buildProductHref(product) {
 export default function CartDrawer() {
   const { items, isDrawerOpen, setDrawerOpen, updateQuantity, removeItem, subtotal } = useCart();
   const [suggestions, setSuggestions] = useState([]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const suggestionsRef = useRef(null);
+  const cardRefs = useRef([]);
 
   useEffect(() => {
     if (!isDrawerOpen) return undefined;
@@ -40,6 +43,8 @@ export default function CartDrawer() {
           .slice(0, 4);
 
         setSuggestions(nextSuggestions);
+        setActiveSlide(0);
+        if (suggestionsRef.current) suggestionsRef.current.scrollLeft = 0;
       })
       .catch((error) => {
         console.error(error);
@@ -50,6 +55,40 @@ export default function CartDrawer() {
       active = false;
     };
   }, [isDrawerOpen, items]);
+
+  const scrollToSlide = (index) => {
+    const container = suggestionsRef.current;
+    const card = cardRefs.current[index];
+    if (!container || !card) return;
+
+    setActiveSlide(index);
+    container.scrollTo({
+      left: card.offsetLeft - container.offsetLeft - 4,
+      behavior: "smooth",
+    });
+  };
+
+  const handleSuggestionsScroll = () => {
+    const container = suggestionsRef.current;
+    if (!container) return;
+
+    const cards = cardRefs.current.filter(Boolean);
+    if (!cards.length) return;
+
+    const containerLeft = container.getBoundingClientRect().left;
+    let closest = 0;
+    let closestDistance = Infinity;
+
+    cards.forEach((card, index) => {
+      const distance = Math.abs(card.getBoundingClientRect().left - containerLeft);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closest = index;
+      }
+    });
+
+    setActiveSlide(closest);
+  };
 
   return (
     <>
@@ -171,21 +210,32 @@ export default function CartDrawer() {
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-[12px] uppercase tracking-[0.18em] text-ink text-tangerine">You may also like</h3>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-tangerine" />
-                  <span className="h-2 w-2 rounded-full bg-ink/30" />
-                  <span className="h-2 w-2 rounded-full bg-ink/30" />
-                  <span className="h-2 w-2 rounded-full bg-ink/30" />
+                  {suggestions.map((product, index) => (
+                  <button
+                    key={`dot-${product.id}`}
+                    type="button"
+                    onClick={() => scrollToSlide(index)}
+                    aria-label={`Show suggestion ${index + 1} of ${suggestions.length}`}
+                    aria-current={activeSlide === index ? "true" : undefined}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      activeSlide === index ? "bg-tangerine" : "bg-ink/30 hover:bg-ink/60"
+                    }`}
+                  />
+                ))}
                 </div>
               </div>
 
-              <div className="-mx-1 overflow-x-auto px-1 pb-1">
+              <div ref={suggestionsRef} onScroll={handleSuggestionsScroll} className="-mx-1 overflow-x-auto px-1 pb-1">
                 <div className="flex gap-3">
-                  {suggestions.map((product) => {
+                  {suggestions.map((product, index) => {
                     const image = normalizeImageUrl(product.images?.[0]) || "/placeholder-product.svg";
 
                     return (
                       <Link
                         key={product.id}
+                        ref={(node) => {
+                          cardRefs.current[index] = node;
+                        }}
                         href={buildProductHref(product)}
                         onClick={() => setDrawerOpen(false)}
                         className="group w-40 shrink-0"
