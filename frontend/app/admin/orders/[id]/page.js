@@ -127,7 +127,7 @@ export default function AdminOrderDetailPage() {
           <section><div class="orange">Ship To</div><div class="muted">${escapeHtml(summarizeShippingAddress(shippingAddress) || "No address available.")}</div></section></div>
         <table><thead><tr><th>Product</th><th>Size / Color</th><th>Qty</th><th class="amount">Price</th></tr></thead><tbody>${itemRows}</tbody></table>
         <div class="totals"><div><span>Subtotal</span><span>${escapeHtml(formatINR(Number(order.subtotal || 0)))}</span></div>${order.couponCode || order.discountCode ? `<div><span>Coupon Code</span><span>${escapeHtml(order.couponCode || order.discountCode)}</span></div><div><span>Coupon Discount</span><span>- ${escapeHtml(formatINR(Number(order.couponDiscountAmount ?? order.discount ?? 0)))}</span></div>` : `<div><span>Discount</span><span>- ${escapeHtml(formatINR(Number(order.discount || 0)))}</span></div>`}<div><span>Shipping</span><span>${escapeHtml(formatINR(Number(order.shipping || 0)))}</span></div><div class="total"><span>Final Total</span><span>${escapeHtml(formatINR(Number(order.total || 0)))}</span></div></div>
-        <footer>Payment method: ${escapeHtml(String(order.paymentMethod || "razorpay").toUpperCase())} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}</footer>
+        <footer>Payment method: ${escapeHtml(order.paymentMethod === "cod" ? "Cash on Delivery" : String(order.paymentMethod || "razorpay").toUpperCase())} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}${order.paymentMethod === "cod" && order.paymentStatus === "pending" ? " (pay on delivery)" : ""}</footer>
       </main><script>window.onload = function () { window.print(); };</script></body></html>`);
     invoiceWindow.document.close();
   }

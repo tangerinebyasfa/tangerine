@@ -12,10 +12,32 @@ import Button from "../../components/ui/Button";
 import { formatINR } from "../../lib/currency";
 import { loadRazorpayCheckout, razorpayKeyId } from "../../lib/razorpay";
 import { buildAddressSummary } from "../../lib/accountFirestore";
-import { CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X, Zap } from "lucide-react";
+import { Banknote, CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X, Zap } from "lucide-react";
 
 const ZIP_LOOKUP_MIN_LENGTH = 6;
 const CHECKOUT_STORAGE_PREFIX = "razorpay-checkout";
+const COD_AVAILABLE = true;
+
+// Cash on delivery keeps its own copy, because nothing is charged up front and
+// the order is confirmed the moment it is placed.
+const PAYMENT_OPTIONS = [
+  {
+    value: "razorpay",
+    icon: Zap,
+    title: "Pay Online",
+    description: "UPI, cards, netbanking and wallets. Your order is confirmed only after the payment succeeds.",
+    badge: "Secured",
+  },
+  ...(COD_AVAILABLE
+    ? [{
+        value: "cod",
+        icon: Banknote,
+        title: "Cash on Delivery",
+        description: "Pay the confirmed total in cash when your order arrives. Available across India.",
+        badge: "Pay at door",
+      }]
+    : []),
+];
 
 function addressToForm(address, profile) {
   if (typeof address === "string") {
@@ -93,7 +115,7 @@ function CheckoutForm() {
     country: "India",
     phone: profile?.phone || "",
   });
-  const paymentMethod = "razorpay";
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
@@ -119,13 +141,17 @@ function CheckoutForm() {
         if (attempt?.requestId) {
           const recovered = await api.recoverOrder(attempt.requestId);
           if (!active) return;
-          // A paid attempt is recovered as-is; a released one starts fresh.
-          if (recovered?.paymentStatus === "paid") {
+          // A prepaid attempt is recovered only once it is paid. A cash order is
+          // confirmed the moment it is created, because nothing else is pending.
+          const prepaid = recovered?.paymentMethod !== "cod" && recovered?.paymentStatus === "paid";
+          const cash = recovered?.paymentMethod === "cod" && recovered?.status !== "cancelled";
+          if (recovered && (prepaid || cash)) {
             sessionStorage.removeItem(storageKey);
             clearCart();
             router.push(`/checkout/success/${recovered.id}`);
             return;
           }
+          // A released or failed one starts fresh.
           if (recovered) sessionStorage.removeItem(storageKey);
         }
         const result = await api.quoteOrder({ items: checkoutItems, couponCode: appliedCoupon?.code || "" });
@@ -308,6 +334,7 @@ function CheckoutForm() {
     const storageKey = `${CHECKOUT_STORAGE_PREFIX}-${user.uid}`;
     let createdOrder = null;
     let paymentCaptured = false;
+    let codPlaced = false;
     try {
       const orderPayload = {
         shippingAddress: address,
@@ -327,6 +354,18 @@ function CheckoutForm() {
       }
       const created = await api.createOrder({ ...orderPayload, requestId: attempt.requestId });
       createdOrder = created;
+
+      // Cash on delivery is confirmed as soon as the order exists: no gateway
+      // window to wait for, so there is nothing to release if the tab closes.
+      if (paymentMethod === "cod") {
+        codPlaced = true;
+        sessionStorage.removeItem(storageKey);
+        clearCart();
+        toast.success("Order placed. Pay cash when it arrives.");
+        router.push(`/checkout/success/${created.id}`);
+        return;
+      }
+
       const razorpayPublicKey = razorpayKeyId(created.razorpayKeyId);
       if (!created.razorpayOrderId || !razorpayPublicKey) {
         throw new Error("Online payment is unavailable right now. Please contact us or try again shortly.");
@@ -373,6 +412,15 @@ function CheckoutForm() {
       toast.success("Payment received. Your order is confirmed!");
       router.push(`/checkout/success/${verified?.id || created.id}`);
     } catch (err) {
+      // A placed cash order is already a real order. Never cancel it here, or a
+      // failure while navigating would silently refund the customer nothing
+      // and take the item out of stock.
+      if (codPlaced && createdOrder) {
+        try { sessionStorage.removeItem(storageKey); } catch {}
+        clearCart();
+        router.push(`/checkout/success/${createdOrder.id}`);
+        return;
+      }
       // A captured payment is never released: the webhook will settle it.
       if (paymentCaptured) {
         setOrderError("We received your payment and are confirming it. This page updates in a moment.");
@@ -391,7 +439,11 @@ function CheckoutForm() {
       } else {
         try { sessionStorage.removeItem(storageKey); } catch {}
       }
-      setOrderError(err.message || "Could not complete your payment. Please retry.");
+      setOrderError(
+        paymentMethod === "cod"
+          ? err.message || "We could not place your order. Please retry."
+          : err.message || "Could not complete your payment. Please retry."
+      );
       setQuoteRevision((value) => value + 1);
     } finally {
       placing.current = false;
@@ -406,7 +458,7 @@ function CheckoutForm() {
           <p className="text-[11px] tracking-[0.28em] text-tangerine uppercase sm:text-xs sm:tracking-[0.35em]">Almost there</p>
           <h1 className="font-display text-3xl text-ink sm:text-4xl lg:text-5xl">Checkout</h1>
           <p className="max-w-2xl text-sm leading-6 text-ink/60 sm:text-base">
-            Review your delivery details and the confirmed total. Pay securely online with UPI, cards, netbanking or wallets.
+            Review your delivery details and the confirmed total, then pay securely online with UPI, cards, netbanking or wallets, or choose cash on delivery.
           </p>
         </div>
         <div className="flex w-full items-start gap-3 border border-ink/10 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:w-auto sm:shrink-0">
@@ -628,40 +680,87 @@ function CheckoutForm() {
               </div>
               <div className="min-w-0">
                 <h3 className="font-display text-xl text-ink sm:text-2xl">Payment Method</h3>
-                <p className="mt-1 text-sm text-ink/55">Pay online in a secure Razorpay window.</p>
+                <p className="mt-1 text-sm text-ink/55">Pay securely online, or in cash when your order arrives.</p>
               </div>
             </div>
 
-            <div className="border border-tangerine bg-[#fff7f0] p-3 sm:p-4 shadow-[0_8px_24px_rgba(255,106,0,0.08)]">
-              <div className="flex items-start gap-3 sm:items-stretch">
-                <div className="grid h-10 w-10 shrink-0 place-items-center bg-tangerine text-white sm:h-11 sm:w-11">
-                  <Zap className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-ink">Pay Online</p>
-                      <p className="mt-1 text-sm text-ink/60">
-                        UPI, cards, netbanking and wallets. Your order is confirmed only after the payment succeeds.
-                      </p>
+            <div className="grid gap-3 sm:gap-4">
+              {PAYMENT_OPTIONS.map((option) => {
+                const isSelected = paymentMethod === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className={`flex cursor-pointer items-center gap-3 border p-3 transition-colors sm:p-4 ${
+                      isSelected
+                        ? "border-tangerine bg-[#fff7f0] shadow-[0_8px_24px_rgba(255,106,0,0.08)]"
+                        : "border-ink/15 bg-white hover:bg-[#fffaf6]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      className="relative h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-full border border-tangerine bg-white transition-colors checked:bg-tangerine after:absolute after:inset-0 after:m-auto after:h-1.5 after:w-1.5 after:rounded-full after:bg-white after:opacity-0 after:transition-opacity checked:after:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tangerine focus-visible:ring-offset-2"
+                      checked={isSelected}
+                      onChange={() => {
+                        setPaymentMethod(option.value);
+                        setOrderError("");
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start gap-3 sm:items-stretch">
+                        <div
+                          className={`grid h-10 w-10 shrink-0 place-items-center sm:h-11 sm:w-11 ${
+                            isSelected ? "bg-tangerine text-white" : "bg-[#fff3ea] text-tangerine"
+                          }`}
+                        >
+                          <option.icon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                            <div className="min-w-0">
+                              <p className="font-medium text-ink">{option.title}</p>
+                              <p className="mt-1 text-sm text-ink/60">{option.description}</p>
+                            </div>
+                            <span
+                              className={`shrink-0 self-start text-[11px] font-medium uppercase tracking-[0.2em] sm:text-xs ${
+                                isSelected ? "text-emerald-600" : "text-ink/40"
+                              }`}
+                            >
+                              {option.badge}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <span className="shrink-0 self-start text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 sm:text-xs">
-                      Secured
-                    </span>
-                  </div>
-                </div>
-              </div>
+                  </label>
+                );
+              })}
             </div>
 
             <div className="mt-3 flex flex-col gap-2 text-xs text-ink/55 sm:mt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-tangerine" />
-                Razorpay encrypted checkout
-              </span>
-              <span className="flex items-center gap-2">
-                <Lock className="h-4 w-4 text-tangerine" />
-                We never store card or UPI details
-              </span>
+              {paymentMethod === "cod" ? (
+                <>
+                  <span className="flex items-center gap-2">
+                    <Banknote className="h-4 w-4 text-tangerine" />
+                    Pay the confirmed total in cash at the door
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-tangerine" />
+                    We never ask for card or UPI details
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-tangerine" />
+                    Razorpay encrypted checkout
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-tangerine" />
+                    We never store card or UPI details
+                  </span>
+                </>
+              )}
             </div>
           </section>
         </div>
@@ -737,24 +836,44 @@ function CheckoutForm() {
               {quoteError ? <p className="text-rose-700">{quoteError}</p> : null}
               {orderError ? <p className="text-rose-700">{orderError}</p> : null}
               {(quoteError || orderError) ? <button type="button" disabled={loading} onClick={() => { setQuote(null); setQuoteRevision(value => value + 1); }} className="mt-2 underline">Refresh total</button> : null}
-              <p className="mt-2 text-ink/60">You can cancel from your order details before shipment, and prepaid amounts are refunded to the original payment method.</p>
+              <p className="mt-2 text-ink/60">
+                {paymentMethod === "cod"
+                  ? "You can cancel from your order details before shipment. Nothing is charged until your order arrives."
+                  : "You can cancel from your order details before shipment, and prepaid amounts are refunded to the original payment method."}
+              </p>
             </div>
             <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading || couponLoading} className="mt-4 w-full sm:mt-6">
-              {loading ? "Opening secure payment..." : `Pay ${formatINR(total)} Securely`}
+              {loading
+                ? paymentMethod === "cod" ? "Placing your order..." : "Opening secure payment..."
+                : paymentMethod === "cod"
+                  ? `Place Order  ${formatINR(total)}`
+                  : `Pay ${formatINR(total)} Securely`}
             </Button>
           </div>
 
           <div className="border border-ink/10 bg-white p-3 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6">
             <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
-                <div className="min-w-0">
-                  <p className="font-medium text-ink">Secure Online Payment</p>
-                  <p className="text-sm text-ink/55">
-                    Payments open in a Razorpay window. If you close it without paying, your reserved items are released straight away.
-                  </p>
+              {paymentMethod === "cod" ? (
+                <div className="flex items-start gap-3">
+                  <Banknote className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-ink">Cash on Delivery</p>
+                    <p className="text-sm text-ink/55">
+                      Your order is confirmed the moment you place it. Keep the exact amount ready for the delivery agent.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-ink">Secure Online Payment</p>
+                    <p className="text-sm text-ink/55">
+                      Payments open in a Razorpay window. If you close it without paying, your reserved items are released straight away.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </aside>

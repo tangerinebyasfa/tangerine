@@ -12,6 +12,11 @@ import {
 } from "../../lib/order";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 
+const PAYMENT_METHOD_LABELS = {
+  razorpay: "Razorpay",
+  cod: "Cash on Delivery",
+};
+
 const PAYMENT_STATE_LABELS = {
   pending: "Awaiting payment",
   paid: "Paid online",
@@ -20,10 +25,25 @@ const PAYMENT_STATE_LABELS = {
   failed: "Payment failed",
 };
 
+function isCashOrder(order) {
+  return order?.paymentMethod === "cod";
+}
+
+function paymentMethodLabel(order) {
+  const method = String(order?.paymentMethod || "").toLowerCase();
+  return PAYMENT_METHOD_LABELS[method] || (method ? method.toUpperCase() : "Razorpay");
+}
+
 function describePaymentState(order) {
   const status = String(order?.paymentStatus || "pending").toLowerCase();
-  if (order?.status === "cancelled" && status === "pending") return "Cancelled before payment";
+  const cash = isCashOrder(order);
+  if (order?.status === "cancelled") {
+    if (status === "pending") return cash ? "Cancelled before dispatch" : "Cancelled before payment";
+    return PAYMENT_STATE_LABELS[status] || status;
+  }
   if (order?.refundPending) return "Refund pending";
+  if (status === "paid") return cash ? "Collected in cash on delivery" : "Paid online";
+  if (cash) return "Pay on delivery";
   return PAYMENT_STATE_LABELS[status] || status;
 }
 
@@ -85,7 +105,7 @@ export default function OrderDetailsView({
         </div>
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Payment</p>
-          <p className="mt-2 font-medium text-ink">{order?.paymentMethod === "razorpay" ? "Razorpay" : String(order?.paymentMethod || "Razorpay").toUpperCase()}</p>
+          <p className="mt-2 font-medium text-ink">{paymentMethodLabel(order)}</p>
           <p className="mt-1 text-sm text-ink/55">{describePaymentState(order)}</p>
           {order?.razorpayPaymentId ? <p className="mt-1 break-all text-xs text-ink/45">Ref: {order.razorpayPaymentId}</p> : null}
           {order?.refundPending ? <p className="mt-1 text-xs text-amber-700">Automatic refund failed. Refund this payment manually.</p> : null}
