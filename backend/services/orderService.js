@@ -55,8 +55,11 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
   }
 
   async function create(payload, user) {
-    if (payload.paymentMethod !== 'razorpay') cod.fail('Online payment is the only available payment method.');
-    if (!razorpay?.isConfigured()) cod.fail('Payments are not configured yet.', 503);
+    const paymentMethod = cod.text(payload.paymentMethod);
+    if (paymentMethod !== 'cod' && paymentMethod !== 'razorpay') cod.fail('Choose cash on delivery or online payment.');
+    // Cash on delivery never touches the gateway, so it must keep working even
+    // when the Razorpay keys are missing or the gateway is unreachable.
+    if (paymentMethod === 'razorpay' && !razorpay?.isConfigured()) cod.fail('Payments are not configured yet.', 503);
     const items = cod.normalizeItems(payload.items);
     const shippingAddress = cod.address(payload.shippingAddress);
     const requestId = cod.text(payload.requestId);
@@ -64,7 +67,7 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
     const couponCode = cod.text(payload.couponCode).toUpperCase();
     const quoteId = cod.text(payload.quoteId);
     if (!/^[a-f0-9]{64}$/.test(quoteId)) cod.fail('Review the latest checkout total before ordering.');
-    const requestHash = cod.hash({ items, shippingAddress, couponCode, quoteId });
+    const requestHash = cod.hash({ items, shippingAddress, couponCode, quoteId, paymentMethod });
     const orderId = `TGNR-${cod.hash([user.uid, requestId]).slice(0, 32).toUpperCase()}`;
     const ref = orders.doc(orderId);
     await db.runTransaction(async tx => {
@@ -88,14 +91,17 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
         itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
         coupon: coupon || null, couponDiscountType: coupon?.discountType || null, couponDiscountValue: coupon?.discountValue ?? null,
         couponId: coupon?.id || null, discountCode: coupon?.code || null, couponDiscountAmount: quote.discount,
-        paymentMethod: 'razorpay', paymentStatus: 'pending', status: 'pending',
-        paymentProvider: 'razorpay', razorpayOrderId: null, razorpayPaymentId: null,
+        paymentMethod, paymentStatus: 'pending', status: 'pending',
+        paymentProvider: paymentMethod === 'cod' ? 'cash_on_delivery' : 'razorpay', razorpayOrderId: null, razorpayPaymentId: null,
         amountCollected: 0, inventoryReserved: true, requestHash,
-        statusHistory: [{ status: 'pending', at: now, by: user.uid, note: 'Order placed, awaiting payment' }],
+        statusHistory: [{ status: 'pending', at: now, by: user.uid, note: paymentMethod === 'cod' ? 'Order placed, pay on delivery' : 'Order placed, awaiting payment' }],
         source: 'checkout', createdAt: now, updatedAt: now,
       });
     });
     const placed = await ref.get();
+
+    // Cash on delivery is collected at the door, so no gateway order is opened.
+    if (paymentMethod === 'cod') return placed;
 
     // Create the Razorpay order outside the transaction so a slow gateway call
     // never holds a Firestore write lock. Retries reuse the stored order id.
@@ -154,6 +160,8 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
       const order = snap.data();
       // Webhook calls carry no user; the browser callback must be the owner.
       if (!fromWebhook && (!user || order.userId !== user.uid)) cod.fail('Not authorized.', 403);
+      // A cash order has no gateway reference, so it can never be settled here.
+      if (order.paymentMethod !== 'razorpay') cod.fail('This order is not an online payment.', 409);
       if (order.paymentStatus === 'paid') return;
       if (order.paymentStatus === 'refunded' || order.paymentStatus === 'partially_refunded') return;
       if (order.status === 'cancelled') cod.fail('This order was cancelled. Contact the store if you were charged.', 409);
@@ -216,11 +224,15 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
       if (customerCancellation && order.userId !== user.uid) cod.fail('Not authorized.', 403);
       if (order.status === next) return; // Safe retry: never restore inventory twice.
       if (!cod.transitions[order.status]?.includes(next)) cod.fail('This order cannot make that status change. Cancellation is available only before shipment.', 409);
-      // Razorpay settles prepaid orders, so delivery needs no cash confirmation.
-      // An order that is still awaiting payment cannot advance.
-      if (order.paymentStatus !== 'paid') cod.fail('Payment for this order is not confirmed yet.', 409);
+      // A prepaid order must be settled before it moves, because the store has
+      // already taken the money. A cash order is collected at the door, so it
+      // may advance as soon as it is placed and is marked paid on delivery.
+      const isCod = order.paymentMethod === 'cod';
+      if (order.paymentStatus !== 'paid' && !isCod) cod.fail('Payment for this order is not confirmed yet.', 409);
       if (next === 'cancelled' && !order.inventoryReserved) cod.fail('This order is already cancelled.', 409);
       const now = new Date();
+      // Cash collected at the door settles the order on the delivered transition.
+      const cashCollected = isCod && next === 'delivered' && order.paymentStatus === 'pending';
       if (next === 'cancelled') {
         await release(tx, order, now);
         const alreadyRefunded = cod.money(order.refundedAmount || 0);
@@ -229,8 +241,10 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
         else if (!order.razorpayPaymentId) refund = { manual: true };
       }
       tx.update(ref, {
-        status: next, paymentStatus: next === 'cancelled' ? 'refunded' : order.paymentStatus,
+        status: next, paymentStatus: next === 'cancelled' ? 'refunded' : cashCollected ? 'paid' : order.paymentStatus,
         ...(next === 'cancelled' ? { inventoryReserved: false, cancelledAt: now } : {}),
+        ...(cashCollected ? { amountCollected: order.total, paidAt: now, paymentConfirmedBy: 'cash_on_delivery' } : {}),
+        ...(next === 'delivered' ? { deliveredAt: now } : {}),
         updatedAt: now, statusUpdatedAt: now, statusUpdatedBy: user.uid,
         statusHistory: [...(order.statusHistory || []), { status: next, at: now, by: user.uid, note: next === 'delivered' ? 'Delivered' : `Order ${next}` }],
       });

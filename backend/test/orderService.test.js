@@ -83,8 +83,8 @@ test('invalid quantities, options, missing stock and bad addresses fail without 
   for (const quantity of [0, -1, 1.5, NaN, Infinity, '2', 100, null]) await assert.rejects(service.create({ ...body, items: [{ ...items[0], quantity }] }, user), { status: 400 });
   for (const variant of [{ size: '' }, { size: 'XL' }, { color: 'Blue' }]) await assert.rejects(service.create({ ...body, items: [{ ...items[0], ...variant }] }, user), { status: 409 });
   for (const patch of [{ zip: '000000' }, { phone: '123' }, { country: 'USA' }, { fullName: '' }]) await assert.rejects(service.create({ ...body, shippingAddress: { ...shippingAddress, ...patch } }, user), { status: 400 });
-  await assert.rejects(service.create({ ...body, paymentMethod: 'cod' }, user), { status: 400 });
-  await assert.rejects(service.create({ ...body, paymentMethod: 'card' }, user), { status: 400 });
+  // Only the two supported methods are accepted, and they are matched exactly.
+  for (const method of ['card', 'COD', 'cash', 'COD ', 'netbanking', undefined, null]) await assert.rejects(service.create({ ...body, paymentMethod: method }, user), { status: 400 });
   db.data.get('products/dress').stock = undefined;
   await assert.rejects(service.create(body, user), { status: 409 });
   assert.equal([...db.data.keys()].filter(k => k.startsWith('orders/')).length, 0);
@@ -309,6 +309,95 @@ test('checkout is refused when razorpay keys are missing', async () => {
   const body = { items, shippingAddress, paymentMethod: 'razorpay', requestId: 'request_1234567890', quoteId: (await service.quote({ items }, user)).quoteId };
   await assert.rejects(service.create(body, user), { status: 503 });
   assert.equal(db.data.get('products/dress').stock, 5);
+});
+
+test('cash on delivery reserves stock without touching the gateway', async () => {
+  const { db, service, payload, razorpay } = setup();
+  const body = await payload({ paymentMethod: 'cod', requestId: 'request_cod_1234567' });
+  const order = await service.create(body, user);
+  assert.equal(razorpay.state.created, 0, 'a cash order must not open a gateway order');
+  assert.equal(order.data().razorpayOrderId, null);
+  assert.equal(order.data().paymentProvider, 'cash_on_delivery');
+  assert.equal(order.data().paymentStatus, 'pending');
+  assert.equal(order.data().status, 'pending');
+  assert.equal(order.data().total, 207.95, 'the same quote total applies to both methods');
+  assert.equal(db.data.get('products/dress').stock, 4);
+  // A retry reuses the same order and never reserves stock twice.
+  assert.equal((await service.create(body, user)).id, order.id);
+  assert.equal(db.data.get('products/dress').stock, 4);
+  assert.equal(razorpay.state.created, 0);
+});
+
+test('cash on delivery still works when razorpay keys are missing', async () => {
+  const db = new MemoryDb();
+  db.data.set('products/dress', { name: 'Dress', price: 199.95, stock: 5, sizes: ['M'], colors: ['Orange'] });
+  const service = createOrderService({ db, validateCouponForOrder: async () => ({ code: '', discountAmount: 0 }), razorpay: { isConfigured: () => false } });
+  const body = { items, shippingAddress, paymentMethod: 'cod', requestId: 'request_cod_1234567', quoteId: (await service.quote({ items }, user)).quoteId };
+  assert.equal((await service.create(body, user)).data().paymentMethod, 'cod');
+  assert.equal(db.data.get('products/dress').stock, 4);
+});
+
+test('a cash order can never be settled by a payment callback or webhook', async () => {
+  const { db, service, payload } = setup();
+  const order = await service.create(await payload({ paymentMethod: 'cod', requestId: 'request_cod_1234567' }), user);
+  await assert.rejects(service.markPaid(order.id, { razorpayOrderId: RAZORPAY_ORDER, razorpayPaymentId: RAZORPAY_PAYMENT, razorpaySignature: sign(RAZORPAY_ORDER, RAZORPAY_PAYMENT), source: 'checkout' }, user), { status: 409 });
+  await assert.rejects(service.markPaid(order.id, { razorpayOrderId: RAZORPAY_ORDER, razorpayPaymentId: RAZORPAY_PAYMENT, source: 'webhook' }), { status: 409 });
+  const state = (await order.ref.get()).data();
+  assert.equal(state.paymentStatus, 'pending');
+  assert.equal(state.amountCollected, 0);
+  assert.equal(db.data.get('products/dress').stock, 4);
+});
+
+test('a cash order is fulfilled on its normal timeline and collects cash on delivery', async () => {
+  const { db, service, payload, razorpay } = setup();
+  const order = await service.create(await payload({ paymentMethod: 'cod', requestId: 'request_cod_1234567' }), user);
+  // Unlike a prepaid order it may advance before any money changes hands.
+  await service.update(order.id, { status: 'processing' }, admin);
+  await service.update(order.id, { status: 'shipped' }, admin);
+  const delivered = (await service.update(order.id, { status: 'delivered' }, admin)).data();
+  assert.equal(delivered.status, 'delivered');
+  assert.equal(delivered.paymentStatus, 'paid');
+  assert.equal(delivered.amountCollected, 207.95);
+  assert.equal(delivered.paymentConfirmedBy, 'cash_on_delivery');
+  assert.ok(delivered.deliveredAt, 'delivery must be stamped for the return window');
+  assert.equal(razorpay.state.refunds.length, 0);
+  // A repeat transition must not collect the cash twice.
+  await service.update(order.id, { status: 'delivered' }, admin);
+  assert.equal((await order.ref.get()).data().statusHistory.filter(entry => entry.status === 'paid' || entry.status === 'delivered').length, 1);
+  assert.equal(db.data.get('products/dress').stock, 4);
+});
+
+test('cancelling a cash order restores stock without a gateway refund', async () => {
+  const { db, service, payload, razorpay } = setup();
+  db.data.set('coupons/promo', { code: 'SAVE10', active: true, scope: 'storewide', discountType: 'percentage', discountValue: 10, minimumOrderValue: 100, usageLimit: 5, usedCount: 0, expiresAt: new Date(Date.now() + 86400000) });
+  const order = await service.create(await payload({ paymentMethod: 'cod', couponCode: 'SAVE10', requestId: 'request_cod_1234567' }), user);
+  assert.equal(db.data.get('coupons/promo').usedCount, 1);
+  await assert.rejects(service.update(order.id, {}, { ...user, uid: 'other' }, true), { status: 403 });
+  await Promise.all([service.update(order.id, {}, user, true), service.update(order.id, {}, user, true)]);
+  const cancelled = (await order.ref.get()).data();
+  assert.equal(cancelled.status, 'cancelled');
+  assert.equal(cancelled.paymentStatus, 'cancelled', 'nothing was collected, so nothing is refunded');
+  assert.equal(cancelled.inventoryReserved, false);
+  assert.equal(razorpay.state.refunds.length, 0);
+  assert.equal(db.data.get('products/dress').stock, 5, 'stock must be returned, not doubled');
+  assert.equal(db.data.get('coupons/promo').usedCount, 0, 'coupon usage must be returned');
+});
+
+test('switching payment method cannot reuse an existing checkout request', async () => {
+  const { service, payload } = setup();
+  const body = await payload({ paymentMethod: 'razorpay', requestId: 'request_cod_1234567' });
+  await service.create(body, user);
+  await assert.rejects(service.create({ ...body, paymentMethod: 'cod' }, user), { status: 409 });
+});
+
+test('a delivered cash order is eligible for a return and refunds manually', async () => {
+  const { service, payload } = setup();
+  const order = await service.create(await payload({ paymentMethod: 'cod', requestId: 'request_cod_1234567' }), user);
+  await service.update(order.id, { status: 'processing' }, admin);
+  await service.update(order.id, { status: 'shipped' }, admin);
+  await service.update(order.id, { status: 'delivered' }, admin);
+  const { eligibility } = require('../services/returnService');
+  assert.equal(eligibility((await order.ref.get()).data()).eligible, true);
 });
 
 test('razorpay signature helpers reject tampering and use constant-time comparison', async () => {
