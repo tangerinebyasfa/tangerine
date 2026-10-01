@@ -3,6 +3,7 @@ import Image from "next/image";
 import {
   ChevronDown,
   Clock3,
+  Headset,
   Mail,
   MapPin,
   Phone,
@@ -37,6 +38,8 @@ const locations = [
   { label: "Location One", lines: ["Atharva University Mumbai,", "Maharashtra"] },
   { label: "Location Two", lines: ["Blue Ocean Resort,", "Ratnagiri, Maharashtra"] },
 ];
+
+const customerCareNumber = "111-111-1111";
 
 function SectionTitle({ children }) {
   return <p className="text-[11px] uppercase tracking-[0.36em] text-paper/80">{children}</p>;
@@ -73,6 +76,25 @@ function ContactLine({ icon: Icon, children }) {
     <p className="flex items-start gap-3 text-sm leading-6 text-paper/80">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-tangerine" />
       <span>{children}</span>
+    </p>
+  );
+}
+
+function CustomerCareLine() {
+  return (
+    <p className="flex items-start gap-3 text-sm leading-6 text-paper/80">
+      <Headset className="mt-0.5 h-4 w-4 shrink-0 text-tangerine" />
+      <span>
+        <span className="text-[11px] uppercase tracking-[0.2em] text-paper/60">Customer Care No</span>
+        <br />
+        <a
+          href={`tel:${customerCareNumber.replace(/[^+\d]/g, "")}`}
+          className="transition-colors hover:text-tangerine focus:outline-none focus-visible:ring-2 focus-visible:ring-tangerine focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+          aria-label={`Call customer care on ${customerCareNumber}`}
+        >
+          {customerCareNumber}
+        </a>
+      </span>
     </p>
   );
 }
@@ -168,6 +190,7 @@ export default function Footer() {
               </div>
 
               <div className="space-y-3">
+                <CustomerCareLine />
                 <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
                 <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
                 <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
@@ -257,6 +280,7 @@ export default function Footer() {
                 </div>
 
                 <div className="space-y-3">
+                  <CustomerCareLine />
                   <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
                   <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
                   <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
