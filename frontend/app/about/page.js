@@ -13,7 +13,7 @@ export default function AboutPage() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 l g:py-14">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <header className="mb-8 border-b border-ink/10 pb-6 sm:mb-12 sm:pb-8">
         <p className="eyebrow mb-3">Tangerine</p>
         <h1 className="font-display text-4xl text-ink md:text-5xl">Brand Story</h1>
@@ -22,10 +22,10 @@ export default function AboutPage() {
         <div>
           <h2 id="story-heading" className="font-display text-3xl leading-tight sm:text-4xl">Where fashion inspires learning</h2>
           <div className="mt-6 space-y-5 text-base leading-8 text-ink/70">
-            <p>Tangerine is the in-house store of the School of Design at Atharva University Mumbai. It was introduced by Honourable Shri Sunil Rane, Founder and Chancellor of Atharva University, Mumbai.</p>
-            <p>Tangerine provides real-time experience in entrepreneurship and boutique management, nurturing the next generation of professionals.</p>
-            <p>The founder aims to give students the opportunity to learn alongside professional designers and entrepreneurs. This combined journey of study and entrepreneurship encourages creative and critical thinking.</p>
-            <p>Tangerine is a brand run by students under the guidance of professional designers.</p>
+            <p className='text-justify'>Tangerine is the in-house store of the School of Design at Atharva University Mumbai. It was introduced by Honourable Shri Sunil Rane, Founder and Chancellor of Atharva University, Mumbai.</p>
+            <p className='text-justify'>Tangerine provides real-time experience in entrepreneurship and boutique management, nurturing the next generation of professionals.</p>
+            <p className='text-justify'>The founder aims to give students the opportunity to learn alongside professional designers and entrepreneurs. This combined journey of study and entrepreneurship encourages creative and critical thinking.</p>
+            <p className='text-justify'>Tangerine is a brand run by students under the guidance of professional designers.</p>
           </div>
         </div>
         <div className="relative aspect-[4/3] overflow-hidden bg-sand lg:aspect-auto">

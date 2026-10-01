@@ -176,7 +176,7 @@ function SidebarLink({ item }) {
 
 function SectionHeader({ title, action }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-4">
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <h2 className="font-display text-2xl text-ink">{title}</h2>
       {action}
     </div>
@@ -904,14 +904,14 @@ function ProfileDashboard() {
 
     if (activeSection === "addresses") {
       return (
-        <section className="border border-ink/10 bg-white/95 p-6 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
+        <section className="border border-ink/10 bg-white/95 p-4 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur sm:p-6">
           <SectionHeader
             title="Saved Addresses"
             action={
               <button
                 type="button"
                 onClick={openCreateAddress}
-                className="inline-flex items-center gap-2 border border-tangerine/30 bg-[#fff7f1] px-4 py-2 text-sm font-medium text-tangerine transition-colors hover:bg-tangerine hover:text-white"
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 border border-tangerine/30 bg-[#fff7f1] px-4 py-2 text-sm font-medium text-tangerine transition-colors hover:bg-tangerine hover:text-white sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 Add Address
@@ -926,22 +926,22 @@ function ProfileDashboard() {
               ))}
             </div>
           ) : addresses.length === 0 ? (
-            <div className="border border-dashed border-ink/10 bg-[#fffaf6] p-8 text-center">
-              <p className="font-display text-2xl text-ink">No saved addresses</p>
+            <div className="border border-dashed border-ink/10 bg-[#fffaf6] p-6 text-center sm:p-8">
+              <p className="font-display text-xl text-ink sm:text-2xl">No saved addresses</p>
               <p className="mt-2 text-sm leading-6 text-ink/55">
                 Add a delivery address to speed up checkout and keep one address marked as default.
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
               {addresses.map((address) => {
                 const lines = formatAddressLines(address);
 
                 return (
-                  <article key={address.id} className="border border-ink/10 bg-[#fffaf6] p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-display text-xl text-ink">{address.label || "Address"}</p>
+                  <article key={address.id} className="min-w-0 border border-ink/10 bg-[#fffaf6] p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                      <div className="min-w-0">
+                        <p className="break-words font-display text-lg text-ink sm:text-xl">{address.label || "Address"}</p>
                         {address.isDefault ? (
                           <span className="mt-2 inline-flex border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-700">
                             Default
@@ -949,12 +949,12 @@ function ProfileDashboard() {
                         ) : null}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 flex-wrap gap-2">
                         {!address.isDefault ? (
                           <button
                             type="button"
                             onClick={() => handleSetDefault(address.id)}
-                            className="border border-ink/10 px-3 py-2 text-xs uppercase tracking-[0.18em] text-ink/70 transition-colors hover:bg-white"
+                            className="flex-1 border border-ink/10 px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-ink/70 transition-colors hover:bg-white sm:flex-none sm:text-xs sm:tracking-[0.18em]"
                           >
                             Set Default
                           </button>
@@ -962,23 +962,23 @@ function ProfileDashboard() {
                         <button
                           type="button"
                           onClick={() => openEditAddress(address)}
-                          className="border border-ink/10 px-3 py-2 text-xs uppercase tracking-[0.18em] text-ink/70 transition-colors hover:bg-white"
+                          className="flex-1 border border-ink/10 px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-ink/70 transition-colors hover:bg-white sm:flex-none sm:text-xs sm:tracking-[0.18em]"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteAddress(address.id)}
-                          className="border border-rose-200 px-3 py-2 text-xs uppercase tracking-[0.18em] text-rose-700 transition-colors hover:bg-rose-50"
+                          className="flex-1 border border-rose-200 px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-rose-700 transition-colors hover:bg-rose-50 sm:flex-none sm:text-xs sm:tracking-[0.18em]"
                         >
                           Delete
                         </button>
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-1 text-sm leading-6 text-ink/70">
+                    <div className="mt-4 space-y-1 break-words text-sm leading-6 text-ink/70">
                       {lines.map((line) => (
-                        <p key={line}>{line}</p>
+                        <p key={line} className="break-words">{line}</p>
                       ))}
                     </div>
                   </article>
