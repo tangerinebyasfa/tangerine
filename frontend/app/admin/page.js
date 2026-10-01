@@ -27,6 +27,9 @@ function getOrderTotal(order) {
 function getActualRevenue(orders) {
   return toArray(orders).reduce((sum, order) => {
     if (!["paid", "partially_refunded", "refunded"].includes(order.paymentStatus) || order.status === "cancelled") return sum;
+    // A failed refund means the money is still with the customer, so it must not
+    // be counted as collected.
+    if (order.refundPending) return sum;
     return sum + Math.max(0, getOrderTotal(order) - Number(order.refundedAmount || 0));
   }, 0);
 }

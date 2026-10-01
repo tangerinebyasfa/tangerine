@@ -37,11 +37,12 @@ function paymentMethodLabel(order) {
 function describePaymentState(order) {
   const status = String(order?.paymentStatus || "pending").toLowerCase();
   const cash = isCashOrder(order);
+  if (order?.refundPending) return cash ? "Manual refund needed" : "Refund pending";
   if (order?.status === "cancelled") {
     if (status === "pending") return cash ? "Cancelled before dispatch" : "Cancelled before payment";
+    if (status === "cancelled") return "No payment was taken";
     return PAYMENT_STATE_LABELS[status] || status;
   }
-  if (order?.refundPending) return "Refund pending";
   if (status === "paid") return cash ? "Collected in cash on delivery" : "Paid online";
   if (cash) return "Pay on delivery";
   return PAYMENT_STATE_LABELS[status] || status;
@@ -88,7 +89,7 @@ export default function OrderDetailsView({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <p className="text-xs tracking-[0.35em] text-tangerine uppercase">{title}</p>
-          <h1 className="font-display text-4xl text-ink sm:text-5xl">{displayOrderId || "Order"}</h1>
+          <h1 className="font-display text-4xl text-ink sm:text-5xl break-all">{displayOrderId || "Order"}</h1>
           {subtitle ? <p className="max-w-2xl text-sm leading-6 text-ink/60 sm:text-base">{subtitle}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
@@ -108,7 +109,14 @@ export default function OrderDetailsView({
           <p className="mt-2 font-medium text-ink">{paymentMethodLabel(order)}</p>
           <p className="mt-1 text-sm text-ink/55">{describePaymentState(order)}</p>
           {order?.razorpayPaymentId ? <p className="mt-1 break-all text-xs text-ink/45">Ref: {order.razorpayPaymentId}</p> : null}
-          {order?.refundPending ? <p className="mt-1 text-xs text-amber-700">Automatic refund failed. Refund this payment manually.</p> : null}
+          {order?.refundPending && !isCashOrder(order) ? (
+            <p className="mt-2 border-l-2 border-amber-500 bg-amber-50 px-2 py-1.5 text-xs leading-5 text-amber-800">
+              Automatic refund failed, so the money has not returned to the customer yet. Refund this payment manually.
+              {order?.refundError ? (
+                <span className="mt-1 block break-words text-amber-700/80">Reason: {order.refundError}</span>
+              ) : null}
+            </p>
+          ) : null}
         </div>
         <div className="border border-ink/10 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Status</p>
