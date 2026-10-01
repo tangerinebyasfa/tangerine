@@ -17,7 +17,7 @@ import Button from "../../../components/ui/Button";
 import Spinner from "../../../components/ui/Spinner";
 import ProductCard from "../../../components/product/ProductCard";
 import WishlistButton from "../../../components/wishlist/WishlistButton";
-import { Bell, Check, Copy, Star } from "lucide-react";
+import { Bell, Check, Copy, Headset, Star } from "lucide-react";
 import { addProductNotification } from "../../../lib/notifications";
 
 const DEFAULT_SIZES = ["XS", "S", "M", "L", "XL"];
@@ -407,6 +407,32 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     }
   }
 
+  const customerCareNumber = "111-111-1111";
+  const customerCareHref = `tel:${customerCareNumber.replace(/[^+\d]/g, "")}`;
+
+  const customerCareBlock = (
+    <section aria-labelledby="customer-care-heading" className="mt-6 border border-ink/10 bg-[#fffaf6] p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <Headset className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
+        <div className="min-w-0">
+          <h2 id="customer-care-heading" className="text-sm uppercase tracking-[0.2em] text-ink/45">
+            Customer Care No
+          </h2>
+          <a
+            href={customerCareHref}
+            className="mt-1 inline-block break-all text-lg font-semibold text-ink transition-colors hover:text-tangerine focus:outline-none focus-visible:ring-2 focus-visible:ring-tangerine focus-visible:ring-offset-2"
+            aria-label={`Call customer care on ${customerCareNumber}`}
+          >
+            {customerCareNumber}
+          </a>
+          <p className="mt-2 text-xs leading-5 text-ink/55">
+            Questions about sizing, delivery or this order? Our team is happy to help.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+
   const accordionItems = [
     {
       id: "details",
@@ -442,7 +468,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       title: "Delivery & Returns",
       content:
         product.returnEligible === false ? "This product is excluded from standard returns and size or colour exchanges. Contact us for help with a damaged or incorrect item." : product.deliveryInfo ||
-        "Orders are typically dispatched within 1-3 business days. Delivery timelines may vary by location. Returns can be requested within 7 days of delivery if the product is unused and in original condition.",
+          "Orders are typically dispatched within 1-3 business days. Delivery timelines may vary by location. Returns can be requested within 7 days of delivery if the product is unused and in original condition.",
       kind: "text",
     },
   ];
@@ -502,13 +528,12 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                   key={item.label}
                   onClick={() => item.available && setSize(item.label)}
                   disabled={!item.available}
-                  className={`px-4 py-2 text-sm border ${
-                    size === item.label
+                  className={`px-4 py-2 text-sm border ${size === item.label
                       ? "border-ink bg-ink text-paper"
                       : item.available
                         ? "border-ink/20"
                         : "border-ink/10 text-ink/35"
-                  }`}
+                    }`}
                 >
                   <span className={item.available ? "" : "line-through decoration-ink/45"}>{item.label}</span>
                 </button>
@@ -528,6 +553,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
         ) : typeof product.stock === "number" && product.stock > 0 && product.stock <= 5 ? (
           <p className="text-xs text-burgundy mt-3">Only {product.stock} left in stock.</p>
         ) : null}
+
+        {customerCareBlock}
 
         <div className="mt-10 border-t border-ink/10">
           {accordionItems.map((item) => {
@@ -744,22 +771,19 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                     <button
                       key={img + i}
                       onClick={() => setActiveImage(i)}
-                      className={`relative shrink-0 w-16 h-20 md:w-20 md:h-24 bg-sand border overflow-hidden ${
-                        activeImage === i ? "border-burgundy" : "border-ink/10"
-                      }`}
+                      className={`relative shrink-0 w-16 h-20 md:w-20 md:h-24 bg-sand border overflow-hidden ${activeImage === i ? "border-burgundy" : "border-ink/10"
+                        }`}
                     >
                       <div
-                        className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${
-                          thumbLoaded[img] ? "opacity-0" : "opacity-100"
-                        }`}
+                        className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${thumbLoaded[img] ? "opacity-0" : "opacity-100"
+                          }`}
                       />
                       <Image
                         src={img}
                         alt=""
                         fill
-                        className={`object-cover transition-opacity duration-300 ${
-                          thumbLoaded[img] ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`object-cover transition-opacity duration-300 ${thumbLoaded[img] ? "opacity-100" : "opacity-0"
+                          }`}
                         unoptimized={isGoogleDriveImageUrl(img)}
                         onLoadingComplete={() =>
                           setThumbLoaded((current) => ({
@@ -776,17 +800,15 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
               <div className="order-1 md:order-2 relative flex-1">
                 <div className="relative aspect-[3/4] bg-sand overflow-hidden">
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${
-                      mainImageLoaded ? "opacity-0" : "opacity-100"
-                    }`}
+                    className={`absolute inset-0 bg-gradient-to-br from-ink/5 via-paper to-sand animate-pulse transition-opacity duration-300 ${mainImageLoaded ? "opacity-0" : "opacity-100"
+                      }`}
                   />
                   <Image
                     src={displayImages[activeImage] || displayImages[0]}
                     alt={product.name}
                     fill
-                    className={`object-cover transition-opacity duration-300 ${
-                      mainImageLoaded ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={`object-cover transition-opacity duration-300 ${mainImageLoaded ? "opacity-100" : "opacity-0"
+                      }`}
                     priority
                     unoptimized={isGoogleDriveImageUrl(displayImages[activeImage] || displayImages[0])}
                     onLoadingComplete={() => setMainImageLoaded(true)}
@@ -916,20 +938,19 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
               {sizeOptions.length > 0 && (
                 <div className="mb-6">
                   <p className="text-xs tracking-widest uppercase text-ink/60 mb-3">Size</p>
-            <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide  </summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
+                  <details className="mb-3 text-sm"><summary className="cursor-pointer text-tangerine underline">View size guide  </summary><div className="mt-3 border p-3"><SizeGuide guide={product.sizeGuide} selectedSize={size} productType={product.productType} /></div></details>
                   <div className="flex flex-wrap gap-2">
                     {sizeOptions.map((item) => (
                       <button
                         key={item.label}
                         onClick={() => item.available && setSize(item.label)}
                         disabled={!item.available}
-                        className={`px-4 py-2 text-sm border ${
-                          size === item.label
+                        className={`px-4 py-2 text-sm border ${size === item.label
                             ? "border-ink bg-ink text-paper"
                             : item.available
                               ? "border-ink/20"
                               : "border-ink/10 text-ink/35"
-                        }`}
+                          }`}
                       >
                         <span className={item.available ? "" : "line-through decoration-ink/45"}>
                           {item.label}
@@ -952,6 +973,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                 <p className="text-xs text-burgundy mt-3">Only {product.stock} left in stock.</p>
               ) : null}
 
+              {customerCareBlock}
+
               <div className="mt-10 border-t border-ink/10">
                 {accordionItems.map((item) => {
                   const isOpen = openSection === item.id;
@@ -965,9 +988,8 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                       >
                         <span className="text-sm tracking-wide uppercase text-ink">{item.title}</span>
                         <span
-                          className={`text-ink/60 transition-transform duration-200 ${
-                            isOpen ? "rotate-180" : ""
-                          }`}
+                          className={`text-ink/60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                            }`}
                         >
                           <svg
                             aria-hidden="true"
