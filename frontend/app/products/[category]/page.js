@@ -257,7 +257,7 @@ export default function CategoryPage() {
     searchTerm
       ? `Showing products that match "${searchTerm}".`
       : isOutlet
-        ? "Explore our two outlet locations, their details, and everything your customers need before visiting."
+        ? "Explore our two locations with details for your next visit!"
         : isAll
           ? "Browse the full range from this edit."
           : SUBCATEGORY_DESCRIPTIONS[categorySlug]
@@ -283,7 +283,7 @@ export default function CategoryPage() {
       ) : products.length === 0 ? (
         category === "accessories" ? (
           <p className="text-ink/50 text-md text-center">
-            We’re curating something special to complete your look!<br/> It will be worth your wait!
+            We’re curating something special to complete your look!<br/> IT WILL BE WORTH YOUR WAIT!
           </p>
         ) : (
           <p className="text-ink/50 text-sm">No products found in this {isMainType ? "type" : "category"} yet.</p>

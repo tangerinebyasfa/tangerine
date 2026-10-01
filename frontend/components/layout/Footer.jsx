@@ -11,7 +11,7 @@ import {
 const quickLinks = [
   { href: "/", label: "Home" },
   { href: "/products/all", label: "Shop" },
-  { href: "/gallery", label: "Gallery" },
+  // { href: "/gallery", label: "Gallery" },
 ];
 
 const companyLinks = [
@@ -142,8 +142,7 @@ export default function Footer() {
           />
 
           <p className="mt-6 max-w-3xl text-sm leading-7 text-paper/76 sm:text-base">
-            Tangerine brings together considered clothing, clean silhouettes, and a warm brand
-            language designed for everyday dressing with confidence.
+            Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.
           </p>
         </div>
 
@@ -217,7 +216,7 @@ export default function Footer() {
           <div className="space-y-1 lg:hidden">
             <div className="pb-4 pt-0 text-center">
               <Image
-                src="/Images/logo.png"
+                src="/Images/logo-transparent.png"
                 alt="Tangerine"
                 width={220}
                 height={80}

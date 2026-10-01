@@ -197,7 +197,7 @@ export default function HomePage() {
               <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[95%] md:max-w-8xl md:w-4/5">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.2em] text-tangerine">Shop by category</p>
-                  <h2 className="font-display text-3xl mt-2">Explore the edit</h2>
+                  <h2 className="font-display text-3xl mt-2">Explore Our Collections</h2>
                 </div>
                 <Link
                   href="/products/all"

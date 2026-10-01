@@ -1014,7 +1014,7 @@ function ProfileDashboard() {
               <Heart className="mx-auto h-8 w-8 text-tangerine/60" fill="currentColor" />
               <p className="mt-4 font-display text-2xl text-ink">Your wishlist is empty</p>
               <p className="mt-2 text-sm leading-6 text-ink/55">
-                Save items from product pages to keep track of the pieces you love.
+                Discover something you love and keep it here for later.
               </p>
             </div>
           ) : (
@@ -1210,7 +1210,7 @@ function ProfileDashboard() {
                 <div>
                   <p className="font-display text-lg text-ink">Need Help?</p>
                   <p className="mt-1 text-sm leading-6 text-ink/65">
-                    Reach out if anything about orders, delivery, or your account needs attention.
+                    Questions about your order, delivery, or account? We're here for you
                   </p>
                 </div>
               </div>

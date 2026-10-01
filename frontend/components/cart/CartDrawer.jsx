@@ -58,15 +58,15 @@ export default function CartDrawer() {
       )}
 
       <aside
-        className={`fixed right-0 top-0 z-50 flex h-full w-full transform flex-col bg-paper shadow-2xl transition-transform duration-300 sm:w-[420px] ${
-          isDrawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed right-0 top-0 z-50 flex h-full w-full transform flex-col bg-paper shadow-2xl transition-transform duration-300 sm:w-[420px] ${isDrawerOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex items-start justify-between border-b border-ink/10 px-5 py-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-ink/40">Cart</p>
-            <h2 className="font-display text-2xl leading-none text-ink mt-1">
-              Your Cart {items.length > 0 ? `(${items.length})` : ""}
+            {/* <p className="text-[11px] uppercase tracking-[0.22em] text-ink/40">Cart</p> */}
+            <h2 className="font-display text-2xl leading-none text-ink mt-1 text-tangerine">
+              {/* Your */}
+              Cart {items.length > 0 ? `(${items.length})` : ""}
             </h2>
           </div>
           <button
@@ -85,7 +85,7 @@ export default function CartDrawer() {
               <div className="py-10 text-center">
                 <p className="text-sm text-ink/55">Your cart is empty.</p>
                 <p className="mt-2 text-xs uppercase tracking-[0.18em] text-ink/35">
-                  Add a few considered pieces to get started.
+                  Your next favourite piece is waiting to be found.
                 </p>
               </div>
             ) : (
@@ -169,9 +169,9 @@ export default function CartDrawer() {
           {suggestions.length > 0 && (
             <section className="border-t border-ink/10 px-5 py-4">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-[12px] uppercase tracking-[0.18em] text-ink">You may also like</h3>
+                <h3 className="text-[12px] uppercase tracking-[0.18em] text-ink text-tangerine">You may also like</h3>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-ink" />
+                  <span className="h-2 w-2 rounded-full bg-tangerine" />
                   <span className="h-2 w-2 rounded-full bg-ink/30" />
                   <span className="h-2 w-2 rounded-full bg-ink/30" />
                   <span className="h-2 w-2 rounded-full bg-ink/30" />

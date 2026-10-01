@@ -109,7 +109,7 @@ export default function ContactPage() {
       <PageHeader
         eyebrow="Get in touch"
         title="Contact Us"
-        description="Questions about an order, a fitting, or store availability? Send a note, choose your preferred location, and our team will respond with care."
+        description="Worry not, we've got you"
       />
 
       <section className="mt-10 grid gap-4 sm:grid-cols-3">

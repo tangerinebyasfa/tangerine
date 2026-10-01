@@ -401,35 +401,35 @@ function CheckoutForm() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
-          <p className="text-xs tracking-[0.35em] text-tangerine uppercase">Almost there</p>
-          <h1 className="font-display text-4xl text-ink sm:text-5xl">Checkout</h1>
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-2 sm:space-y-3">
+          <p className="text-[11px] tracking-[0.28em] text-tangerine uppercase sm:text-xs sm:tracking-[0.35em]">Almost there</p>
+          <h1 className="font-display text-3xl text-ink sm:text-4xl lg:text-5xl">Checkout</h1>
           <p className="max-w-2xl text-sm leading-6 text-ink/60 sm:text-base">
             Review your delivery details and the confirmed total. Pay securely online with UPI, cards, netbanking or wallets.
           </p>
         </div>
-        <div className="flex items-start gap-3 border border-ink/10 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          <div className="grid h-11 w-11 place-items-center bg-[#fff3ea] text-tangerine">
+        <div className="flex w-full items-start gap-3 border border-ink/10 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:w-auto sm:shrink-0">
+          <div className="grid h-10 w-10 shrink-0 place-items-center bg-[#fff3ea] text-tangerine sm:h-11 sm:w-11">
             <Lock className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-ink">Secure Checkout</p>
             <p className="text-sm text-ink/55">Your data is safe with us</p>
           </div>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:grid-cols-4 sm:gap-4">
         {[
           { step: "1", label: "Shipping", active: true },
           { step: "2", label: "Payment", active: false },
           { step: "3", label: "Review", active: false },
           { step: "4", label: "Confirmation", active: false },
         ].map((item) => (
-          <div key={item.step} className="flex flex-col items-center gap-2 text-center">
+          <div key={item.step} className="flex min-w-0 flex-col items-center gap-2 text-center">
             <div
-              className={`grid h-10 w-10 place-items-center border text-sm font-medium sm:h-11 sm:w-11 ${
+              className={`grid h-9 w-9 place-items-center border text-sm font-medium sm:h-11 sm:w-11 ${
                 item.active
                   ? "border-tangerine bg-tangerine text-white"
                   : "border-ink/20 bg-white text-ink/65"
@@ -437,35 +437,35 @@ function CheckoutForm() {
             >
               {item.step}
             </div>
-            <div className="text-[11px] font-medium uppercase tracking-[0.25em] text-ink/60 sm:text-xs">
+            <div className="max-w-full break-words px-0.5 text-[10px] font-medium uppercase leading-tight tracking-[0.14em] text-ink/60 sm:px-1 sm:text-xs sm:tracking-[0.25em]">
               {item.label}
             </div>
           </div>
         ))}
       </div>
 
-      <form onSubmit={handlePlaceOrder} className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)] lg:gap-8">
-        <div className="space-y-6">
+      <form onSubmit={handlePlaceOrder} className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)] lg:gap-8">
+        <div className="min-w-0 space-y-4 sm:space-y-6">
           <section className="border border-ink/10 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6 lg:p-8">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center bg-[#fff3ea] text-tangerine">
+            <div className="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center bg-[#fff3ea] text-tangerine sm:h-12 sm:w-12">
                 <MapPin className="h-5 w-5" />
               </div>
-              <div>
-                <h3 className="font-display text-2xl text-ink">Shipping Information</h3>
+              <div className="min-w-0">
+                <h3 className="font-display text-xl text-ink sm:text-2xl">Shipping Information</h3>
                 <p className="mt-1 text-sm text-ink/55">Enter your delivery address</p>
               </div>
             </div>
 
             {addressesLoading ? (
-              <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
+              <div className="mb-4 border border-ink/10 bg-[#fffaf6] px-3 py-3 text-sm text-ink/65 sm:mb-6 sm:px-4">
                 Loading your saved addresses...
               </div>
             ) : hasSavedAddresses ? (
-              <div className="mb-6 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs tracking-widest uppercase text-ink/45">Saved Addresses</p>
+              <div className="mb-4 space-y-3 sm:mb-6 sm:space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] tracking-widest uppercase text-ink/45 sm:text-xs">Saved Addresses</p>
                     <p className="mt-1 text-sm text-ink/60">
                       {hasMultipleSavedAddresses
                         ? "Choose the address you want to ship to."
@@ -473,7 +473,7 @@ function CheckoutForm() {
                     </p>
                   </div>
                   {hasMultipleSavedAddresses ? (
-                    <div className="rounded-full border border-ink/10 bg-[#fffaf6] px-3 py-1 text-xs uppercase tracking-[0.18em] text-ink/55">
+                    <div className="shrink-0 rounded-full border border-ink/10 bg-[#fffaf6] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-ink/55 sm:text-xs">
                       {addresses.length} saved
                     </div>
                   ) : null}
@@ -487,7 +487,7 @@ function CheckoutForm() {
                       return (
                         <label
                           key={savedAddress.id}
-                          className={`flex cursor-pointer items-start gap-3 border px-4 py-4 transition-colors sm:px-5 ${
+                          className={`flex cursor-pointer items-start gap-3 border px-3 py-3 transition-colors sm:px-5 sm:py-4 ${
                             isSelected
                               ? "border-tangerine bg-[#fff7f0] shadow-[0_8px_24px_rgba(255,106,0,0.08)]"
                               : "border-ink/15 bg-white hover:bg-[#fffaf6]"
@@ -496,7 +496,7 @@ function CheckoutForm() {
                           <input
                             type="radio"
                             name="saved-address"
-                            className="mt-1"
+                            className="mt-1 shrink-0"
                             checked={isSelected}
                             onChange={() => setSelectedAddressId(savedAddress.id)}
                           />
@@ -518,7 +518,7 @@ function CheckoutForm() {
                     })}
                   </div>
                 ) : (
-                  <div className="border border-ink/10 bg-[#fffaf6] px-4 py-4">
+                  <div className="border border-ink/10 bg-[#fffaf6] px-3 py-3 sm:px-4 sm:py-4">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center border border-tangerine/20 bg-white text-tangerine">
                         <MapPin className="h-4 w-4" />
@@ -536,12 +536,12 @@ function CheckoutForm() {
                 )}
               </div>
             ) : (
-              <div className="mb-6 border border-ink/10 bg-[#fffaf6] px-4 py-3 text-sm text-ink/65">
+              <div className="mb-4 border border-ink/10 bg-[#fffaf6] px-3 py-3 text-sm text-ink/65 sm:mb-6 sm:px-4">
                 No saved addresses found. Fill in the form below to use a new shipping address.
               </div>
             )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             <Input
               label="Full Name"
               required
@@ -566,7 +566,7 @@ function CheckoutForm() {
             value={address.line2}
             onChange={(e) => setAddress({ ...address, line2: e.target.value })}
           />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_1fr]">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-[1.15fr_1fr_1fr]">
             <Input
               label="ZIP / Postal Code"
               required
@@ -602,7 +602,7 @@ function CheckoutForm() {
               onChange={(e) => setAddress({ ...address, state: e.target.value })}
             />
           </div>
-          <div className="mb-4 flex items-start gap-2 text-xs text-ink/60">
+          <div className="mb-3 flex items-start gap-2 text-xs text-ink/60 sm:mb-4">
             <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${zipVerified ? "text-emerald-600" : "text-ink/35"}`} />
             {zipLookupLoading ? (
               <span>Verifying ZIP code and loading city/state...</span>
@@ -622,30 +622,30 @@ function CheckoutForm() {
           </section>
 
           <section className="border border-ink/10 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6 lg:p-8">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center bg-[#fff3ea] text-tangerine">
+            <div className="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center bg-[#fff3ea] text-tangerine sm:h-12 sm:w-12">
                 <CreditCard className="h-5 w-5" />
               </div>
-              <div>
-                <h3 className="font-display text-2xl text-ink">Payment Method</h3>
+              <div className="min-w-0">
+                <h3 className="font-display text-xl text-ink sm:text-2xl">Payment Method</h3>
                 <p className="mt-1 text-sm text-ink/55">Pay online in a secure Razorpay window.</p>
               </div>
             </div>
 
-            <div className="border border-tangerine bg-[#fff7f0] p-4 shadow-[0_8px_24px_rgba(255,106,0,0.08)]">
-              <div className="flex items-stretch gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center bg-tangerine text-white">
+            <div className="border border-tangerine bg-[#fff7f0] p-3 sm:p-4 shadow-[0_8px_24px_rgba(255,106,0,0.08)]">
+              <div className="flex items-start gap-3 sm:items-stretch">
+                <div className="grid h-10 w-10 shrink-0 place-items-center bg-tangerine text-white sm:h-11 sm:w-11">
                   <Zap className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <div className="min-w-0">
                       <p className="font-medium text-ink">Pay Online</p>
                       <p className="mt-1 text-sm text-ink/60">
                         UPI, cards, netbanking and wallets. Your order is confirmed only after the payment succeeds.
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs font-medium uppercase tracking-[0.2em] text-emerald-600">
+                    <span className="shrink-0 self-start text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 sm:text-xs">
                       Secured
                     </span>
                   </div>
@@ -653,7 +653,7 @@ function CheckoutForm() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink/55">
+            <div className="mt-3 flex flex-col gap-2 text-xs text-ink/55 sm:mt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
               <span className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-tangerine" />
                 Razorpay encrypted checkout
@@ -666,22 +666,22 @@ function CheckoutForm() {
           </section>
         </div>
 
-        <aside className="h-fit space-y-6 lg:sticky lg:top-6">
-          <div className="border border-ink/10 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center bg-[#fff3ea] text-tangerine">
+        <aside className="h-fit min-w-0 space-y-4 sm:space-y-6 lg:sticky lg:top-6">
+          <div className="border border-ink/10 bg-white p-3 sm:p-4 lg:p-6 shadow-[0_12px_40px_rgba(0,0,0,0.03)]">
+            <div className="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+              <div className="grid h-10 w-10 shrink-0 place-items-center bg-[#fff3ea] text-tangerine sm:h-12 sm:w-12">
                 <Package className="h-5 w-5" />
               </div>
-              <div>
-                <h3 className="font-display text-2xl text-ink">Order Summary</h3>
+              <div className="min-w-0">
+                <h3 className="font-display text-xl text-ink sm:text-2xl">Order Summary</h3>
                 <p className="mt-1 text-sm text-ink/55">Review the items in your cart</p>
               </div>
             </div>
 
-          <div className="space-y-3 mb-4 max-h-64 overflow-y-auto pr-1">
-            {items.map((item) => (
-              <div key={item.lineId} className="flex gap-3 border border-ink/10 p-3">
-                <div className="h-16 w-16 shrink-0 overflow-hidden bg-[#fff7f0]">
+          <div className="space-y-3 mb-4 max-h-80 overflow-y-auto pr-1 sm:max-h-64">
+            {items.map((item, itemIndex) => (
+              <div key={item.lineId} className="flex gap-3 border border-ink/10 p-2.5 sm:p-3">
+                <div className="h-14 w-14 shrink-0 overflow-hidden bg-[#fff7f0] sm:h-16 sm:w-16">
                   <img
                     src={item.image || "/placeholder-product.svg"}
                     alt={item.name}
@@ -689,7 +689,7 @@ function CheckoutForm() {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-ink">{item.name}</p>
                       <p className="mt-1 text-sm text-ink/60">
@@ -698,57 +698,57 @@ function CheckoutForm() {
                       </p>
                       <p className="mt-1 text-sm text-ink/60">Qty: {item.quantity}</p>
                     </div>
-                    <span className="shrink-0 font-medium text-ink">{formatINR(currentQuote?.items?.[items.indexOf(item)]?.lineTotal ?? item.price * item.quantity)}</span>
+                    <span className="shrink-0 font-medium text-ink">{formatINR(currentQuote?.items?.[itemIndex]?.lineTotal ?? item.price * item.quantity)}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mb-5 border border-ink/10 bg-[#fffaf6] p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-ink"><Tag className="h-4 w-4 text-tangerine" /> Apply Coupon</div>
+          <div className="mb-4 border border-ink/10 bg-[#fffaf6] p-3 sm:mb-5 sm:p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-ink"><Tag className="h-4 w-4 shrink-0 text-tangerine" /> Apply Coupon</div>
             {appliedCoupon ? (
-              <div className="mt-3 flex items-center justify-between gap-3 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"><span><strong>{appliedCoupon.code}</strong> applied</span><button type="button" onClick={handleRemoveCoupon} disabled={loading} aria-label="Remove coupon" className="text-emerald-700"><X className="h-4 w-4" /></button></div>
+              <div className="mt-3 flex items-center justify-between gap-2 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 sm:gap-3"><span className="min-w-0 break-words"><strong>{appliedCoupon.code}</strong> applied</span><button type="button" onClick={handleRemoveCoupon} disabled={loading} aria-label="Remove coupon" className="shrink-0 text-emerald-700"><X className="h-4 w-4" /></button></div>
             ) : (
-              <div className="mt-3 flex gap-2"><input aria-label="Coupon code" maxLength={40} disabled={loading || couponLoading} value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-tangerine" /><button type="button" onClick={handleApplyCoupon} disabled={couponLoading || loading || !couponCode.trim()} className="border border-tangerine px-3 py-2 text-xs font-semibold uppercase tracking-widest text-tangerine disabled:opacity-50">{couponLoading ? "Checking" : "Apply"}</button></div>
+              <div className="mt-3 flex gap-2"><input aria-label="Coupon code" maxLength={40} disabled={loading || couponLoading} value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }} placeholder="Enter code" className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-tangerine sm:py-2" /><button type="button" onClick={handleApplyCoupon} disabled={couponLoading || loading || !couponCode.trim()} className="shrink-0 border border-tangerine px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-tangerine disabled:opacity-50 sm:py-2">{couponLoading ? "Checking" : "Apply"}</button></div>
             )}
             {couponError ? <p className="mt-2 text-xs text-rose-600">{couponError}</p> : null}
             {appliedCoupon ? <p className="mt-2 text-xs text-ink/55">Coupon discount: {formatINR(couponDiscount)}</p> : null}
           </div>
 
-          <div className="border-t border-ink/10 pt-4 space-y-2">
-            <div className="flex justify-between text-sm text-ink/70">
+          <div className="space-y-2 border-t border-ink/10 pt-4">
+            <div className="flex items-baseline justify-between gap-3 text-sm text-ink/70">
               <span>Subtotal</span>
-              <span>{formatINR(subtotal)}</span>
+              <span className="shrink-0">{formatINR(subtotal)}</span>
             </div>
-            {appliedCoupon ? <div className="flex justify-between text-sm text-emerald-700"><span>Coupon ({appliedCoupon.code})</span><span>- {formatINR(couponDiscount)}</span></div> : null}
-            <div className="flex justify-between text-sm text-ink/70">
+            {appliedCoupon ? <div className="flex items-baseline justify-between gap-3 text-sm text-emerald-700"><span className="min-w-0 break-words">Coupon ({appliedCoupon.code})</span><span className="shrink-0">- {formatINR(couponDiscount)}</span></div> : null}
+            <div className="flex items-baseline justify-between gap-3 text-sm text-ink/70">
               <span>Shipping</span>
-              <span>{formatINR(shipping)}</span>
+              <span className="shrink-0">{formatINR(shipping)}</span>
             </div>
-            <div className="flex justify-between text-base font-medium pt-2">
+            <div className="flex items-baseline justify-between gap-3 pt-2 text-base font-medium">
               <span>Final Total</span>
-              <span>{formatINR(total)}</span>
+              <span className="shrink-0">{formatINR(total)}</span>
             </div>
           </div>
 
-            <div className="mt-4 text-sm" aria-live="polite">
+            <div className="mt-3 text-sm sm:mt-4" aria-live="polite">
               {!currentQuote && !quoteError && items.length > 0 ? <p>Confirming current prices and stock?</p> : null}
               {quoteError ? <p className="text-rose-700">{quoteError}</p> : null}
               {orderError ? <p className="text-rose-700">{orderError}</p> : null}
               {(quoteError || orderError) ? <button type="button" disabled={loading} onClick={() => { setQuote(null); setQuoteRevision(value => value + 1); }} className="mt-2 underline">Refresh total</button> : null}
               <p className="mt-2 text-ink/60">You can cancel from your order details before shipment, and prepaid amounts are refunded to the original payment method.</p>
             </div>
-            <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading || couponLoading} className="mt-6 w-full">
+            <Button type="submit" loading={loading} disabled={!currentQuote || !items.length || loading || couponLoading} className="mt-4 w-full sm:mt-6">
               {loading ? "Opening secure payment..." : `Pay ${formatINR(total)} Securely`}
             </Button>
           </div>
 
-          <div className="border border-ink/10 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6">
+          <div className="border border-ink/10 bg-white p-3 shadow-[0_12px_40px_rgba(0,0,0,0.03)] sm:p-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-tangerine" />
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-ink">Secure Online Payment</p>
                   <p className="text-sm text-ink/55">
                     Payments open in a Razorpay window. If you close it without paying, your reserved items are released straight away.
