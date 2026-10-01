@@ -64,7 +64,7 @@ export default function CartDrawer() {
         <div className="flex items-start justify-between border-b border-ink/10 px-5 py-4">
           <div>
             {/* <p className="text-[11px] uppercase tracking-[0.22em] text-ink/40">Cart</p> */}
-            <h2 className="font-display text-2xl leading-none text-ink mt-1 text-tangerine">
+            <h2 className="font-display text-2xl leading-none text-ink mt-1">
               {/* Your */}
               Cart {items.length > 0 ? `(${items.length})` : ""}
             </h2>
