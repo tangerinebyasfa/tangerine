@@ -425,7 +425,7 @@ test('a delivered cash order is eligible for a return and refunds manually', asy
   assert.equal(eligibility((await order.ref.get()).data()).eligible, true);
 });
 
-test('refundPayment calls a method the installed razorpay SDK actually exposes', async () => {
+test('refundPayment sends the payment ID positionally and the amount in params', async () => {
   // razorpay 2.9.x has no `refunds.create`; refunds go through `payments.refund`.
   // This guards against the SDK shape changing again under us.
   const razorpayPath = require.resolve('../lib/razorpay');
@@ -437,18 +437,48 @@ test('refundPayment calls a method the installed razorpay SDK actually exposes',
   assert.equal(typeof sdk.refunds.create, 'undefined', 'SDK assumption changed; re-check the refund path');
   assert.equal(typeof sdk.payments.refund, 'function');
 
-  // Drive refundPayment against a stub client that only has payments.refund,
-  // mirroring the real 2.9.x shape.
+  // Mirror the real 2.9.x call convention: (paymentId, params). Putting the ID in
+  // the body builds a URL that 404s and drops the amount entirely.
   const calls = [];
-  const stubbed = { payments: { refund: async (body) => { calls.push(body); return { id: 'rfnd_stub' }; } }, refunds: {} };
+  const stubbed = { payments: { refund: async (paymentId, params) => { calls.push({ paymentId, params }); return { id: 'rfnd_stub' }; } }, refunds: {} };
 
   const receipt = await refundPayment({ paymentId: RAZORPAY_PAYMENT, amount: 207.95, notes: { orderId: 'order-1' }, sdk: stubbed });
 
   assert.equal(receipt.id, 'rfnd_stub');
   assert.equal(calls.length, 1, 'refund must be attempted exactly once');
-  assert.equal(calls[0].payment_id, RAZORPAY_PAYMENT);
+  assert.equal(calls[0].paymentId, RAZORPAY_PAYMENT, 'payment ID must be the positional argument');
+  assert.equal(calls[0].params.payment_id, undefined, 'payment ID must not be duplicated into the body');
+  assert.equal(calls[0].params.amount, 20795, 'rupees must be converted to paise and sent in params');
+  assert.deepEqual(calls[0].params.notes, { orderId: 'order-1' });
+});
+
+test('refundPayment prefers refunds.create when a future razorpay SDK restores it', async () => {
+  const razorpayPath = require.resolve('../lib/razorpay');
+  delete require.cache[razorpayPath];
+  const { refundPayment } = require(razorpayPath);
+
+  // razorpay 3.x takes the payment ID inside the request body instead.
+  const calls = [];
+  const stubbed = {
+    payments: { refund: async () => { throw new Error('payments.refund must not be called'); } },
+    refunds: { create: async (body) => { calls.push(body); return { id: 'rfnd_v3' }; } },
+  };
+
+  const receipt = await refundPayment({ paymentId: RAZORPAY_PAYMENT, amount: 207.95, sdk: stubbed });
+
+  assert.equal(receipt.id, 'rfnd_v3');
+  assert.equal(calls[0].payment_id, RAZORPAY_PAYMENT, 'v3 refunds.create takes the ID inside the body');
   assert.equal(calls[0].amount, 20795, 'rupees must be converted to paise');
-  assert.deepEqual(calls[0].notes, { orderId: 'order-1' });
+});
+
+test('refundPayment rejects a missing payment ID before calling the gateway', async () => {
+  const { refundPayment } = require('../lib/razorpay');
+  for (const paymentId of [undefined, null, '', '   ']) {
+    await assert.rejects(
+      refundPayment({ paymentId, amount: 100, sdk: { payments: { refund: async () => { throw new Error('must not be called'); } }, refunds: {} } }),
+      /payment ID/i
+    );
+  }
 });
 
 test('razorpay signature helpers reject tampering and use constant-time comparison', async () => {

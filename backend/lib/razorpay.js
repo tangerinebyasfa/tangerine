@@ -83,19 +83,24 @@ function describeGatewayError(err) {
 
 // `sdk` is injectable so the SDK-shape fallback can be tested without a network call.
 async function refundPayment({ paymentId, amount, notes, sdk } = {}) {
+  const id = String(paymentId || '').trim();
+  if (!id) throw Object.assign(new Error('A Razorpay payment ID is required to refund.'), { status: 400 });
   const client = sdk || getClient();
-  // razorpay 2.9.x exposes `refunds` with only all/edit/fetch. Refunds are
-  // actually created through `payments.refund`, which accepts the same body.
-  // Prefer `refunds.create` so a future SDK that restores it keeps working.
-  const create = client.refunds && typeof client.refunds.create === 'function'
-    ? client.refunds.create.bind(client.refunds)
-    : client.payments.refund.bind(client.payments);
 
-  return create({
-    payment_id: paymentId,
-    ...(Number.isFinite(Number(amount)) ? { amount: toPaise(amount) } : {}),
-    notes: notes || undefined,
-  });
+  const params = {};
+  if (Number.isFinite(Number(amount))) params.amount = toPaise(amount);
+  if (notes) params.notes = notes;
+
+  // razorpay 2.9.x exposes `refunds` with only all/edit/fetch, so refunds are
+  // created through `payments.refund(paymentId, params)` where the payment ID is a
+  // POSITIONAL argument. Putting the ID inside the body builds a URL against
+  // `/payments/[object Object]/refund`, which the gateway answers with 404, and
+  // silently drops the amount so a partial refund would settle for the full total.
+  // razorpay 3.x restores `refunds.create`, which takes the ID inside the body.
+  if (client.refunds && typeof client.refunds.create === 'function') {
+    return client.refunds.create({ payment_id: id, ...params });
+  }
+  return client.payments.refund(id, params);
 }
 
 module.exports = {
