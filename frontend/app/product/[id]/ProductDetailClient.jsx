@@ -407,7 +407,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     }
   }
 
-  const customerCareNumber = "111-111-1111";
+  const customerCareNumber = "+91 77387 28078";
   const customerCareHref = `tel:${customerCareNumber.replace(/[^+\d]/g, "")}`;
 
   const customerCareBlock = (

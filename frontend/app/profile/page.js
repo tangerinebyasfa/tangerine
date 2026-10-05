@@ -368,15 +368,22 @@ function ProfileDashboard() {
 
     syncSectionFromHash();
     window.addEventListener("hashchange", syncSectionFromHash);
+    window.addEventListener("popstate", syncSectionFromHash);
 
     return () => {
       window.removeEventListener("hashchange", syncSectionFromHash);
+      window.removeEventListener("popstate", syncSectionFromHash);
     };
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.innerWidth >= STACKED_NAV_BREAKPOINT) return;
+    if (mobileSectionView) {
+      pendingSectionScrollRef.current = false;
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
 
     const requestedFromHash = SECTION_KEYS.includes(window.location.hash.replace("#", "").trim());
     if (!requestedFromHash && !pendingSectionScrollRef.current) return;
@@ -390,7 +397,7 @@ function ProfileDashboard() {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [activeSection]);
+  }, [activeSection, mobileSectionView]);
 
   const productMap = useMemo(() => new Map(wishlistProducts.map((product) => [String(product.id), product])), [wishlistProducts]);
 
@@ -634,10 +641,12 @@ function ProfileDashboard() {
 
   function handleSelectSection(key) {
     setMobileSectionView(true);
-    pendingSectionScrollRef.current = true;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < STACKED_NAV_BREAKPOINT;
+    pendingSectionScrollRef.current = !isMobile;
 
     if (typeof window !== "undefined" && window.location.hash.replace("#", "").trim() !== key) {
-      window.history.replaceState(null, "", `#${key}`);
+      if (isMobile) window.history.pushState(null, "", `#${key}`);
+      else window.history.replaceState(null, "", `#${key}`);
     }
 
     if (activeSection === key) {
@@ -650,10 +659,13 @@ function ProfileDashboard() {
   }
 
   function handleBackToAccountMenu() {
-    setMobileSectionView(false);
     if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", window.location.pathname);
+      if (SECTION_KEYS.includes(window.location.hash.replace("#", "").trim())) {
+        window.history.back();
+        return;
+      }
     }
+    setMobileSectionView(false);
   }
 
   const sectionButtonItems = [

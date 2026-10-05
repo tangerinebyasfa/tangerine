@@ -10,14 +10,14 @@ const teamMembers = [
     name: "Shri. Sunil Rane",
     role: "Founder & Chancellor of Atharva University Mumbai",
     image: "/Images/about/fonder-gray-background.png",
-    bio: "Shri. Sunil Rane is the founder and chancellor of Atharva University Mumbai, and the guiding force behind Tangerine. His vision is to pair the discipline of structured education with the freedom of individual expression, so that every garment we make feels considered, purposeful and built to last. He leads the brand with a long-term view of quality over trend.",
+    bio: "Shri. Sunil Rane is the Founder & Chancellor of Atharva University Mumbai and the guiding force behind Tangerine.\n\nHis vision is to pair the discipline of structured education with the freedom of individual expression, so every garments the students make feels considered, purposeful, and built to last. He leads the brand with a long-term view, prioritising quality over trends.",
   },
   {
     id: "varda",
     name: "Miss. Varda Kalaburgi",
     role: "Fashion Designer",
     image: "/Images/about/head.jpeg",
-    bio: "Varda designs the silhouettes that define our womenswear and occasion lines. Her approach combines classical draping knowledge with modern, wearable cuts, and she is closely involved from the first sketch through to the final fitting. She is responsible for the fit library that keeps sizing consistent across every collection.",
+    bio: "With eight years in the atelier mastering garment design, draping, and fine stitching, I bridge the space between high-end craftsmanship and fashion education. I believe that a great designer must be an exceptional craftsperson first.\n\nAs an educator, my mission is to demystify complex construction techniques for the next generation. I don't just teach technique; I mentor aspiring designers to translate their creative ambition into technical precision, build industry-ready portfolios, and launch sustainable careers in fashion.",
   },
   {
     id: "sanchita-vishwakarma",
@@ -95,7 +95,7 @@ function TeamMemberModal({ member, onClose }) {
           <div aria-hidden="true" className="mx-auto mt-6 h-0.5 w-10 bg-tangerine" />
 
           {member.bio && (
-            <p className="mt-6 text-left text-sm leading-7 text-ink/70">{member.bio}</p>
+          <p className="mt-6 text-justify text-sm leading-7 text-ink/70">{member.bio}</p>
           )}
         </div>
       </div>

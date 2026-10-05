@@ -39,7 +39,7 @@ const locations = [
   { label: "Location Two", lines: ["Blue Ocean Resort,", "Ratnagiri, Maharashtra"] },
 ];
 
-const customerCareNumber = "111-111-1111";
+const customerCareNumber = "+91 77387 28078";
 
 function SectionTitle({ children }) {
   return <p className="text-[11px] uppercase tracking-[0.36em] text-paper/80">{children}</p>;
@@ -191,7 +191,7 @@ export default function Footer() {
 
               <div className="space-y-3">
                 <CustomerCareLine />
-                <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
+                <ContactLine icon={Phone}>+91 77387 28078</ContactLine>
                 <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
                 <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
               </div>
@@ -281,7 +281,7 @@ export default function Footer() {
 
                 <div className="space-y-3">
                   <CustomerCareLine />
-                  <ContactLine icon={Phone}>+91 98765 43210</ContactLine>
+                  <ContactLine icon={Phone}>+91 77387 28078</ContactLine>
                   <ContactLine icon={Mail}><a href="mailto:tangerinebyasfa@gmail.com">tangerinebyasfa@gmail.com</a></ContactLine>
                   <ContactLine icon={Clock3}>Mon - Sat: 10:00 AM to 6:00 PM</ContactLine>
                 </div>
@@ -329,7 +329,7 @@ export default function Footer() {
 
           <div className="mt-12 flex flex-col gap-3 border-t border-paper/10 pt-6 text-[11px] uppercase tracking-[0.2em] text-paper/55 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-paper/40"></p>
-            <p>© 2026 Tangerine. Powered by Atharva University Mumbai - School of Design.</p>
+            <p>© 2026 Tangerine. Powered by School of Design. - Atharva University Mumbai</p>
           </div>
         </div>
       </div>

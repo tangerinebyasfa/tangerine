@@ -17,7 +17,7 @@ export default function AboutPage() {
       <header className="mb-8 border-b border-ink/10 pb-6 sm:mb-10 sm:pb-8">
         <p className="eyebrow mb-3 inline-flex items-center gap-2 before:h-px before:w-8 before:bg-tangerine">Tangerine</p>
         <h1 className="font-display text-4xl text-ink md:text-5xl">Brand Story</h1>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-ink/60 sm:text-base">A student-run fashion house where creativity meets hands-on learning.</p>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-ink/60 sm:text-base">A student-run fashion house where creativity moves from concept to collection.</p>
       </header>
       <section aria-labelledby="story-heading" className="grid items-center gap-8 rounded-3xl bg-gradient-to-br from-sand via-paper to-sand/40 p-5 shadow-sm ring-1 ring-ink/5 sm:p-8 lg:grid-cols-[1fr_0.95fr] lg:gap-12 lg:p-10">
         <div className="py-2">
