@@ -120,7 +120,7 @@ export default function ContactPage() {
             <a
               key={item.label}
               href={item.href}
-              className="group border border-ink/10 bg-white p-5 transition-colors hover:border-tangerine/40 hover:bg-sand/30"
+              className="group border border-ink/10 bg-gradient-to-br from-sand via-paper to-sand/40 p-5 transition-colors hover:border-tangerine/40 hover:bg-sand/30"
             >
               <div className="flex h-11 w-11 items-center justify-center border border-tangerine/30 bg-sand text-tangerine">
                 <Icon className="h-5 w-5" />
@@ -250,7 +250,7 @@ export default function ContactPage() {
             </div>
 
             <aside className="border border-ink/10 bg-sand/30 p-5 sm:p-6">
-              <div className="border border-ink/10 bg-white p-5">
+              <div className="border border-ink/10 bg-gradient-to-br from-sand via-paper to-sand/40 p-5">
                 <p className="eyebrow mb-3">Why reach out?</p>
                 <h3 className="font-display text-2xl text-ink">We keep replies thoughtful and quick</h3>
                 <div className="mt-6 space-y-4">
@@ -290,7 +290,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="mt-5 overflow-hidden border border-ink/10 bg-white">
+              <div className="mt-5 overflow-hidden border border-ink/10 bg-gradient-to-br from-sand via-paper to-sand/40">
                 <div className="p-5">
                   <p className="eyebrow mb-3">Quick links</p>
                   <div className="space-y-3 text-sm">

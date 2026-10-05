@@ -175,7 +175,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className={`text-xs tracking-widest uppercase transition-colors ${
+                className={`text-xs tracking-widest uppercase underline underline-offset-4 transition-colors ${
                   isAdminPanelActive ? "text-tangerine" : "text-ink/70 hover:text-burgundy"
                 }`}
               >
@@ -259,7 +259,7 @@ export default function Navbar() {
                     My Profile
                   </Link>
                   {isAdmin && (
-                    <Link href="/admin" className="block px-4 py-2 text-sm hover:bg-sand">
+                    <Link href="/admin" className="block px-4 py-2 text-sm underline underline-offset-4 hover:bg-sand">
                       Admin Panel
                     </Link>
                   )}
@@ -478,7 +478,7 @@ export default function Navbar() {
                     <Link
                       href="/admin"
                       onClick={closeMobileMenu}
-                      className={`block text-sm font-medium uppercase tracking-[0.06em] ${
+                      className={`block text-sm font-medium uppercase tracking-[0.06em] underline underline-offset-4 ${
                         isAdminPanelActive ? "text-tangerine" : "text-ink/90"
                       }`}
                     >
@@ -558,4 +558,5 @@ export default function Navbar() {
       </div>    </>
   );
 }
+
 

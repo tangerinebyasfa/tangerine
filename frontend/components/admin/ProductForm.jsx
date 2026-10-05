@@ -25,7 +25,7 @@ const emptyForm = {
   price: "",
   compareAtPrice: "",
   stock: 0,
-  productType: "accessories",
+  productType: "",
   categorySlug: "",
   sizes: "",
   colors: "",
@@ -108,7 +108,7 @@ function normalizeForm(product = null) {
     price: product.price ?? "",
     compareAtPrice: product.compareAtPrice ?? "",
     stock: Number(product.stock ?? 0),
-    productType: product.productType || product.categoryParentType || "accessories",
+    productType: product.productType || product.categoryParentType || "",
     categorySlug: product.categorySlug || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
     colors: Array.isArray(product.colors) ? product.colors.join(", ") : "",
@@ -155,12 +155,7 @@ export default function ProductForm({ initialProduct = null }) {
       return;
     }
 
-    if (subtypeOptions.length > 0) {
-      setForm((current) => ({
-        ...current,
-        categorySlug: subtypeOptions[0].slug || "",
-      }));
-    } else if (form.categorySlug) {
+    if (form.categorySlug) {
       setForm((current) => ({ ...current, categorySlug: "" }));
     }
     // We intentionally react only to subtype changes here.
@@ -348,6 +343,7 @@ export default function ProductForm({ initialProduct = null }) {
                 onChange={(e) => handleChange("productType", e.target.value)}
                 className="input-field"
               >
+                <option value="">Select Product Type</option>
                 {PRODUCT_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -362,7 +358,7 @@ export default function ProductForm({ initialProduct = null }) {
                 onChange={(e) => handleChange("categorySlug", e.target.value)}
                 className="input-field"
               >
-                <option value="">Select subtype</option>
+                <option value="">Select Subtype</option>
                 {subtypeOptions.map((subtype) => (
                   <option key={subtype.id} value={subtype.slug}>
                     {subtype.name}

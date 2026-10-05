@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
+  ArrowLeft,
   Bell,
   Camera,
   ChevronRight,
@@ -204,6 +205,7 @@ function ProfileDashboard() {
   const contentRef = useRef(null);
   const pendingSectionScrollRef = useRef(false);
   const [activeSection, setActiveSection] = useState("profile");
+  const [mobileSectionView, setMobileSectionView] = useState(false);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [addresses, setAddresses] = useState([]);
@@ -358,6 +360,9 @@ function ProfileDashboard() {
       const hash = window.location.hash.replace("#", "").trim();
       if (SECTION_KEYS.includes(hash)) {
         setActiveSection(hash);
+        setMobileSectionView(true);
+      } else {
+        setMobileSectionView(false);
       }
     };
 
@@ -628,6 +633,7 @@ function ProfileDashboard() {
   }
 
   function handleSelectSection(key) {
+    setMobileSectionView(true);
     pendingSectionScrollRef.current = true;
 
     if (typeof window !== "undefined" && window.location.hash.replace("#", "").trim() !== key) {
@@ -641,6 +647,13 @@ function ProfileDashboard() {
     }
 
     setActiveSection(key);
+  }
+
+  function handleBackToAccountMenu() {
+    setMobileSectionView(false);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   }
 
   const sectionButtonItems = [
@@ -1177,7 +1190,7 @@ function ProfileDashboard() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="border border-ink/10 bg-white/90 p-4 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur">
+          <aside className={`border border-ink/10 bg-white/90 p-4 shadow-[0_18px_60px_rgba(17,17,17,0.06)] backdrop-blur ${mobileSectionView ? "hidden lg:block" : ""}`}>
             <div className="space-y-2 px-2 pb-4 pt-1">
               <p className="text-[11px] uppercase tracking-[0.34em] text-ink/40">Menu</p>
               <p className="font-display text-xl text-ink">Your Account</p>
@@ -1221,7 +1234,15 @@ function ProfileDashboard() {
             </div>
           </aside>
 
-          <div ref={contentRef} className="min-w-0 space-y-6 transition-all duration-300 ease-out">
+          <div ref={contentRef} className={`min-w-0 space-y-6 transition-all duration-300 ease-out ${!mobileSectionView ? "hidden lg:block" : ""}`}>
+            <button
+              type="button"
+              onClick={handleBackToAccountMenu}
+              className="mb-2 inline-flex items-center gap-2 py-2 text-sm font-medium text-ink lg:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to account menu
+            </button>
             {renderActiveSection()}
           </div>
         </div>
