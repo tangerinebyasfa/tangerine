@@ -17,7 +17,7 @@ const teamMembers = [
     name: "Miss. Varda Kalaburgi",
     role: "Fashion Designer",
     image: "/Images/about/head.jpeg",
-    bio: "With eight years in the atelier mastering garment design, draping, and fine stitching, I bridge the space between high-end craftsmanship and fashion education. I believe that a great designer must be an exceptional craftsperson first.\n\nAs an educator, my mission is to demystify complex construction techniques for the next generation. I don't just teach technique; I mentor aspiring designers to translate their creative ambition into technical precision, build industry-ready portfolios, and launch sustainable careers in fashion.",
+    bio: "Miss. Varda Kalaburgi brings eight years of atelier experience in garment design, draping, and fine stitching, bridging the space between high-end craftsmanship and fashion education. Her belief is that a great designer must first be an exceptional craftsperson. As an educator, her mission is to demystify complex construction techniques for the next generation. She goes beyond teaching technique, mentoring aspiring designers to translate their creative ambition into technical precision, build industry-ready portfolios, and launch sustainable careers in fashion.",
   },
   {
     id: "sanchita-vishwakarma",
