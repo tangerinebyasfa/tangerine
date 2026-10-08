@@ -108,11 +108,12 @@ router.post("/", async (req, res) => {
 
 // Shiprocket pushes tracking updates (courier assigned, scans, delivered) as
 // soon as they happen; the panel ships no seller email for API-created orders.
-// Auth: a shared secret configured as `?token=` in the webhook URL (or the
-// x-shiprocket-token header), because Shiprocket cannot send custom headers.
-router.post("/shiprocket", async (req, res) => {
+// The path avoids Shiprocket's banned words (shiprocket/sr/kr). Auth is the
+// `x-api-key` header Shiprocket sends (configured in the panel), the legacy
+// x-shiprocket-token header, or a `?token=` in the webhook URL.
+router.post("/tracking-updates", async (req, res) => {
   const secret = (process.env.SHIPROCKET_WEBHOOK_TOKEN || "").trim();
-  const provided = req.get("x-shiprocket-token") || req.query?.token;
+  const provided = req.get("x-api-key") || req.get("x-shiprocket-token") || req.query?.token;
   if (!secret || !provided || String(provided) !== secret) {
     console.warn("Rejected Shiprocket webhook with an invalid token");
     return res.status(401).json({ error: "Invalid webhook token" });
