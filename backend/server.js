@@ -42,6 +42,7 @@ app.use(
 // before express.json() consumes and re-serializes the payload.
 app.use("/api/webhooks", express.raw({ type: "application/json" }), require("./routes/webhooks"));
 app.use(express.json());
+app.use("/api/cron", require("./routes/cron"));
 app.use(morgan("dev"));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
