@@ -1,9 +1,7 @@
 const { db } = require("../config/firebaseAdmin");
-const { validateCouponForOrder } = require("../controllers/couponsController");
-const { createOrderService } = require("../services/orderService");
+const { orderService: service, shipmentService, applyTrackingStatus } = require("../config/services");
 const razorpay = require("../lib/razorpay");
 const ordersRef = db.collection("orders");
-const service = createOrderService({ db, validateCouponForOrder, razorpay });
 
 function failure(res, err) {
   const status = err.status || 500;
@@ -70,6 +68,22 @@ exports.cancelOrder = async (req, res) => {
   catch (err) { failure(res, err); }
 };
 exports.deleteOrder = async (req, res) => res.status(405).json({ error: "Orders are retained for inventory and payment records. Cancel an eligible order instead." });
+
+// POST /api/orders/:id/tracking/refresh (owner or admin)
+// Pulls live tracking from Shiprocket on demand, throttled server-side.
+exports.refreshOrderTracking = async (req, res) => {
+  try {
+    const doc = await ordersRef.doc(req.params.id).get();
+    if (!doc.exists) return res.status(404).json({ error: "Order not found" });
+    const data = doc.data();
+    if (req.user.role !== "admin" && data.userId !== req.user.uid) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    const result = await shipmentService.refreshTracking(req.params.id);
+    const updated = (await applyTrackingStatus(req.params.id, result.suggestedStatus)) || result.order;
+    res.json(serializeOrder(updated));
+  } catch (err) { failure(res, err); }
+};
 
 // GET /api/orders/mine (logged-in user's own orders)
 exports.getMyOrders = async (req, res) => {

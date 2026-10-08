@@ -36,6 +36,24 @@ function normalizeNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+// Parcel dimensions every product must carry: Shiprocket refuses an order
+// without weight/dimensions, and defaults only exist for legacy records.
+function readPackageDimension(body, field) {
+  const value = normalizeNumber(body[field]);
+  if (value === null || value <= 0) return null;
+  return value;
+}
+
+function validatePackageDimensions(body) {
+  const missing = ["weight", "length", "breadth", "height"].filter(
+    (field) => readPackageDimension(body, field) === null
+  );
+  if (missing.length) {
+    return `${missing.join(", ")} must be a number greater than 0`;
+  }
+  return null;
+}
+
 function slugify(value) {
   return normalizeText(value)
     .toLowerCase()
@@ -138,6 +156,10 @@ exports.createProduct = async (req, res) => {
     if (!name) {
       return res.status(400).json({ error: "name is required" });
     }
+    const packageError = validatePackageDimensions(body);
+    if (packageError) {
+      return res.status(400).json({ error: packageError });
+    }
 
     const code = normalizeText(body.code) || slugify(name);
     const existing = await findByCode(code);
@@ -161,6 +183,10 @@ exports.createProduct = async (req, res) => {
       deliveryInfo: normalizeText(body.deliveryInfo),
       price: normalizeNumber(body.price),
       compareAtPrice: normalizeNumber(body.compareAtPrice),
+      weight: readPackageDimension(body, "weight"),
+      length: readPackageDimension(body, "length"),
+      breadth: readPackageDimension(body, "breadth"),
+      height: readPackageDimension(body, "height"),
       productType: normalizeText(body.productType),
       subType: normalizeText(body.subType),
       stock: normalizeNumber(body.stock),
@@ -190,6 +216,15 @@ exports.updateProduct = async (req, res) => {
     }
 
     const updates = { ...(req.body || {}), updatedAt: getTimestamp() };
+
+    const packageFields = ["weight", "length", "breadth", "height"].filter((field) => field in updates);
+    if (packageFields.length) {
+      const packageError = validatePackageDimensions(updates);
+      if (packageError) {
+        return res.status(400).json({ error: packageError });
+      }
+      for (const field of packageFields) updates[field] = readPackageDimension(updates, field);
+    }
 
     if ("name" in updates) {
       updates.name = normalizeText(updates.name);

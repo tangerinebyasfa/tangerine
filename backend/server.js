@@ -69,6 +69,16 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));
 
+// Shiprocket: automatic order creation with a periodic retry sweep, so a
+// failed creation self-heals without anyone touching the Shiprocket panel.
+const { shipmentService, shiprocket } = require("./config/services");
+shipmentService.startSweep();
+if (shiprocket.isConfigured()) {
+  console.log("Shiprocket: configured; orders sync automatically");
+} else {
+  console.log("Shiprocket: not configured (set SHIPROCKET_EMAIL / SHIPROCKET_PASSWORD to enable order sync)");
+}
+
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(`Port ${PORT} is already in use. Stop the existing process or set PORT to another value.`);

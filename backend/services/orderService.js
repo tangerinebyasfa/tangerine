@@ -1,7 +1,7 @@
 const cod = require('../lib/cod');
 
 // Dependency injection allows transaction behavior to be tested without live writes.
-function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
+function createOrderService({ db, validateCouponForOrder, razorpay, shipment } = {}) {
   const orders = db.collection('orders');
   const products = db.collection('products');
   const coupons = db.collection('coupons');
@@ -101,7 +101,12 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
     const placed = await ref.get();
 
     // Cash on delivery is collected at the door, so no gateway order is opened.
-    if (paymentMethod === 'cod') return placed;
+    // It ships as soon as it is placed; Shiprocket creation is fire-and-forget
+    // so an outage there can never fail the order itself.
+    if (paymentMethod === 'cod') {
+      shipment?.onOrderReady?.(orderId)?.catch?.(err => console.error(`Shiprocket trigger failed for ${orderId}: ${err.message}`));
+      return placed;
+    }
 
     // Create the Razorpay order outside the transaction so a slow gateway call
     // never holds a Firestore write lock. Retries reuse the stored order id.
@@ -176,7 +181,13 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
         statusHistory: [...(order.statusHistory || []), { status: 'paid', at: now, by: source, note: `Payment received (${razorpayPaymentId})` }],
       });
     });
-    return ref.get();
+    const paid = await ref.get();
+
+    // The order is now settled, so hand it to Shiprocket. The claim inside
+    // onOrderReady makes this safe when the browser callback and the webhook
+    // both try to trigger it.
+    shipment?.onOrderReady?.(id)?.catch?.(err => console.error(`Shiprocket trigger failed for ${id}: ${err.message}`));
+    return paid;
   }
 
   // Releases stock and coupon when the customer abandons or fails payment.
@@ -249,6 +260,12 @@ function createOrderService({ db, validateCouponForOrder, razorpay } = {}) {
         statusHistory: [...(order.statusHistory || []), { status: next, at: now, by: user.uid, note: next === 'delivered' ? 'Delivered' : `Order ${next}` }],
       });
     });
+    if (next === 'cancelled') {
+      // Mirror the cancellation into Shiprocket so it stops appearing in the
+      // Shiprocket panel. Fire-and-forget: a remote failure must not undo the
+      // website cancellation.
+      shipment?.onOrderCancelled?.(id, payload?.cancelReason || 'Order cancelled on the store.')?.catch?.(err => console.error(`Shiprocket cancel trigger failed for ${id}: ${err.message}`));
+    }
     if (refund) {
       if (refund.manual) {
         // Cancelled before payment: nothing was collected, so nothing to refund.

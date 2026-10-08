@@ -1,11 +1,9 @@
 const express = require("express");
 const { db } = require("../config/firebaseAdmin");
-const { createOrderService } = require("../services/orderService");
-const { validateCouponForOrder } = require("../controllers/couponsController");
+const { orderService: service, shipmentService, applyTrackingStatus } = require("../config/services");
 const razorpay = require("../lib/razorpay");
 const cod = require("../lib/cod");
 
-const service = createOrderService({ db, validateCouponForOrder, razorpay });
 const orders = db.collection("orders");
 
 // Razorpay sends its own order id, not ours. Resolve ours by the gateway id we
@@ -104,6 +102,39 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("Razorpay webhook handler failed:", err.message);
     // 500 makes Razorpay retry, which is what we want for a transient failure.
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
+});
+
+// Shiprocket pushes tracking updates (courier assigned, scans, delivered) as
+// soon as they happen; the panel ships no seller email for API-created orders.
+// Auth: a shared secret configured as `?token=` in the webhook URL (or the
+// x-shiprocket-token header), because Shiprocket cannot send custom headers.
+router.post("/shiprocket", async (req, res) => {
+  const secret = (process.env.SHIPROCKET_WEBHOOK_TOKEN || "").trim();
+  const provided = req.get("x-shiprocket-token") || req.query?.token;
+  if (!secret || !provided || String(provided) !== secret) {
+    console.warn("Rejected Shiprocket webhook with an invalid token");
+    return res.status(401).json({ error: "Invalid webhook token" });
+  }
+
+  let payload = req.body;
+  if (Buffer.isBuffer(payload)) {
+    try {
+      payload = JSON.parse(payload.toString("utf8") || "{}");
+    } catch (err) {
+      return res.status(400).json({ error: "Invalid JSON" });
+    }
+  }
+  try {
+    const result = await shipmentService.applyTrackingPayload(payload);
+    if (result.matched) {
+      await applyTrackingStatus(result.order.id, result.suggestedStatus);
+    }
+    return res.json({ received: true, matched: result.matched });
+  } catch (err) {
+    console.error("Shiprocket webhook handler failed:", err.message);
+    // 500 makes Shiprocket retry a transient failure.
     return res.status(500).json({ error: "Webhook processing failed" });
   }
 });

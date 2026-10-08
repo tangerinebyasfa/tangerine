@@ -52,6 +52,9 @@ function setup(stock = 5, razorpay = fakeRazorpay()) {
   const couponPath = require.resolve('../controllers/couponsController');
   require.cache[configPath] = { id: configPath, filename: configPath, loaded: true, exports: { db, admin: {} } };
   delete require.cache[couponPath];
+  // The shared services singleton captures db/razorpay at load time, so it must
+  // be rebuilt against this test's database like the modules below are.
+  delete require.cache[require.resolve('../config/services')];
   const { validateCouponForOrder } = require(couponPath);
   const service = createOrderService({ db, validateCouponForOrder, razorpay });
   const payload = async (extra = {}) => ({ items, shippingAddress, paymentMethod: 'razorpay', requestId: 'request_1234567890', quoteId: (await service.quote({ items, couponCode: extra.couponCode }, user)).quoteId, ...extra });
