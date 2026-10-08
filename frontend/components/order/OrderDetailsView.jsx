@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import { formatINR } from "../../lib/currency";
 import {
   formatOrderDateTime,
@@ -11,6 +13,7 @@ import {
   summarizeShippingAddress,
 } from "../../lib/order";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
+import { api } from "../../lib/api";
 
 const PAYMENT_METHOD_LABELS = {
   razorpay: "Razorpay",
@@ -27,6 +30,120 @@ const PAYMENT_STATE_LABELS = {
 
 function isCashOrder(order) {
   return order?.paymentMethod === "cod";
+}
+
+// Self-contained tracking card. It pulls live status from Shiprocket on demand
+// (throttled server-side) and hands the fresh order back through onOrderUpdated
+// so the parent can keep its local state in sync.
+function TrackingCard({ order, onOrderUpdated }) {
+  const [loading, setLoading] = useState(false);
+  const shipment = order?.shiprocket;
+  const tracking = shipment?.tracking;
+  const activities = Array.isArray(tracking?.activities) ? tracking.activities : [];
+  const hasStatus = Boolean(tracking?.status || tracking?.currentStatus);
+  const hasDetails = Boolean(tracking?.awb || tracking?.courierName || hasStatus);
+
+  async function handleRefresh() {
+    setLoading(true);
+    try {
+      const updated = await api.refreshOrderTracking(order.id);
+      onOrderUpdated?.(updated);
+    } catch (err) {
+      toast.error(err.message || "Could not refresh tracking right now.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="border border-ink/10 bg-white p-4 sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="font-display text-2xl text-ink">Shipping & Tracking</p>
+          <p className="mt-1 text-sm text-ink/55">Live status from the courier</p>
+        </div>
+        <span className="text-xs uppercase tracking-[0.2em] text-tangerine">Shiprocket</span>
+      </div>
+
+      {hasDetails ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {tracking?.courierName || shipment?.courierName ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Courier</p>
+                <p className="mt-1 font-medium text-ink">{tracking?.courierName || shipment?.courierName}</p>
+              </div>
+            ) : null}
+            {tracking?.awb || shipment?.awb ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-ink/40">AWB Number</p>
+                <p className="mt-1 break-all font-medium text-ink">{tracking?.awb || shipment?.awb}</p>
+              </div>
+            ) : null}
+            {tracking?.edd || shipment?.etd ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Expected Delivery</p>
+                <p className="mt-1 font-medium text-ink">{tracking?.edd || shipment?.etd}</p>
+              </div>
+            ) : null}
+            {hasStatus ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Latest Update</p>
+                <p className="mt-1 font-medium text-ink">{tracking?.currentStatus || tracking?.status}</p>
+              </div>
+            ) : null}
+          </div>
+
+          {tracking?.trackUrl ? (
+            <p className="text-sm">
+              <Link href={tracking.trackUrl} target="_blank" rel="noopener noreferrer" className="text-tangerine underline">
+                Track on courier site
+              </Link>
+            </p>
+          ) : null}
+
+          {activities.length ? (
+            <div className="mt-2 space-y-3 border-t border-ink/10 pt-4">
+              {activities
+                .slice()
+                .reverse()
+                .map((entry, index) => (
+                  <div key={`${entry.date}-${entry.activity}-${index}`} className="border-l border-ink/10 pl-4">
+                    <p className="text-sm font-medium text-ink">{entry.activity || entry.status || "Update"}</p>
+                    {entry.location ? <p className="mt-0.5 text-sm text-ink/55">{entry.location}</p> : null}
+                    {entry.date ? <p className="mt-0.5 text-xs text-ink/45">{entry.date}</p> : null}
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-ink/55">
+              {hasStatus
+                ? "The courier has the parcel. Pull again for the latest scans."
+                : "A courier has not been assigned yet. It is assigned automatically in the Shiprocket panel."}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm leading-6 text-ink/55">
+          Your order was sent to our shipping partner and will be assigned a courier automatically.
+        </p>
+      )}
+
+      <div className="mt-4 flex gap-3">
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={loading}
+          className="border border-ink/15 bg-paper px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink transition-colors hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Refreshing…" : "Refresh tracking"}
+        </button>
+        {tracking?.updatedAt && !loading ? (
+          <p className="self-center text-xs text-ink/45">Last updated {formatOrderDateTime(tracking.updatedAt)}</p>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 function paymentMethodLabel(order) {
@@ -77,6 +194,7 @@ export default function OrderDetailsView({
   showStatusHistory = true,
   extraSummary = null,
   footer = null,
+  onOrderUpdated = null,
 }) {
   const displayOrderId = getOrderDisplayId(order);
   const shippingAddress = order?.shippingAddress || {};
@@ -197,6 +315,10 @@ export default function OrderDetailsView({
             </div>
             {extraSummary}
           </section>
+
+          {order?.shiprocket && order.shiprocket.status !== "error" && order.shiprocket.status !== "cancelled" ? (
+            <TrackingCard order={order} onOrderUpdated={onOrderUpdated} />
+          ) : null}
 
           {showStatusHistory && statusHistory.length ? (
             <section className="border border-ink/10 bg-white p-4 sm:p-6">

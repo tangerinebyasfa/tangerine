@@ -310,6 +310,7 @@ export const api = {
   cancelOrder: (id) => request(`/orders/${encodeURIComponent(id)}/cancel`, { method: "PUT", body: {}, authRequired: true }),
   verifyOrderPayment: (id, body) => request(`/orders/${encodeURIComponent(id)}/verify-payment`, { method: "POST", body, authRequired: true }),
   releaseUnpaidOrder: (id) => request(`/orders/${encodeURIComponent(id)}/release`, { method: "POST", body: {}, authRequired: true }),
+  refreshOrderTracking: (id) => request(`/orders/${encodeURIComponent(id)}/tracking/refresh`, { method: "POST", body: {}, authRequired: true }),
 
   // Coupons
   getCoupons: () => request("/coupons", { authRequired: true }),

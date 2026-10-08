@@ -75,6 +75,7 @@ export default function OrderDetailPage() {
         ) : order ? (
           <OrderDetailsView
             order={order}
+            onOrderUpdated={(updated) => setOrder(updated)}
             title="Order Details"
             subtitle="This is the full receipt for your purchase, including shipping and item breakdown."
             actions={[

@@ -24,6 +24,10 @@ const emptyForm = {
   images: "",
   price: "",
   compareAtPrice: "",
+  weight: "",
+  length: "",
+  breadth: "",
+  height: "",
   stock: 0,
   productType: "",
   categorySlug: "",
@@ -107,6 +111,10 @@ function normalizeForm(product = null) {
     images: Array.isArray(product.images) ? product.images.join(", ") : product.images || "",
     price: product.price ?? "",
     compareAtPrice: product.compareAtPrice ?? "",
+    weight: product.weight ?? "",
+    length: product.length ?? "",
+    breadth: product.breadth ?? "",
+    height: product.height ?? "",
     stock: Number(product.stock ?? 0),
     productType: product.productType || product.categoryParentType || "",
     categorySlug: product.categorySlug || "",
@@ -181,6 +189,10 @@ export default function ProductForm({ initialProduct = null }) {
       images,
       price: Number(form.price || 0),
       compareAtPrice: form.compareAtPrice === "" ? null : Number(form.compareAtPrice),
+      weight: Number(form.weight),
+      length: Number(form.length),
+      breadth: Number(form.breadth),
+      height: Number(form.height),
       stock: Number(form.stock || 0),
       productType: form.productType,
       categoryParentType: form.productType,
@@ -224,6 +236,14 @@ export default function ProductForm({ initialProduct = null }) {
 
       if (Number.isNaN(payload.stock) || payload.stock < 0) {
         throw new Error("Please enter a valid stock amount.");
+      }
+
+      // Parcel fields are required so Shiprocket can create a shipment for the
+      // order without staff touching the dispatch panel.
+      for (const field of ["weight", "length", "breadth", "height"]) {
+        if (!(payload[field] > 0)) {
+          throw new Error(`Please enter a ${field === "weight" ? "weight" : `${field} dimension`} greater than 0.`);
+        }
       }
 
       if (isEditing) {
@@ -333,6 +353,46 @@ export default function ProductForm({ initialProduct = null }) {
                 <option value="yes">Yes</option>
               </select>
             </label>
+          </div>
+
+          <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Weight (kg)"
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.weight}
+              onChange={(e) => handleChange("weight", e.target.value)}
+            />
+            <Input
+              label="Length (cm)"
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.length}
+              onChange={(e) => handleChange("length", e.target.value)}
+            />
+            <Input
+              label="Breadth (cm)"
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.breadth}
+              onChange={(e) => handleChange("breadth", e.target.value)}
+            />
+            <Input
+              label="Height (cm)"
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={form.height}
+              onChange={(e) => handleChange("height", e.target.value)}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
