@@ -27,6 +27,24 @@ export default function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("pending");
+  const [pickupOptions, setPickupOptions] = useState([]);
+  const [pickupDefault, setPickupDefault] = useState("");
+  const [pickup, setPickup] = useState("");
+  const [pickupSaving, setPickupSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api.getOrderPickupOptions().then((data) => {
+      if (!active) return;
+      setPickupOptions(Array.isArray(data?.options) ? data.options : []);
+      setPickupDefault(data?.default || "");
+    }).catch(() => {
+      if (active) setPickupOptions([]);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -41,6 +59,7 @@ export default function AdminOrderDetailPage() {
         if (!active) return;
         setOrder(data);
         setStatus(normalizeOrderStatus(data?.status));
+        setPickup((current) => current || data?.pickupLocation || data?.shiprocket?.pickupLocation || "");
       } catch (err) {
         if (active) {
           setError(err?.message || "Unable to load order");
@@ -59,6 +78,31 @@ export default function AdminOrderDetailPage() {
   }, [orderId]);
 
   const dirty = useMemo(() => normalizeOrderStatus(order?.status) !== normalizeOrderStatus(status), [order?.status, status]);
+
+  const storedPickup = useMemo(() => order?.pickupLocation || order?.shiprocket?.pickupLocation || pickupDefault || "", [order, pickupDefault]);
+  const effectivePickup = pickup || storedPickup || pickupOptions[0]?.code || "";
+  const pickupDirty = useMemo(() => Boolean(pickup) && pickup !== storedPickup, [pickup, storedPickup]);
+  const pickupLocked = useMemo(() => ["shipped", "delivered", "cancelled"].includes(normalizeOrderStatus(order?.status)), [order?.status]);
+
+  function handlePickupLabel(option) {
+    const bits = [option?.code, option?.city, option?.pinCode].filter(Boolean);
+    return bits.join(" · ");
+  }
+
+  async function handleSavePickup() {
+    if (!order?.id || !pickupDirty) return;
+
+    setPickupSaving(true);
+    try {
+      const updated = await api.updateOrderPickup(order.id, pickup);
+      setOrder(updated);
+      toast.success("Pickup location updated");
+    } catch (err) {
+      toast.error(err?.message || "Unable to update pickup location");
+    } finally {
+      setPickupSaving(false);
+    }
+  }
 
   async function handleSaveStatus() {
     if (!order?.id || !dirty) return;
@@ -165,39 +209,76 @@ export default function AdminOrderDetailPage() {
       ) : order ? (
         <div className="space-y-6">
           <div className="border border-ink/10 bg-white p-4 sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-2">
                 <p className="text-xs uppercase tracking-[0.24em] text-ink/40">Safe update</p>
                 <p className="text-sm text-ink/60">Change the order status only after reviewing the full order details below.</p>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <label className="block">
-                  <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-ink/40">Status</span>
-                  <select
-                    value={status}
-                    onChange={(event) => setStatus(normalizeOrderStatus(event.target.value))}
-                    className="min-w-[220px] border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none"
+              <div className="space-y-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <label className="block">
+                    <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-ink/40">Status</span>
+                    <select
+                      value={status}
+                      onChange={(event) => setStatus(normalizeOrderStatus(event.target.value))}
+                      className="min-w-[220px] border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none"
+                    >
+                      {[order.status, ...allowedOrderTransitions(order.status)].map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-ink/40">Ship from</span>
+                    <select
+                      value={effectivePickup}
+                      onChange={(event) => setPickup(event.target.value)}
+                      disabled={pickupLocked}
+                      className="min-w-[220px] border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {pickupOptions.length ? (
+                        pickupOptions.map((option) => (
+                          <option key={option.code} value={option.code}>
+                            {handlePickupLabel(option)}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={pickupDefault || ""}>{pickupDefault ? `${pickupDefault} · default` : "No pickup options loaded"}</option>
+                      )}
+                    </select>
+                    {pickupLocked ? (
+                      <span className="mt-1 block text-xs text-ink/50">Pickup is locked once the order ships.</span>
+                    ) : null}
+                  </label>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+
+                   <button
+                    type="button"
+                    onClick={handleSaveStatus}
+                    disabled={saving || !dirty}
+                    className="inline-flex items-center justify-center gap-2 bg-tangerine px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-tangerine-dark disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {[order.status, ...allowedOrderTransitions(order.status)].map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Save Status
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSavePickup}
+                    disabled={pickupSaving || !pickupDirty || pickupLocked}
+                    className="inline-flex items-center justify-center gap-2 border border-tangerine bg-white px-5 py-3 text-sm font-medium text-tangerine transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {pickupSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Save Pickup
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={handleSaveStatus}
-                  disabled={saving || !dirty}
-                  className="inline-flex items-center justify-center gap-2 bg-tangerine px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-tangerine-dark disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Save Status
-                </button>
-
-
+                 
+                </div>
               </div>
             </div>
           </div>

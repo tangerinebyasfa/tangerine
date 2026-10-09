@@ -307,6 +307,9 @@ export const api = {
   getOrder: (id) => request(`/orders/${encodeURIComponent(id)}`, { authRequired: true }),
   updateOrderStatus: (id, status, collection = {}) =>
     request(`/orders/${encodeURIComponent(id)}/status`, { method: "PUT", body: { status, ...collection }, authRequired: true }),
+  getOrderPickupOptions: () => request("/orders/pickup-options", { authRequired: true }),
+  updateOrderPickup: (id, pickupLocation) =>
+    request(`/orders/${encodeURIComponent(id)}/pickup`, { method: "PUT", body: { pickupLocation }, authRequired: true }),
   cancelOrder: (id) => request(`/orders/${encodeURIComponent(id)}/cancel`, { method: "PUT", body: {}, authRequired: true }),
   verifyOrderPayment: (id, body) => request(`/orders/${encodeURIComponent(id)}/verify-payment`, { method: "POST", body, authRequired: true }),
   releaseUnpaidOrder: (id) => request(`/orders/${encodeURIComponent(id)}/release`, { method: "POST", body: {}, authRequired: true }),
