@@ -2,10 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/shipment-sweep",
-      "schedule": "0 1 * * *",
-      "headers": {
-        "x-cron-secret": "c977b71e4743829440ff459473043c6aec6c0a77b152ff3a"
-      }
+      "schedule": "0 1 * * *"
     }
   ]
 }
