@@ -15,11 +15,15 @@ router.post("/:id/tracking/refresh", verifyToken, ctrl.refreshOrderTracking);
 router.post("/:id/release", verifyToken, ctrl.releaseUnpaidOrder);
 router.post("/", verifyToken, ctrl.createOrder);
 router.get("/mine", verifyToken, ctrl.getMyOrders);
+// Static segment must be registered before the ":id" param route so it is not
+// swallowed as an order id.
+router.get("/pickup-options", verifyToken, requireAdmin, ctrl.getPickupOptions);
 router.get("/:id", verifyToken, ctrl.getOrderById);
 
 // Admin only
 router.get("/", verifyToken, requireAdmin, ctrl.getAllOrders);
 router.put("/:id/status", verifyToken, requireAdmin, ctrl.updateOrderStatus);
+router.put("/:id/pickup", verifyToken, requireAdmin, ctrl.updateOrderPickup);
 router.delete("/:id", verifyToken, requireAdmin, ctrl.deleteOrder);
 
 module.exports = router;

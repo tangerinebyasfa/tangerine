@@ -1,5 +1,5 @@
 const { db } = require("../config/firebaseAdmin");
-const { orderService: service, shipmentService, applyTrackingStatus } = require("../config/services");
+const { orderService: service, shipmentService, applyTrackingStatus, shiprocket } = require("../config/services");
 const razorpay = require("../lib/razorpay");
 const ordersRef = db.collection("orders");
 
@@ -68,6 +68,31 @@ exports.cancelOrder = async (req, res) => {
   catch (err) { failure(res, err); }
 };
 exports.deleteOrder = async (req, res) => res.status(405).json({ error: "Orders are retained for inventory and payment records. Cancel an eligible order instead." });
+
+// GET /api/orders/pickup-options (admin)
+// The pickup addresses registered on the Shiprocket account, so warehouse staff
+// can choose which one an order ships from.
+exports.getPickupOptions = async (req, res) => {
+  try {
+    const options = await shiprocket.listPickupLocations();
+    const defaultPickup = shiprocket.pickupLocation();
+    res.json({ options, default: defaultPickup });
+  } catch (err) {
+    if (err.status === 503) {
+      // Shiprocket not configured: the env default is still a valid option.
+      return res.json({ options: [{ code: shiprocket.pickupLocation() }], default: shiprocket.pickupLocation() });
+    }
+    failure(res, err);
+  }
+};
+
+// PUT /api/orders/:id/pickup (admin)
+exports.updateOrderPickup = async (req, res) => {
+  try {
+    const order = await shipmentService.changePickup(req.params.id, req.body?.pickupLocation);
+    res.json(serializeOrder(order));
+  } catch (err) { failure(res, err); }
+};
 
 // POST /api/orders/:id/tracking/refresh (owner or admin)
 // Pulls live tracking from Shiprocket on demand, throttled server-side.

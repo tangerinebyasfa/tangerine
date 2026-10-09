@@ -231,9 +231,10 @@ function splitName(fullName = '') {
 }
 
 // Creates the order in Shiprocket (adhoc / quick order). `package` carries the
-// weight (kg) and dimensions (cm) for the whole parcel.
-async function createAdhocOrder({ orderId, placedAt, paymentMethod, customerEmail, subtotal, shippingAddress, items, package: parcel }, { timeout } = {}) {
-  const pickup = pickupLocation();
+// weight (kg) and dimensions (cm) for the whole parcel. An explicit pickup
+// (per-order choice made on the admin order page) wins over the env default.
+async function createAdhocOrder({ orderId, placedAt, paymentMethod, customerEmail, subtotal, shippingAddress, items, package: parcel, pickupLocation: requestedPickup }, { timeout } = {}) {
+  const pickup = String(requestedPickup || '').trim() || pickupLocation();
   if (!pickup) {
     throw Object.assign(new Error('SHIPROCKET_PICKUP_LOCATION is missing from the server configuration.'), { status: 503 });
   }
@@ -359,6 +360,49 @@ async function cancelAdhocOrders({ srOrderIds, reason = 'Order cancelled on the 
   });
 }
 
+// Every pickup address registered on the account (Settings -> Pickup Address).
+// The admin order page lists these so staff can choose which warehouse ships an
+// order. Falls back to the env default when the account has nothing registered.
+async function listPickupLocations(timeout) {
+  const data = await request('/v1/external/settings/company/pickup', { timeout });
+  const entries = Array.isArray(data?.data?.shipping_address) ? data.data.shipping_address : [];
+  const locations = entries
+    .map(address => ({
+      code: String(address?.pickup_location || '').trim(),
+      name: String(address?.name || '').trim(),
+      address: String(address?.address || '').trim(),
+      address2: String(address?.address_2 || '').trim(),
+      city: String(address?.city || '').trim(),
+      state: String(address?.state || '').trim(),
+      pinCode: String(address?.pin_code || '').trim(),
+      country: String(address?.country || 'India').trim(),
+    }))
+    .filter(location => location.code);
+  if (locations.length) return locations;
+  const fallback = pickupLocation();
+  return fallback ? [{ code: fallback, name: '', address: '', city: '', state: '', pinCode: '', country: 'India' }] : [];
+}
+
+// Moves an already-created Shiprocket order to a different pickup address
+// (Settings -> Pickup Address) before it is dispatched. PATCH per Shiprocket's
+// "Change/Update Pickup Location of Created Orders"; the AWB is preserved.
+// `order_id` is a list of Shiprocket order ids (a bare id is rejected with 400).
+async function updateOrderPickupLocation(srOrderId, pickupLocation, timeout) {
+  const id = Number(srOrderId);
+  const pickup = String(pickupLocation || '').trim();
+  if (!Number.isFinite(id) || id <= 0) {
+    throw Object.assign(new Error('No Shiprocket order id is available to update.'), { status: 409 });
+  }
+  if (!pickup) {
+    throw Object.assign(new Error('A pickup location is required.'), { status: 400 });
+  }
+  return request('/v1/external/orders/address/pickup', {
+    method: 'PATCH',
+    body: { order_id: [id], pickup_location: pickup },
+    timeout,
+  });
+}
+
 module.exports = {
   isConfigured,
   pickupLocation,
@@ -370,6 +414,8 @@ module.exports = {
   orderDate,
   describeShiprocketError,
   createAdhocOrder,
+  listPickupLocations,
+  updateOrderPickupLocation,
   trackByOrderId,
   trackAwb,
   cancelAdhocOrders,

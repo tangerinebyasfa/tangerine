@@ -181,6 +181,7 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
           shippingAddress: claimed.shippingAddress,
           items: claimed.items,
           package: parcel,
+          pickupLocation: claimed.pickupLocation,
         }, { timeout: inline ? INLINE_TIMEOUT_MS : undefined });
         await persistCreated(id, claimed, parcel, result, triesUsed);
         return orders.doc(id).get();
@@ -243,6 +244,47 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
     }, intervalMs);
     if (typeof timer.unref === 'function') timer.unref();
     return () => clearInterval(timer);
+  }
+
+  // Warehouse staff choose which registered pickup address an order ships from.
+  // For an order already in Shiprocket the change is pushed live so the same
+  // AWB is kept; for one not yet created it is stored and used at creation.
+  async function changePickup(id, pickupLocation) {
+    if (!cod.text(id) || id.includes('/')) fail('Invalid order ID.');
+    const pickup = String(pickupLocation || '').trim();
+    if (!pickup) fail('A pickup location is required.');
+    const ref = orders.doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) fail('Order not found.', 404);
+    const order = snap.data();
+    // A pickup can only move in the pending/processing window; once a courier
+    // has the parcel Shiprocket won't reassign it either.
+    if (order.status !== 'pending' && order.status !== 'processing') {
+      fail('Pickup location can only be changed before the order ships.', 409);
+    }
+    const shipment = { ...(order.shiprocket || {}) };
+    const stamp = nowIso();
+    const write = {
+      pickupLocation: pickup,
+      shiprocket: { ...shipment, pickupLocation: pickup, pickupUpdatedAt: stamp, updatedAt: stamp },
+      updatedAt: new Date(),
+    };
+    // Live-sync only orders that already exist in Shiprocket. Doing it here
+    // (instead of waiting for a retry) keeps the panel and our admin in step
+    // and preserves the assigned AWB.
+    if (shipment.status === 'created' && shipment.orderId) {
+      try {
+        await shiprocket.updateOrderPickupLocation(shipment.orderId, pickup);
+      } catch (err) {
+        const detail = shiprocket.describeShiprocketError(err);
+        fail(`Shiprocket rejected the pickup change: ${detail}`, 409);
+      }
+    } else if (shipment.status !== 'cancelled') {
+      // Offline orders keep the choice stored; creation reads it when it runs.
+      write.shipmentRetryNeeded = true;
+    }
+    await ref.update(write);
+    return ref.get();
   }
 
   // Maps Shiprocket status labels onto our order state machine. Ambiguous or
@@ -413,6 +455,7 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
     onOrderReady,
     onOrderCancelled,
     createNow,
+    changePickup,
     sweepOnce,
     startSweep,
     refreshTracking,

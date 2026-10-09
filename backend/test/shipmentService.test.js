@@ -38,15 +38,20 @@ function seedOrder(db, id = ORDER_A, overrides = {}) {
 
 // Stands in for lib/shiprocket.js so tests never touch the network.
 function fakeShiprocket(overrides = {}) {
-  const state = { createCalls: 0, cancelCalls: [], trackCalls: 0, tracked: [] };
+  const state = { createCalls: 0, cancelCalls: [], trackCalls: 0, tracked: [], pickupCalls: [], lastPickupArg: null };
   const fake = {
     state,
     isConfigured: () => true,
     packageDefaults: () => ({ weight: 0.5, length: 25, breadth: 20, height: 5 }),
     describeShiprocketError: err => String(err?.message || 'error'),
-    createAdhocOrder: async () => {
+    createAdhocOrder: async (options) => {
       state.createCalls += 1;
+      state.lastPickupArg = options?.pickupLocation ?? null;
       return { duplicate: false, srOrderId: 1000 + state.createCalls, shipmentId: 500 + state.createCalls, raw: {} };
+    },
+    updateOrderPickupLocation: async (srOrderId, pickupLocation) => {
+      state.pickupCalls.push({ srOrderId, pickupLocation });
+      return {};
     },
     trackByOrderId: async () => {
       state.trackCalls += 1;
@@ -206,8 +211,9 @@ test('a duplicate order id is adopted instead of failing forever', async () => {
   seedProducts(db);
   const id = seedOrder(db);
   const fake = fakeShiprocket({
-    createAdhocOrder: async () => {
+    createAdhocOrder: async (options) => {
       fake.state.createCalls += 1;
+      fake.state.lastPickupArg = options?.pickupLocation ?? null;
       return { duplicate: true, srOrderId: null, shipmentId: null, raw: null };
     },
   });
@@ -220,6 +226,78 @@ test('a duplicate order id is adopted instead of failing forever', async () => {
   assert.equal(data.shiprocket.orderId, null);
   assert.equal(data.shipmentRetryNeeded, false);
   assert.equal(data.shiprocketSrOrderId, null);
+});
+
+test('the per-order pickup location is passed to Shiprocket at creation', async () => {
+  const db = new MemoryDb();
+  seedProducts(db);
+  const id = seedOrder(db, ORDER_A, { pickupLocation: 'work-1' });
+  const fake = fakeShiprocket();
+  const shipment = shipmentFor(db, fake);
+
+  const snap = await shipment.onOrderReady(id);
+  assert.equal(snap.data().shiprocket.status, 'created');
+  assert.equal(fake.state.lastPickupArg, 'work-1');
+});
+
+test('changePickup stores the choice for an order not yet created', async () => {
+  const db = new MemoryDb();
+  seedProducts(db);
+  const id = seedOrder(db, ORDER_A, { status: 'pending', paymentStatus: 'paid' });
+  const fake = fakeShiprocket();
+  const shipment = shipmentFor(db, fake);
+
+  const snap = await shipment.changePickup(id, 'work-1');
+  const data = snap.data();
+  assert.equal(data.pickupLocation, 'work-1');
+  assert.equal(data.shiprocket.pickupLocation, 'work-1');
+  assert.equal(data.shipmentRetryNeeded, true);
+  assert.deepEqual(fake.state.pickupCalls, []);
+});
+
+test('changePickup pushes a live update for an order already in Shiprocket', async () => {
+  const db = new MemoryDb();
+  seedProducts(db);
+  const id = seedOrder(db, ORDER_A, {
+    shiprocket: { status: 'created', orderId: 1001 },
+    pickupLocation: 'work',
+    shipmentRetryNeeded: false,
+  });
+  const fake = fakeShiprocket();
+  const shipment = shipmentFor(db, fake);
+
+  const snap = await shipment.changePickup(id, 'work-1');
+  const data = snap.data();
+  assert.equal(data.pickupLocation, 'work-1');
+  assert.equal(data.shiprocket.pickupLocation, 'work-1');
+  // The AWB survives: no retry flag, just the remote PATCH mirroring our choice.
+  assert.equal(data.shipmentRetryNeeded, false);
+  assert.deepEqual(fake.state.pickupCalls, [{ srOrderId: 1001, pickupLocation: 'work-1' }]);
+});
+
+test('changePickup refuses locked, invalid, or remote-rejected pickups', async () => {
+  const db = new MemoryDb();
+  seedProducts(db);
+  const fake = fakeShiprocket();
+  const shipment = shipmentFor(db, fake);
+
+  // A shipped (or delivered/cancelled) order may not move pickup.
+  const shipped = seedOrder(db, ORDER_A, { status: 'shipped' });
+  await assert.rejects(shipment.changePickup(shipped, 'work-1'), { status: 409 });
+
+  // An empty pickup is a client error, and unknown order ids are 404.
+  await assert.rejects(shipment.changePickup(seedOrder(db, ORDER_B), ''), { status: 400 });
+  await assert.rejects(shipment.changePickup('TGNR-MISSING000000000000000000001', 'work'), { status: 404 });
+
+  // Shiprocket rejecting the PATCH (e.g. already dispatched remotely) surfaces
+  // as a 409 for the staff member instead of silently desyncing.
+  const strict = fakeShiprocket({ updateOrderPickupLocation: async () => { throw new Error('order already picked up'); } });
+  const strictSvc = shipmentFor(db, strict);
+  const created = seedOrder(db, 'TGNR-PATCHREFUSED00000000000000001', {
+    shiprocket: { status: 'created', orderId: 1002 },
+  });
+  await assert.rejects(strictSvc.changePickup(created, 'work-1'), { status: 409 });
+  assert.equal(db.data.get(`orders/${created}`).pickupLocation, undefined);
 });
 
 test('tracking is pulled, merged, throttled and mapped onto order status', async () => {
