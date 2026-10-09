@@ -149,17 +149,25 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
     });
   }
 
-  // One guarded creation pass: claim, then create with immediate retries.
+  // Inline (payment-flow) creates run on serverless functions with a hard
+  // runtime cap (Vercel kills at ~10s), so they get one attempt on a tighter
+  // timeout; the sweep owns retries and self-healing.
+  const INLINE_TIMEOUT_MS = 9000;
+
+  // One guarded creation pass: claim, then create. Inline mode makes exactly
+  // one attempt so it always fits the serverless budget; sweep mode keeps the
+  // immediate retries with their backoff delays.
   // Returns the updated document, or null when nothing was done.
-  async function createNow(id) {
+  async function createNow(id, { inline = false } = {}) {
     if (!shiprocket.isConfigured()) return null;
     const claimed = await claim(id, new Date());
     if (!claimed) return null;
 
+    const totalAttempts = inline ? 1 : retryDelays.length + 1;
     let lastError = null;
     let triesUsed = 0;
-    for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
-      if (attempt > 0) await delay(retryDelays[attempt - 1]);
+    for (let attempt = 0; attempt < totalAttempts; attempt += 1) {
+      if (!inline && attempt > 0) await delay(retryDelays[attempt - 1]);
       triesUsed += 1;
       try {
         const parcel = await computePackage(claimed);
@@ -172,7 +180,7 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
           shippingAddress: claimed.shippingAddress,
           items: claimed.items,
           package: parcel,
-        });
+        }, { timeout: inline ? INLINE_TIMEOUT_MS : undefined });
         await persistCreated(id, claimed, parcel, result, triesUsed);
         return orders.doc(id).get();
       } catch (err) {
@@ -184,12 +192,14 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
     return null;
   }
 
-  // Auto-trigger from the payment flow. Never throws: callers fire and forget.
+  // Auto-trigger from the payment flow. Serverless-safe: a single fast attempt
+  // so the create finishes inside the function's runtime budget. Never throws:
+  // callers fire and forget, and the sweep picks up any failure.
   async function onOrderReady(input) {
     const id = typeof input === 'string' ? input : input?.id;
     if (!id) return null;
     try {
-      return await createNow(id);
+      return await createNow(id, { inline: true });
     } catch (err) {
       console.error(`Shiprocket auto-create failed for ${id}: ${shiprocket.describeShiprocketError(err)}`);
       return null;

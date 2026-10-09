@@ -2,7 +2,6 @@
 // through this module, mirroring how lib/razorpay.js owns all gateway access:
 // lazy state, env read at call time, and 503 fail-closed when unconfigured.
 
-const REQUEST_TIMEOUT_MS = 15000;
 // Shiprocket auth tokens are valid for 240 hours; refresh a minute early.
 const TOKEN_TTL_MS = 240 * 60 * 60 * 1000;
 
@@ -27,6 +26,13 @@ function requireConfigured() {
 function envNumber(name, fallback) {
   const value = Number(process.env[name]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+// Per-request budget. Shiprocket normally answers in a few seconds, so 15s is
+// generous for the sweep; callers on a serverless budget (Vercel kills at 10s)
+// pass a shorter timeout explicitly.
+function requestTimeoutMs() {
+  return envNumber('SHIPROCKET_REQUEST_TIMEOUT_MS', 15000);
 }
 
 // Legacy products predate the package fields, so blanks fall back to these.
@@ -94,7 +100,7 @@ async function login() {
           email: process.env.SHIPROCKET_EMAIL.trim(),
           password: process.env.SHIPROCKET_PASSWORD,
         }),
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+signal: AbortSignal.timeout(requestTimeoutMs()),
       });
       const body = await readBody(response);
       if (!response.ok || !body?.token) throw httpError(response.status, body);
@@ -112,14 +118,14 @@ function resetToken() {
   tokenCache = null;
 }
 
-async function request(path, { method = 'GET', body, retryAuth = true } = {}) {
+async function request(path, { method = 'GET', body, retryAuth = true, timeout } = {}) {
   requireConfigured();
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${await login()}` };
   const response = await fetch(`${baseUrl()}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeout || requestTimeoutMs()),
   });
   const data = await readBody(response);
   if (response.status === 401 && retryAuth) {
@@ -165,7 +171,7 @@ function splitName(fullName = '') {
 
 // Creates the order in Shiprocket (adhoc / quick order). `package` carries the
 // weight (kg) and dimensions (cm) for the whole parcel.
-async function createAdhocOrder({ orderId, placedAt, paymentMethod, customerEmail, subtotal, shippingAddress, items, package: parcel }) {
+async function createAdhocOrder({ orderId, placedAt, paymentMethod, customerEmail, subtotal, shippingAddress, items, package: parcel }, { timeout } = {}) {
   const pickup = pickupLocation();
   if (!pickup) {
     throw Object.assign(new Error('SHIPROCKET_PICKUP_LOCATION is missing from the server configuration.'), { status: 503 });
@@ -212,7 +218,7 @@ async function createAdhocOrder({ orderId, placedAt, paymentMethod, customerEmai
   if (channel && Number.isFinite(Number(channel))) payload.channel_id = Number(channel);
 
   try {
-    const data = await request('/v1/external/orders/create/adhoc', { method: 'POST', body: payload });
+    const data = await request('/v1/external/orders/create/adhoc', { method: 'POST', body: payload, timeout });
     return {
       duplicate: false,
       // The response's order_id is Shiprocket's own id; ours is order_id sent.

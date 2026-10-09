@@ -142,7 +142,7 @@ test('unpaid, cancelled, unconfigured, in-flight and finished orders are never h
   assert.equal(fake.state.createCalls, 1);
 });
 
-test('a failed creation records the error, retries in the background, and self-heals', async () => {
+test('a failed inline create records the error fast; the sweep retries and self-heals', async () => {
   const db = new MemoryDb();
   seedProducts(db);
   const id = seedOrder(db);
@@ -156,13 +156,15 @@ test('a failed creation records the error, retries in the background, and self-h
   });
   const shipment = shipmentFor(db, fake, [0, 0]);
 
+  // The payment path must not burn serverless runtime on retries: one attempt,
+  // a recorded error, and leave recovery to the sweep.
   assert.equal(await shipment.onOrderReady(id), null);
   let data = db.data.get(`orders/${id}`);
   assert.equal(data.shiprocket.status, 'error');
-  assert.equal(data.shiprocket.attempts, 3);
+  assert.equal(data.shiprocket.attempts, 1);
   assert.equal(data.shipmentRetryNeeded, true);
   assert.match(data.shiprocket.lastError, /down/);
-  assert.equal(fake.state.createCalls, 3);
+  assert.equal(fake.state.createCalls, 1);
 
   // The sweep is the recovery path: no panel visit, no manual retry.
   down = false;
