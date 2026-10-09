@@ -151,8 +151,9 @@ function createShipmentService({ db, shiprocket, retryDelays = [1000, 3000] } = 
 
   // Inline (payment-flow) creates run on serverless functions with a hard
   // runtime cap (Vercel kills at ~10s), so they get one attempt on a tighter
-  // timeout; the sweep owns retries and self-healing.
-  const INLINE_TIMEOUT_MS = 9000;
+  // timeout; the sweep owns retries and self-healing. The Firestore-shared
+  // Shiprocket session means this budget is almost entirely the create itself.
+  const INLINE_TIMEOUT_MS = 8000;
 
   // One guarded creation pass: claim, then create. Inline mode makes exactly
   // one attempt so it always fits the serverless budget; sweep mode keeps the

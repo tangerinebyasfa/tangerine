@@ -5,6 +5,10 @@ const { createShipmentService } = require('../services/shipmentService');
 const shiprocket = require('../lib/shiprocket');
 const razorpay = require('../lib/razorpay');
 
+// Share one Shiprocket login across every serverless instance (each has its own
+// memory): a Firestore-persisted session avoids a login round-trip per order.
+shiprocket.setTokenStore(shiprocket.createTokenStore(db));
+
 // Shared singletons so the order service used by controllers, webhooks, and
 // shipment sync is exactly one instance (one shipment trigger per payment).
 const shipmentService = createShipmentService({ db, shiprocket });

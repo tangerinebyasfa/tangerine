@@ -87,12 +87,64 @@ async function readBody(response) {
 
 let tokenCache = null; // { value, expiresAt }
 let loginInFlight = null;
+// A durable cross-instance session store (Firestore in production) so a
+// serverless cold start reuses the account token instead of logging in again
+// inside the payment request. Tokens live ~240h; callers share this session.
+let tokenStore = null; // { read(), write({ token, expiresAt }) } | null
 
-async function login() {
+function setTokenStore(store) {
+  tokenStore = store || null;
+  // A different instance may have refreshed the session; re-read it once.
+  tokenCache = null;
+}
+
+// Persists the Shiprocket session in Firestore so every Vercel serverless
+// instance (each with its own memory) reuses the same login.
+function createTokenStore(db) {
+  const ref = db.collection("app_state").doc("shiprocket_session");
+  const toMillis = raw => {
+    if (raw && typeof raw.toMillis === "function") return raw.toMillis();
+    if (typeof raw === "number") return raw;
+    if (raw) {
+      const time = new Date(raw).getTime();
+      return Number.isFinite(time) ? time : 0;
+    }
+    return 0;
+  };
+  return {
+    async read() {
+      try {
+        const snap = await ref.get();
+        if (!snap.exists) return null;
+        const data = snap.data() || {};
+        if (!data.token) return null;
+        const expiresAt = toMillis(data.expiresAt);
+        if (!expiresAt) return null;
+        return { token: String(data.token), expiresAt };
+      } catch {
+        // Firestore unavailable: fall back to a fresh login rather than fail.
+        return null;
+      }
+    },
+    async write({ token, expiresAt }) {
+      await ref.set({ token, expiresAt: new Date(expiresAt), updatedAt: new Date() });
+    },
+  };
+}
+
+async function login(timeout) {
   requireConfigured();
   if (tokenCache && tokenCache.expiresAt > Date.now() + 60 * 1000) return tokenCache.value;
   if (!loginInFlight) {
     loginInFlight = (async () => {
+      // Reuse a session any instance persisted before burning a login round-trip.
+      if (!tokenCache && tokenStore) {
+        const session = await tokenStore.read();
+        if (session && session.expiresAt > Date.now() + 60 * 1000) {
+          tokenCache = { value: session.token, expiresAt: session.expiresAt };
+          return tokenCache.value;
+        }
+      }
       const response = await fetch(`${baseUrl()}/v1/external/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,11 +152,19 @@ async function login() {
           email: process.env.SHIPROCKET_EMAIL.trim(),
           password: process.env.SHIPROCKET_PASSWORD,
         }),
-signal: AbortSignal.timeout(requestTimeoutMs()),
+        signal: AbortSignal.timeout(timeout || requestTimeoutMs()),
       });
       const body = await readBody(response);
       if (!response.ok || !body?.token) throw httpError(response.status, body);
       tokenCache = { value: body.token, expiresAt: Date.now() + TOKEN_TTL_MS };
+      if (tokenStore) {
+        // Sharing the session is best-effort; a failed write just logs in again.
+        try {
+          await tokenStore.write({ token: tokenCache.value, expiresAt: tokenCache.expiresAt });
+        } catch (err) {
+          console.warn(`Could not persist Shiprocket session: ${err.message}`);
+        }
+      }
       return tokenCache.value;
     })().finally(() => {
       loginInFlight = null;
@@ -120,7 +180,8 @@ function resetToken() {
 
 async function request(path, { method = 'GET', body, retryAuth = true, timeout } = {}) {
   requireConfigured();
-  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${await login()}` };
+  const token = await login(timeout);
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
   const response = await fetch(`${baseUrl()}${path}`, {
     method,
     headers,
@@ -304,6 +365,8 @@ module.exports = {
   packageDefaults,
   login,
   resetToken,
+  setTokenStore,
+  createTokenStore,
   orderDate,
   describeShiprocketError,
   createAdhocOrder,
