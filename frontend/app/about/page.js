@@ -33,7 +33,7 @@ export default function AboutPage() {
         </div>
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-sand ring-1 ring-ink/10 lg:aspect-[4/3]">
           {heroImage ? (
-            <Image src={heroImage} alt="Inside the Tangerine boutique, with fashion displays and a seating area" fill sizes="(max-width: 1023px) 100vw, 50vw" className="object-cover" unoptimized={isGoogleDriveImageUrl(heroImage)} />
+            <Image src={'/Images/about-us.jpeg'} alt="Inside the Tangerine boutique, with fashion displays and a seating area" fill sizes="(max-width: 1023px) 100vw, 50vw" className="object-cover" unoptimized={isGoogleDriveImageUrl(heroImage)} />
           ) : null}
         </div>
       </section>
