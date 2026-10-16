@@ -5,7 +5,7 @@ export default function PrivacyPolicyPage() {
     <PolicyPage
       eyebrow="Legal"
       title="Privacy Policy"
-      description="This page explains how we collect, use, and protect your personal information."
+      // description="This page explains how we collect, use, and protect your personal information."
       effectiveDate="August 31, 2026"
       sections={[
         {

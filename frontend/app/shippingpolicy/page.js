@@ -5,7 +5,7 @@ export default function ShippingPolicyPage() {
     <PolicyPage
       eyebrow="Help"
       title="Shipping Policy"
-      description="This page covers order dispatch, shipping timelines, and delivery basics."
+      // description="This page covers order dispatch, shipping timelines, and delivery basics."
       effectiveDate="August 31, 2026"
       sections={[
         {

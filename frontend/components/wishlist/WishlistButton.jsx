@@ -51,7 +51,7 @@ export default function WishlistButton({ product, mode = "icon", className = "" 
         onClick={handleClick}
         disabled={loading || pending}
         aria-pressed={active}
-        className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`inline-flex items-center justify-center gap-2   border px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
           active
             ? "border-burgundy bg-burgundy text-white"
             : "border-ink/15 bg-white text-ink hover:border-burgundy hover:text-burgundy"

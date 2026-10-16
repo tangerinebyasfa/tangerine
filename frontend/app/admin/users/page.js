@@ -87,7 +87,10 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-ink/10">
                 {sortedUsers.map((u) => (
-                  <tr key={u.id}>
+                  <tr
+                    key={u.id}
+                    className={u.role === "admin" ? "font-bold" : ""}
+                  >
                     <td className="py-3 pr-4">{u.displayName || "—"}</td>
                     <td className="py-3 pr-4">{u.email}</td>
                     <td className="py-3 pr-4">

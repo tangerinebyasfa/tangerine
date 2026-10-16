@@ -465,14 +465,14 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
         "Fabric composition and care instructions can be added for each product. Until then, please follow the wash label on the garment and avoid harsh detergents, bleach, or high-heat drying.",
       kind: "text",
     },
-    {
-      id: "delivery",
-      title: "Delivery & Returns",
-      content:
-        product.returnEligible === false ? "This product is excluded from standard returns and size or colour exchanges. Contact us for help with a damaged or incorrect item." : product.deliveryInfo ||
-          "Orders are typically dispatched within 1-3 business days. Delivery timelines may vary by location. Returns can be requested within 7 days of delivery if the product is unused and in original condition.",
-      kind: "text",
-    },
+    // {
+    //   id: "delivery",
+    //   title: "Delivery & Returns",
+    //   content:
+    //     product.returnEligible === false ? "This product is excluded from standard returns and size or colour exchanges. Contact us for help with a damaged or incorrect item." : product.deliveryInfo ||
+    //       "Orders are typically dispatched within 1-3 business days. Delivery timelines may vary by location. Returns can be requested within 7 days of delivery if the product is unused and in original condition.",
+    //   kind: "text",
+    // },
   ];
 
   const purchaseActions = isSoldOut ? (
@@ -492,7 +492,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       </Button>
     </div>
   ) : (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {/* <Button onClick={handleAddToCart} className="w-full">
         Add to Cart
       </Button> */}
@@ -505,6 +505,9 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       >
         Shop via DM
       </Button>
+      <div className="hidden lg:inline-block">
+        <WishlistButton product={product} mode="text" className="w-full" />
+      </div>
     </div>
   );
 
@@ -537,10 +540,10 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                   onClick={() => item.available && setSize(item.label)}
                   disabled={!item.available}
                   className={`px-4 py-2 text-sm border ${size === item.label
-                      ? "border-ink bg-ink text-paper"
-                      : item.available
-                        ? "border-ink/20"
-                        : "border-ink/10 text-ink/35"
+                    ? "border-ink bg-ink text-paper"
+                    : item.available
+                      ? "border-ink/20"
+                      : "border-ink/10 text-ink/35"
                     }`}
                 >
                   <span className={item.available ? "" : "line-through decoration-ink/45"}>{item.label}</span>
@@ -954,10 +957,10 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                         onClick={() => item.available && setSize(item.label)}
                         disabled={!item.available}
                         className={`px-4 py-2 text-sm border ${size === item.label
-                            ? "border-ink bg-ink text-paper"
-                            : item.available
-                              ? "border-ink/20"
-                              : "border-ink/10 text-ink/35"
+                          ? "border-ink bg-ink text-paper"
+                          : item.available
+                            ? "border-ink/20"
+                            : "border-ink/10 text-ink/35"
                           }`}
                       >
                         <span className={item.available ? "" : "line-through decoration-ink/45"}>
@@ -971,9 +974,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
 
               {purchaseActions}
 
-              <div className="mt-3">
-                <WishlistButton product={product} mode="text" className="w-full" />
-              </div>
+
 
               {isSoldOut ? (
                 <p className="text-xs text-burgundy mt-3">This product is sold out.</p>
