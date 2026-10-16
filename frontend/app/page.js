@@ -217,8 +217,9 @@ export default function HomePage() {
                       href={`/products/${category.slug}`}
                       className="group relative block overflow-hidden bg-sand aspect-[3/4] md:aspect-[4/5]"
                     >
+
                       <Image
-                        src={image}
+                        src={image === '/api/image?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Dview%26id%3D1izE6gH_1lWdyFkZYvdGz7ayqj7tDBFnT' ? '/api/image?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Dview%26id%3D1SOoL5-j6NkBwnOPA4QHjOGOGe3-GaZnO' : image}
                         alt={category.name}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"

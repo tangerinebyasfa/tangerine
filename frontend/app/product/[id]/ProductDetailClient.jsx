@@ -328,13 +328,13 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   }
 
   function handleAddToCart() {
-    if (isSoldOut) {
-      toast.error("This product is sold out.");
-      return;
-    }
+    // if (isSoldOut) {
+    //   toast.error("This product is sold out.");
+    //   return;
+    // }
 
-    if (!addItem(product, { size, color, quantity: 1 })) return;
-    toast.success("Added to bag");
+    // if (!addItem(product, { size, color, quantity: 1 })) return;
+    // toast.success("Added to bag");
   }
 
   function handleBuyNow() {
@@ -491,10 +491,13 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     </div>
   ) : (
     <div className="grid grid-cols-2 gap-3">
-      <Button onClick={handleAddToCart} className="w-full">
+      {/* <Button onClick={handleAddToCart} className="w-full">
         Add to Cart
-      </Button>
-      <Button onClick={handleBuyNow} className="w-full bg-tangerine text-white hover:bg-tangerine/90">
+      </Button> */}
+      {/* <Button onClick={handleBuyNow} className="w-full bg-tangerine text-white hover:bg-tangerine/90">
+        Buy Now
+      </Button> */}
+       <Button   className="w-full bg-tangerine text-white hover:bg-tangerine/90">
         Buy Now
       </Button>
     </div>

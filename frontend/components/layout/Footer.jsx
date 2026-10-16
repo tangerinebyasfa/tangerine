@@ -30,7 +30,7 @@ const supportLinks = [
 ];
 
 const socialItems = [
-  { label: "Instagram", src: "/Images/instagram.png", href: "https://www.instagram.com/_tangerine_by_aum_sod?stkn=MXU5MWUxN2Z1dWNyeA==" },
+  { label: "Instagram", src: "/Images/instagram.png", href: "https://www.instagram.com/_tangerine_by_sod_aum?vrfl=Mnd6czIxbjdwMnFt" },
   { label: "Facebook", src: "/Images/facebook.webp", href: "https://www.facebook.com/share/1Hor7jtrrV/" },
 ];
 

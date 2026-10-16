@@ -194,7 +194,7 @@ export default function Navbar() {
               <Search className="h-5 w-5" strokeWidth={2} />
             </button>
 
-            <button
+            {/* <button
               onClick={() => setDrawerOpen(true)}
               className="relative hidden xl:inline-flex text-ink hover:text-tangerine transition-colors"
               aria-label="Open cart"
@@ -205,7 +205,7 @@ export default function Navbar() {
                   {itemCount}
                 </span>
               )}
-            </button>
+            </button> */}
 
             <button
                 type="button"

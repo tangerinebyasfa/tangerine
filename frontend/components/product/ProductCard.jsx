@@ -84,7 +84,7 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
-        <button
+        {/* <button
           type="button"
           aria-label={isSoldOut ? "Sold out" : "Quick add to bag"}
           onClick={handleQuickAdd}
@@ -92,7 +92,7 @@ export default function ProductCard({ product }) {
           className="absolute bottom-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_10px_22px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:w-10"
         >
           <ShoppingBag className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.8} />
-        </button>
+        </button> */}
       </div>
 
       <Link href={href} className="mt-2 flex min-h-[4.5rem] items-start justify-between gap-3">

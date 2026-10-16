@@ -670,8 +670,8 @@ function ProfileDashboard() {
 
   const sectionButtonItems = [
     { key: "profile", label: "My Profile", icon: UserRound, active: activeSection === "profile" },
-    { key: "orders", label: "Orders", icon: Package2, active: activeSection === "orders" },
-    { key: "addresses", label: "Addresses", icon: MapPin, active: activeSection === "addresses" },
+    // { key: "orders", label: "Orders", icon: Package2, active: activeSection === "orders" },
+    // { key: "addresses", label: "Addresses", icon: MapPin, active: activeSection === "addresses" },
     { key: "wishlist", label: "Wishlist", icon: Heart, active: activeSection === "wishlist" },
     { key: "reviews", label: "My Reviews", icon: Star, active: activeSection === "reviews" },
   ];
@@ -729,7 +729,7 @@ function ProfileDashboard() {
             </dl>
           </div>
 
-          <div className="mt-6 border-t border-ink/10 pt-6">
+          {/* <div className="mt-6 border-t border-ink/10 pt-6">
             <SectionHeader
              title="Order Summary"
            
@@ -753,7 +753,7 @@ function ProfileDashboard() {
                 />
               ))}
             </div>
-          </div>
+          </div> */}
 
           <div className="mt-6 border-t border-ink/10 pt-6">
             <SectionHeader

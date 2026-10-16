@@ -106,6 +106,7 @@ export default function CartDrawer() {
             <h2 className="font-display text-2xl leading-none text-ink mt-1">
               {/* Your */}
               Cart {items.length > 0 ? `(${items.length})` : ""}
+              {/* Cart */}
             </h2>
           </div>
           <button
@@ -263,7 +264,7 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {items.length > 0 && (
+        {/* {items.length > 0 && (
           <div className="border-t border-ink/10 px-5 py-4">
             <div className="flex items-center justify-between text-sm">
               <span className="uppercase tracking-[0.14em] text-ink/55">Subtotal</span>
@@ -278,7 +279,7 @@ export default function CartDrawer() {
               Checkout
             </Link>
           </div>
-        )}
+        )} */}
       </aside>
     </>
   );
