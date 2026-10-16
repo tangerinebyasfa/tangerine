@@ -17,14 +17,14 @@ const MAIN_CATEGORIES = [
     title: "Clothes",
     description: "Dresses, skirts, co-ords, and every clothing edit in one place.",
     href: "/products/clothes",
-    image: "/Images/HomePage/1.png",
+    image: "https://drive.google.com/uc?export=view&id=1izE6gH_1lWdyFkZYvdGz7ayqj7tDBFnT",
   },
   {
     key: "accessories",
     title: "Accessories",
     description: "Finishing pieces and styling extras to complete the look.",
     href: "/products/accessories",
-    image: "/Images/HomePage/2.png",
+    image: "https://ahaeli.com/cdn/shop/files/dark-pink-lac-bangles-with-pink-stones-set.jpg?v=1782561307",
   },
   // {
   //   key: "footwear",
@@ -50,7 +50,7 @@ function CategoryHeroCard({ category }) {
     >
       <div className="relative lg:aspect-[3/1.5] aspect-[3/4] bg-sand overflow-hidden">
         <Image
-          src={category.image}
+          src={ category.image }
           alt={category.title}
           fill
           sizes="(max-width: 768px) 100vw, 25vw"
@@ -91,7 +91,7 @@ function SubcategoryCard({ item }) {
     >
       <div className="relative aspect-[3/4] bg-sand">
         <Image
-          src={image}
+          src={image === '/api/image?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Dview%26id%3D1izE6gH_1lWdyFkZYvdGz7ayqj7tDBFnT' ? '/api/image?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Dview%26id%3D1SOoL5-j6NkBwnOPA4QHjOGOGe3-GaZnO' : image}
           alt={item.name}
           fill
           sizes="(max-width: 768px) 50vw, 25vw"
