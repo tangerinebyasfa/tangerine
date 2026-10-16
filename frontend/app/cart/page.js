@@ -6,6 +6,7 @@ import { useCart } from "../../context/CartContext";
 import PageHeader from "../../components/ui/PageHeader";
 import { normalizeImageUrl } from "../../lib/image";
 import { formatINR } from "../../lib/currency";
+import { allowCheckoutEntry } from "../../lib/checkoutGuard";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
@@ -69,7 +70,7 @@ export default function CartPage() {
               <span>{formatINR(subtotal)}</span>
             </div>
             <p className="text-xs text-ink/50 mb-6">Shipping and taxes calculated at checkout.</p>
-            <Link href="/checkout" className="btn-primary w-full block text-center">
+            <Link href="/checkout" onClick={allowCheckoutEntry} className="btn-primary w-full block text-center">
               Proceed to Checkout
             </Link>
           </div>

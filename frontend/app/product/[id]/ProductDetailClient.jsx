@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
 import { formatINR } from "../../../lib/currency";
+import { allowCheckoutEntry } from "../../../lib/checkoutGuard";
 import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/AuthContext";
 import Button from "../../../components/ui/Button";
@@ -344,6 +345,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     }
 
     if (!addItem(product, { size, color, quantity: 1 })) return;
+    allowCheckoutEntry();
     router.push("/checkout");
   }
 

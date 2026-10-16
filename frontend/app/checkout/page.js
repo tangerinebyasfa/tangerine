@@ -12,6 +12,7 @@ import Button from "../../components/ui/Button";
 import { formatINR } from "../../lib/currency";
 import { loadRazorpayCheckout, razorpayKeyId } from "../../lib/razorpay";
 import { buildAddressSummary } from "../../lib/accountFirestore";
+import { consumeCheckoutEntry } from "../../lib/checkoutGuard";
 import { Banknote, CheckCircle2, CreditCard, Lock, MapPin, Package, ShieldCheck, Tag, X, Zap } from "lucide-react";
 
 const ZIP_LOOKUP_MIN_LENGTH = 6;
@@ -128,6 +129,15 @@ function CheckoutForm() {
   const checkoutItems = useMemo(() => items.map(({ productId, quantity, size, color }) => ({ productId, quantity, size, color })), [items]);
   const quoteKey = JSON.stringify([checkoutItems, appliedCoupon?.code || "", user?.uid, quoteRevision]);
   const currentQuote = quote?.key === quoteKey ? quote : null;
+  const entryChecked = useRef(false);
+
+  useEffect(() => {
+    if (entryChecked.current) return;
+    entryChecked.current = true;
+    if (!consumeCheckoutEntry()) {
+      router.replace("/");
+    }
+  }, [router]);
 
   useEffect(() => {
     let active = true;
