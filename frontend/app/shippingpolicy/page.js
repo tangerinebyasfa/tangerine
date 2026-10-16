@@ -21,12 +21,12 @@ export default function ShippingPolicyPage() {
             "Delivery times vary by location, courier partner, and peak seasons. Estimated timelines are shown during checkout when available.",
           ],
         },
-        {
-          title: "Shipping Charges",
-          paragraphs: [
-            "Shipping charges, if applicable, are shown before you place your order. Promotional free-shipping offers may apply from time to time.",
-          ],
-        },
+        // {
+        //   title: "Shipping Charges",
+        //   paragraphs: [
+        //     "Shipping charges, if applicable, are shown before you place your order. Promotional free-shipping offers may apply from time to time.",
+        //   ],
+        // },
         {
           title: "Delays and Exceptions",
           paragraphs: [

@@ -22,8 +22,8 @@ const companyLinks = [
 
 const supportLinks = [
   { href: "/contact", label: "Contact Us" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/termsandcondition", label: "Terms & Conditions" },
+  // { href: "/faq", label: "FAQ" },
+  // { href: "/termsandcondition", label: "Terms & Conditions" },
   { href: "/privacy", label: "Privacy Policy" },
   // { href: "/return", label: "Returns Policy" },
   { href: "/shippingpolicy", label: "Shipping Policy" },

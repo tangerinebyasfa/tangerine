@@ -501,7 +501,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
         onClick={() => window.open("https://ig.me/m/_tangerine_by_sod_aum", "_blank", "noopener,noreferrer")}
         className="w-full bg-tangerine text-white hover:bg-tangerine/90"
       >
-        Buy Now
+        Shop via DM
       </Button>
     </div>
   );

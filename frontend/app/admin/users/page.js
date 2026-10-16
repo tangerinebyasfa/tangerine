@@ -36,6 +36,11 @@ export default function AdminUsersPage() {
     }
   }
 
+  const sortedUsers = [...users].sort((a, b) => {
+    if (a.role === b.role) return 0;
+    return a.role === "admin" ? -1 : 1;
+  });
+
   return (
     <div>
       <h1 className="font-display text-3xl mb-2">Users</h1>
@@ -49,7 +54,7 @@ export default function AdminUsersPage() {
       ) : (
         <>
           <div className="space-y-3 lg:hidden">
-            {users.map((u) => (
+            {sortedUsers.map((u) => (
               <article key={u.id} className="border border-ink/10 bg-white p-4">
                 <div className="min-w-0">
                   <p className="text-sm text-ink">{u.displayName || "—"}</p>
@@ -81,7 +86,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
-                {users.map((u) => (
+                {sortedUsers.map((u) => (
                   <tr key={u.id}>
                     <td className="py-3 pr-4">{u.displayName || "—"}</td>
                     <td className="py-3 pr-4">{u.email}</td>

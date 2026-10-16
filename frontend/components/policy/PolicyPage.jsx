@@ -33,11 +33,11 @@ export default function PolicyPage({ eyebrow, title, description, effectiveDate,
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
       <PageHeader eyebrow={eyebrow} title={title} description={description} />
 
-      {effectiveDate ? (
+      {/* {effectiveDate ? (
         <p className="mb-8 text-xs uppercase tracking-[0.22em] text-ink/45">
           Effective date: {effectiveDate}
         </p>
-      ) : null}
+      ) : null} */}
 
       <div className="space-y-5">
         {sections.map((section) => (
