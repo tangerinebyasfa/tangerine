@@ -25,6 +25,7 @@ const nextConfig = {
       { protocol: "https", hostname: "www.ahaeli.com" },
       { protocol: "https", hostname: "encrypted-tbn0.gstatic.com" },
       { protocol: "https", hostname: "inc5shop.com" },
+      { protocol: "https", hostname: "moccasin-panther-516241.hostingersite.com" },
     ],
   },
 };
