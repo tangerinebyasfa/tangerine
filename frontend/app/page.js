@@ -100,6 +100,7 @@ export default function HomePage() {
       .getSubcategories()
       .then((items) => {
         if (active) setCategories(Array.isArray(items) ? items : []);
+        console.log("Fetched categories:", items);
       })
       .catch((error) => {
         console.error(error);
