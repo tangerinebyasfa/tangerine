@@ -345,7 +345,7 @@ export default function ProductForm({ initialProduct = null }) {
             </label>
           </div>
 
-          {/* <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
+          <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Weight (kg)"
@@ -383,7 +383,7 @@ export default function ProductForm({ initialProduct = null }) {
               value={form.height}
               onChange={(e) => handleChange("height", e.target.value)}
             />
-          </div> */}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <label className="block mb-4">
