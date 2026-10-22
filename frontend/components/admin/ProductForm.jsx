@@ -264,6 +264,7 @@ export default function ProductForm({ initialProduct = null }) {
         <form onSubmit={handleSubmit}>
           <Input
             label="Product Name"
+            placeholder="Enter product name"
             required
             value={form.name}
             onChange={(e) => {
@@ -288,7 +289,8 @@ export default function ProductForm({ initialProduct = null }) {
             onChange={(e) => handleChange("internalCode", e.target.value)}
           />
           <Input
-            label="Description"
+            label="Details"
+            placeholder="Enter a brief description of the product"
             textarea
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
@@ -303,6 +305,7 @@ export default function ProductForm({ initialProduct = null }) {
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Price"
+              placeholder="e.g., 999"
               type="number"
               min="0"
               step="1"
@@ -312,6 +315,7 @@ export default function ProductForm({ initialProduct = null }) {
             />
             <Input
               label="Compare At Price"
+              placeholder="e.g., 1,499"
               type="number"
               min="0"
               step="1"
@@ -341,14 +345,14 @@ export default function ProductForm({ initialProduct = null }) {
             </label>
           </div>
 
-          <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
+          {/* <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Weight (kg)"
               type="number"
               min="0"
               step="any"
-              required
+              // required
               value={form.weight}
               onChange={(e) => handleChange("weight", e.target.value)}
             />
@@ -357,7 +361,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              required
+              // required
               value={form.length}
               onChange={(e) => handleChange("length", e.target.value)}
             />
@@ -366,7 +370,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              required
+              // required
               value={form.breadth}
               onChange={(e) => handleChange("breadth", e.target.value)}
             />
@@ -375,11 +379,11 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              required
+              // required
               value={form.height}
               onChange={(e) => handleChange("height", e.target.value)}
             />
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-2 gap-4">
             <label className="block mb-4">
@@ -389,7 +393,7 @@ export default function ProductForm({ initialProduct = null }) {
                 onChange={(e) => handleChange("productType", e.target.value)}
                 className="input-field"
               >
-                <option value="">Select Product Type</option>
+                <option value="">Product Type</option>
                 {PRODUCT_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
                     {type.label}
@@ -404,7 +408,7 @@ export default function ProductForm({ initialProduct = null }) {
                 onChange={(e) => handleChange("categorySlug", e.target.value)}
                 className="input-field"
               >
-                <option value="">Select Subtype</option>
+                <option value="">Subtype</option>
                 {subtypeOptions.map((subtype) => (
                   <option key={subtype.id} value={subtype.slug}>
                     {subtype.name}
@@ -416,40 +420,44 @@ export default function ProductForm({ initialProduct = null }) {
 
           <Input
             label="Sizes"
-            placeholder="XS, S, M, L"
+            placeholder="XS, S, M, L, XL"
             value={form.sizes}
             onChange={(e) => handleChange("sizes", e.target.value)}
           />
           <Input
             label="Colors"
-            placeholder="Black, Ivory, Beige"
+            // placeholder="Black, Ivory, Beige"
+            placeholder="Enter available colors separated by commas."
             value={form.colors}
             onChange={(e) => handleChange("colors", e.target.value)}
           />
-          <Input
+          {/* <Input
             label="Size Guide ? notes or measurement table"
             placeholder={"Body measurements\nSize | Chest (cm) | Waist (cm)\nEnter your product measurements, one size per row."}
             textarea
             value={form.sizeGuide}
             onChange={(e) => handleChange("sizeGuide", e.target.value)}
-          />
-          <p className="text-sm text-ink/60">Separate columns with | and put each size on its own line. Label centimetre columns with (cm) to enable inch conversion. State whether these are body or garment measurements; use only verified product measurements.</p>
-          {form.sizeGuide && <details className="border p-3"><summary className="cursor-pointer">Preview size guide</summary><div className="mt-3"><SizeGuide guide={form.sizeGuide} productType={form.productType} /></div></details>}
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.returnEligible} onChange={e => handleChange("returnEligible", e.target.checked)} /> Eligible for standard returns and exchanges</label>
+          /> */}
+          {/* <p className="text-sm text-ink/60">Separate columns with | and put each size on its own line. Label centimetre columns with (cm) to enable inch conversion. State whether these are body or garment measurements; use only verified product measurements.</p> */}
+          {/* {form.sizeGuide && <details className="border p-3"><summary className="cursor-pointer">Preview size guide</summary><div className="mt-3"><SizeGuide guide={form.sizeGuide} productType={form.productType} /></div></details>} */}
+          {/* <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.returnEligible} onChange={e => handleChange("returnEligible", e.target.checked)} /> Eligible for standard returns and exchanges</label> */}
           <Input
             label="Materials"
+            placeholder="Enter material or fabric details"
             textarea
             value={form.materials}
             onChange={(e) => handleChange("materials", e.target.value)}
           />
           <Input
             label="Wash Care"
+            placeholder="Enter wash care details"
             textarea
             value={form.washCare}
             onChange={(e) => handleChange("washCare", e.target.value)}
           />
           <Input
             label="Delivery Info"
+            placeholder="Enter delivery details"
             textarea
             value={form.deliveryInfo}
             onChange={(e) => handleChange("deliveryInfo", e.target.value)}
@@ -457,7 +465,8 @@ export default function ProductForm({ initialProduct = null }) {
           <Input
             label="Additional Info"
             textarea
-            placeholder="Fabric: Cotton\nFit: Relaxed"
+            // placeholder="Fabric: Cotton\nFit: Relaxed"
+            placeholder="Enter any other relevant details"
             value={form.additionalInfo}
             onChange={(e) => handleChange("additionalInfo", e.target.value)}
           />
