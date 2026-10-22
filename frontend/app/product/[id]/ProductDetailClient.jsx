@@ -30,6 +30,20 @@ function getReviewDate(value) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// Materials and wash care are stored as lists, so join them into readable text
+// instead of relying on the array being truthy (an empty list is truthy too).
+function toPlainText(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (item == null ? "" : String(item).trim()))
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (value == null) return "";
+  return String(value).trim();
+}
+
 function RatingStars({ rating = 0 }) {
   return (
     <div className="flex items-center gap-1">
@@ -424,6 +438,9 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
     </section>
   );
 
+  const materialsText = toPlainText(product.materials);
+  const washCareText = toPlainText(product.washCare);
+
   const accordionItems = [
     {
       id: "details",
@@ -445,15 +462,12 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       content: product.additionalInfo || [],
       kind: "table",
     },
-    {
-      id: "materials",
-      title: "Materials & Wash Care",
-      content: [product.materials, product.washCare]
-        .filter(Boolean)
-        .join("\n\n") ||
-        "Fabric composition and care instructions can be added for each product. Until then, please follow the wash label on the garment and avoid harsh detergents, bleach, or high-heat drying.",
-      kind: "text",
-    },
+    ...(materialsText
+      ? [{ id: "materials", title: "Materials", content: materialsText, kind: "text" }]
+      : []),
+    ...(washCareText
+      ? [{ id: "wash-care", title: "Wash Care", content: washCareText, kind: "text" }]
+      : []),
     // {
     //   id: "delivery",
     //   title: "Delivery & Returns",
