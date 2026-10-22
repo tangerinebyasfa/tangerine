@@ -352,7 +352,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              // required
+              required
               value={form.weight}
               onChange={(e) => handleChange("weight", e.target.value)}
             />
@@ -361,7 +361,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              // required
+              required
               value={form.length}
               onChange={(e) => handleChange("length", e.target.value)}
             />
@@ -370,7 +370,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              // required
+              required
               value={form.breadth}
               onChange={(e) => handleChange("breadth", e.target.value)}
             />
@@ -379,7 +379,7 @@ export default function ProductForm({ initialProduct = null }) {
               type="number"
               min="0"
               step="any"
-              // required
+              required
               value={form.height}
               onChange={(e) => handleChange("height", e.target.value)}
             />
