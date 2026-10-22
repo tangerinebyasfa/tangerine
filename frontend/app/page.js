@@ -115,7 +115,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <Link href="/product/red-embroidered-anarkali-kurta-set-with-dupatta" className="block max-w-full">
+        <Link href="/product/red-embroidered-anarkali-set" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
             mobile={homeImages[1].mobile}
