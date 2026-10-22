@@ -114,6 +114,7 @@ export default function ProductForm({ initialProduct = null }) {
   const [form, setForm] = useState(() => normalizeForm(initialProduct));
   const [saving, setSaving] = useState(false);
   const [subtypes, setSubtypes] = useState([]);
+  const [subtypesLoaded, setSubtypesLoaded] = useState(false);
   const isEditing = !!initialProduct?.id;
 
   useEffect(() => {
@@ -128,6 +129,8 @@ export default function ProductForm({ initialProduct = null }) {
       } catch (err) {
         console.error(err);
         toast.error(err.message || "Failed to load product types");
+      } finally {
+        setSubtypesLoaded(true);
       }
     })();
   }, []);
@@ -138,6 +141,10 @@ export default function ProductForm({ initialProduct = null }) {
   );
 
   useEffect(() => {
+    // Wait for the subtype list before validating, otherwise the empty initial
+    // list would clear a saved category on the first render.
+    if (!subtypesLoaded) return;
+
     if (form.categorySlug && subtypeOptions.some((option) => option.slug === form.categorySlug)) {
       return;
     }
@@ -147,7 +154,7 @@ export default function ProductForm({ initialProduct = null }) {
     }
     // We intentionally react only to subtype changes here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtypeOptions]);
+  }, [subtypeOptions, subtypesLoaded]);
 
   function handleChange(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
