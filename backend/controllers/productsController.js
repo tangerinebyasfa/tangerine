@@ -1,4 +1,8 @@
 const { db, admin } = require("../config/firebaseAdmin");
+// `additionalInfo` is a list of { label, value } rows. It must never go through
+// normalizeList(), which stringifies each entry and turns the rows into
+// "[object Object]" - that silently emptied the product page's information table.
+const { normalizeAdditionalInfo } = require("../lib/additionalInfo");
 
 const productsRef = db.collection("products");
 
@@ -176,7 +180,7 @@ exports.createProduct = async (req, res) => {
       returnEligible: body.returnEligible !== false,
       categorySlug: normalizeText(body.categorySlug),
       categoryParentType: normalizeText(body.categoryParentType || body.productType),
-      additionalInfo: normalizeList(body.additionalInfo),
+      additionalInfo: normalizeAdditionalInfo(body.additionalInfo),
       sizeOptions: normalizeList(body.sizeOptions),
       materials: normalizeList(body.materials),
       washCare: normalizeList(body.washCare),
@@ -236,7 +240,7 @@ exports.updateProduct = async (req, res) => {
     if ("sizeGuide" in updates) updates.sizeGuide = normalizeText(updates.sizeGuide);
     if ("returnEligible" in updates) updates.returnEligible = updates.returnEligible !== false;
     if ("description" in updates) updates.description = normalizeText(updates.description);
-    if ("additionalInfo" in updates) updates.additionalInfo = normalizeList(updates.additionalInfo);
+    if ("additionalInfo" in updates) updates.additionalInfo = normalizeAdditionalInfo(updates.additionalInfo);
     if ("sizeOptions" in updates) updates.sizeOptions = normalizeList(updates.sizeOptions);
     if ("materials" in updates) updates.materials = normalizeList(updates.materials);
     if ("washCare" in updates) updates.washCare = normalizeList(updates.washCare);
