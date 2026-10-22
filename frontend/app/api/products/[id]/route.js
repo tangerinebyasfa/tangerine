@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb, requireAdminRequest, serializeTimestamp } from "../../../../lib/firebaseAdmin";
 import { proxyToBackend } from "../../../../lib/serverApi";
 import { getProduct } from "../../../../lib/firestoreServer";
+import { normalizeAdditionalInfo } from "../../../../lib/additionalInfo.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -95,10 +96,8 @@ export async function PUT(request, { params }) {
     const colors = body.colors !== undefined ? normalizeList(body.colors) : normalizeList(current.colors);
     const additionalInfo =
       body.additionalInfo !== undefined
-        ? Array.isArray(body.additionalInfo)
-          ? body.additionalInfo
-          : normalizeList(body.additionalInfo)
-        : current.additionalInfo || [];
+        ? normalizeAdditionalInfo(body.additionalInfo)
+        : normalizeAdditionalInfo(current.additionalInfo);
 
     const updates = {
       name,

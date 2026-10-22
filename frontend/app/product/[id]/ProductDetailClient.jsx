@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { api } from "../../../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../../lib/image";
 import { formatINR } from "../../../lib/currency";
+import { additionalInfoRows, formatAdditionalInfoText } from "../../../lib/additionalInfo.mjs";
 import { allowCheckoutEntry } from "../../../lib/checkoutGuard";
 import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/AuthContext";
@@ -718,7 +719,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
   function renderAccordionContent(item) {
     if (item.kind === "size-guide") return <SizeGuide guide={item.content} selectedSize={size} productType={product.productType} />;
     if (item.kind === "table") {
-      const rows = Array.isArray(item.content) ? item.content.filter((row) => row?.label || row?.value) : [];
+      const rows = additionalInfoRows(item.content);
 
       if (rows.length === 0) {
         return (
@@ -729,20 +730,9 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
       }
 
       return (
-        <div className="overflow-hidden border border-ink/10 bg-paper">
-          <table className="w-full border-collapse text-sm">
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={`${row.label}-${index}`} className="border-b border-ink/10 last:border-b-0">
-                  <th className="w-1/2 border-r border-ink/10 bg-sand/30 px-4 py-3 text-left font-medium text-ink">
-                    {row.label}
-                  </th>
-                  <td className="px-4 py-3 text-ink/70">{row.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="text-sm leading-7 text-ink/60 whitespace-pre-line">
+          {formatAdditionalInfoText(rows)}
+        </p>
       );
     }
 

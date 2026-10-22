@@ -7,6 +7,11 @@ import { api } from "../../lib/api";
 import { normalizeImageUrl } from "../../lib/image";
 import SizeGuide from "../product/SizeGuide";
 import { parseSizeGuide } from "../../lib/sizeGuide.mjs";
+import {
+  formatAdditionalInfoText,
+  normalizeAdditionalInfo,
+  parseAdditionalInfoText,
+} from "../../lib/additionalInfo.mjs";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 
@@ -58,32 +63,6 @@ function toCommaList(value) {
     .filter(Boolean);
 }
 
-function parseAdditionalInfo(value) {
-  if (!value) return [];
-
-  return String(value)
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const separatorIndex = line.indexOf(":");
-      if (separatorIndex === -1) {
-        return { label: line, value: "" };
-      }
-
-      const label = line.slice(0, separatorIndex).trim();
-      const entryValue = line.slice(separatorIndex + 1).trim();
-      return { label, value: entryValue };
-    })
-    .filter((row) => row.label || row.value);
-}
-
-function formatAdditionalInfo(rows = []) {
-  return rows
-    .filter((row) => row?.label || row?.value)
-    .map((row) => `${row.label || ""}${row.value ? `: ${row.value}` : ""}`.trim())
-    .join("\n");
-}
 function toTextValue(value) {
   if (Array.isArray(value)) {
     return value
@@ -125,7 +104,7 @@ function normalizeForm(product = null) {
     materials: toTextValue(product.materials),
     washCare: toTextValue(product.washCare),
     deliveryInfo: toTextValue(product.deliveryInfo),
-    additionalInfo: formatAdditionalInfo(Array.isArray(product.additionalInfo) ? product.additionalInfo : []),
+    additionalInfo: formatAdditionalInfoText(normalizeAdditionalInfo(product.additionalInfo)),
     featured: !!product.featured,
   };
 }
@@ -179,7 +158,7 @@ export default function ProductForm({ initialProduct = null }) {
     const images = toCommaList(form.images).map((image) => normalizeImageUrl(image)).filter(Boolean);
     const sizes = toCommaList(form.sizes);
     const colors = toCommaList(form.colors);
-    const additionalInfo = parseAdditionalInfo(form.additionalInfo);
+    const additionalInfo = parseAdditionalInfoText(form.additionalInfo);
 
     const payload = {
       name: form.name.trim(),

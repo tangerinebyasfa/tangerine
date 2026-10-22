@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb, requireAdminRequest } from "../../../lib/firebaseAdmin";
 import { proxyToBackend } from "../../../lib/serverApi";
 import { getProducts } from "../../../lib/firestoreServer";
+import { normalizeAdditionalInfo } from "../../../lib/additionalInfo.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,7 @@ export async function POST(request) {
     const images = normalizeList(body.images);
     const sizes = normalizeList(body.sizes);
     const colors = normalizeList(body.colors);
-    const additionalInfo = Array.isArray(body.additionalInfo) ? body.additionalInfo : normalizeList(body.additionalInfo);
+    const additionalInfo = normalizeAdditionalInfo(body.additionalInfo);
 
     const payload = {
       name,
