@@ -24,7 +24,7 @@ const teamMembers = [
     name: "Miss. Sanchita Vishwakarma",
     role: "Fashion Designer",
     image: "/Images/about/designer.jpeg",
-    bio: "Sanchita leads our print, colour and surface development, working with our sampling room to turn textile ideas into finished pieces. She focuses on the details that separate a garment from a costume, and collaborates with the production team on embroidery and finishing to keep the craft consistent at every batch.",
+    bio: "A fashion designer specializing in Western wear, she graduated from NIFT Hyderabad and brings 5.5 years of industry experience across export houses, artisan collaborations, and a women’s formal wear brand. At Tangerine, she combines contemporary aesthetics, thoughtful detailing, and a strong understanding of garment construction to create versatile, modern styles.",
   },
 ];
 

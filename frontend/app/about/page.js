@@ -15,7 +15,7 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <header className="mb-8 border-b border-ink/10 pb-6 sm:mb-10 sm:pb-8">
-        <p className="eyebrow mb-3 inline-flex items-center gap-2 before:h-px before:w-8 before:bg-tangerine">Tangerine</p>
+        <p className="eyebrow mb-3 inline-flex items-center gap-2 before:h-px ">Tangerine</p>
         <h1 className="font-display text-4xl text-ink md:text-5xl">Brand Story</h1>
         <p className="mt-3 max-w-xl text-sm leading-6 text-ink/60 sm:text-base">A student-run fashion house where creativity moves from concept to collection.</p>
       </header>
