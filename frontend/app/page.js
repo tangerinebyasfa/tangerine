@@ -173,7 +173,7 @@ export default function HomePage() {
                     height={940}
                     sizes="100vw"
                     draggable={false}
-                    className="hidden h-full w-full select-none object-cover object-center md:block md:h-[calc(100vh-5rem)] xl:h-[calc(100vh-6rem)]"
+                    className="hidden h-full w-full select-none object-cover object-top md:block md:h-[calc(100vh-5rem)] xl:h-[calc(100vh-6rem)]"
                     priority={index === 0}
                   />
                 </Link>
