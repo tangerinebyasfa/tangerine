@@ -4,11 +4,40 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
 import { api } from "../lib/api";
 import { isGoogleDriveImageUrl, normalizeImageUrl } from "../lib/image";
 import ProductCard from "../components/product/ProductCard";
 
 const HOMEPAGE_CATEGORY_SLUGS = ["indian", "casual", "western", "corporate"];
+
+const SWIPER_MOBILE_IMAGE = "/Images/HomePage/indian-dress-mob-new.jpeg";
+
+const recentHomeImages = [
+  {
+    src: "/Images/HomePage/Banner/banner-1.png",
+    mobile: "/Images/HomePage/Banner/banner-1.png",
+    alt: "Elegant trio in festive pink",
+  },
+  {
+    src: "/Images/HomePage/Banner/banner-2.png",
+    mobile: "/Images/HomePage/Banner/banner-2.png",
+    alt: "Dreamy red bridal portrait",
+  },
+  {
+    src: "/Images/HomePage/Banner/banner-3.png",
+    mobile:  "/Images/HomePage/Banner/banner-3.png",
+    alt: "Elegant Indian bridal portrait",
+  },
+  {
+    src: "/Images/HomePage/Banner/banner-4.png",
+    mobile: "/Images/HomePage/Banner/banner-4.png",
+    alt: "Festive collection",
+  },
+];
 
 const homeImages = [
   {
@@ -115,6 +144,63 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
+        <section className="relative w-full max-w-[100vw] overflow-hidden mb-14 md:mb-20">
+          <Swiper
+            modules={[Pagination]}
+            pagination={{ clickable: true }}
+            grabCursor
+            simulateTouch
+            loop
+            className="home-hero-swiper w-full"
+          >
+            {recentHomeImages.map((image, index) => (
+              <SwiperSlide key={image.src}>
+                <Link href="/products/indian" className="block max-w-full">
+                  <Image
+                    src={image.mobile}
+                    alt={image.alt}
+                    width={1024}
+                    height={1536}
+                    sizes="100vw"
+                    draggable={false}
+                    className="block h-[70vh] w-full select-none object-cover object-center md:hidden"
+                    priority={index === 0}
+                  />
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={1672}
+                    height={940}
+                    sizes="100vw"
+                    draggable={false}
+                    className="hidden h-full w-full select-none object-cover object-center md:block md:h-[calc(100vh-5rem)] xl:h-[calc(100vh-6rem)]"
+                    priority={index === 0}
+                  />
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          <style jsx global>{`
+            .home-hero-swiper .swiper-pagination {
+              bottom: 16px;
+            }
+            .home-hero-swiper .swiper-pagination-bullet {
+              width: 8px;
+              height: 8px;
+              background: #ffffff;
+              opacity: 0.55;
+              transition: all 0.3s ease;
+            }
+            .home-hero-swiper .swiper-pagination-bullet-active {
+              width: 24px;
+              border-radius: 9999px;
+              background: #ff6a00;
+              opacity: 1;
+            }
+          `}</style>
+        </section>
+
         <Link href="/product/red-embroidered-anarkali-set" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
@@ -181,7 +267,7 @@ export default function HomePage() {
           />
         </Link>
 
-       
+
 
         <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full mt-14">
           <HomepageImage
@@ -192,7 +278,7 @@ export default function HomePage() {
         </Link>
 
 
-         {homepageCategories.length > 0 && (
+        {homepageCategories.length > 0 && (
           <section className="w-full py-14 pb-0">
             <div className="mx-auto w-full max-w-[1920px] px-0">
               <div className="mb-5 flex items-end justify-between gap-4 px-5 md:px-0 md:mx-auto md:w-[95%] md:max-w-8xl md:w-4/5">
