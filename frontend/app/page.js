@@ -19,22 +19,22 @@ const SWIPER_MOBILE_IMAGE = "/Images/HomePage/indian-dress-mob-new.jpeg";
 const recentHomeImages = [
   {
     src: "/Images/HomePage/Banner/banner-1.png",
-    mobile: "/Images/HomePage/Banner/banner-1.png",
+    mobile: "/Images/HomePage/Banner/mob-banner-1.png",
     alt: "Elegant trio in festive pink",
   },
   {
     src: "/Images/HomePage/Banner/banner-2.png",
-    mobile: "/Images/HomePage/Banner/banner-2.png",
+    mobile: "/Images/HomePage/Banner/mob-banner-2.png",
     alt: "Dreamy red bridal portrait",
   },
   {
     src: "/Images/HomePage/Banner/banner-3.png",
-    mobile:  "/Images/HomePage/Banner/banner-3.png",
+    mobile:  "/Images/HomePage/Banner/mob-banner-3.png",
     alt: "Elegant Indian bridal portrait",
   },
   {
     src: "/Images/HomePage/Banner/banner-4.png",
-    mobile: "/Images/HomePage/Banner/banner-4.png",
+    mobile: "/Images/HomePage/Banner/mob-banner-4.png",
     alt: "Festive collection",
   },
 ];
