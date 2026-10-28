@@ -23,7 +23,7 @@ const TYPE_COPY = {
   },
   clothes: {
     title: "Clothes",
-    description: "Wear your perspective.",
+    description: "Wear your perspective",
   },
   footwear: {
     title: "Footwear",
@@ -32,10 +32,10 @@ const TYPE_COPY = {
 };
 
 const SUBCATEGORY_DESCRIPTIONS = {
-  indian: "Wear your perspective.",
-  western: "Wear your perspective.",
-  casual: "Wear your perspective.",
-  corporate: "Wear your perspective.",
+  indian: "Wear your perspective",
+  western: "Wear your perspective",
+  casual: "Wear your perspective",
+  corporate: "Wear your perspective",
 };
 
 const OUTLET_LOCATIONS = [

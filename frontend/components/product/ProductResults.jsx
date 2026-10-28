@@ -51,6 +51,6 @@ export default function ProductResults({ products, categoryOptions = [], default
       {invalidRange && <p role="alert" className="text-sm text-rose-700">Minimum price must not exceed maximum price.</p>}
     </div>
     <p aria-live="polite" className="text-sm text-ink/65">{visible.length} of {products.length} products</p>
-    {visible.length ? <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">{visible.map(product => <ProductCard key={product.id} product={product} />)}</div> : <div className="border border-dashed p-8 text-center"><p>No products match these filters.</p><button type="button" onClick={clear} className="mt-3 text-tangerine underline">Clear filters and try again</button></div>}
+    {visible.length ? <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">{visible.map(product => <ProductCard key={product.id} product={product} />)}</div> : <div className="text-ink/50 text-md text-center"><p>{(resolvedCategoryFilter === 'corporate' || effectiveFilters.categoryFilter === 'corporate') ? 'Your boss lady look is coming soon!' : 'No products match these filters.'}</p>{(resolvedCategoryFilter === 'corporate' || effectiveFilters.categoryFilter === 'corporate') ? null : <button type="button" onClick={clear} className="mt-3 text-tangerine underline">Clear filters and try again</button>}</div>}
   </section>;
 }

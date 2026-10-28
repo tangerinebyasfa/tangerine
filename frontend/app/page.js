@@ -18,22 +18,22 @@ const SWIPER_MOBILE_IMAGE = "/Images/HomePage/indian-dress-mob-new.jpeg";
 
 const recentHomeImages = [
   {
-    src: "/Images/HomePage/Banner/banner-1.png",
-    mobile: "/Images/HomePage/Banner/mob-banner-1.png",
+    src: "/Images/HomePage/Banner/banner-1-new.png",
+    mobile: "/Images/HomePage/Banner/mob-banner-1-new.png",
     alt: "Elegant trio in festive pink",
   },
   {
-    src: "/Images/HomePage/Banner/banner-2.png",
+    src: "/Images/HomePage/Banner/banner-2-new.png",
     mobile: "/Images/HomePage/Banner/mob-banner-2.png",
     alt: "Dreamy red bridal portrait",
   },
   {
-    src: "/Images/HomePage/Banner/banner-3.png",
+    src: "/Images/HomePage/Banner/banner-3-new.png",
     mobile:  "/Images/HomePage/Banner/mob-banner-3.png",
     alt: "Elegant Indian bridal portrait",
   },
   {
-    src: "/Images/HomePage/Banner/banner-4.png",
+    src: "/Images/HomePage/Banner/banner-4-new.png",
     mobile: "/Images/HomePage/Banner/mob-banner-4.png",
     alt: "Festive collection",
   },
@@ -144,7 +144,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
-        <section className="relative w-full max-w-[100vw] overflow-hidden mb-14 md:mb-20">
+        <section className="relative w-full max-w-[100vw] overflow-hidden  mb-5 md:mb-10">
           <Swiper
             modules={[Pagination]}
             pagination={{ clickable: true }}
@@ -201,14 +201,14 @@ export default function HomePage() {
           `}</style>
         </section>
 
-        <Link href="/product/red-embroidered-anarkali-set" className="block max-w-full">
+        {/* <Link href="/product/red-embroidered-anarkali-set" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[1].desktop}
             mobile={homeImages[1].mobile}
             alt={homeImages[1].alt}
             priority
           />
-        </Link>
+        </Link> */}
 
         {featuredProducts.length > 0 && (
           <section className="mx-auto w-[96%] py-14 md:w-5/5">
@@ -259,7 +259,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/product/sunshine-yellow-ruched-layered-mini-dress" className="block max-w-full">
+        <Link href="/products/casual" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[3].desktop}
             mobile={homeImages[3].mobile}
@@ -269,7 +269,7 @@ export default function HomePage() {
 
 
 
-        <Link href="/product/maroon-tailored-blazer-trouser-set" className="block max-w-full mt-14">
+        <Link href="/products/corporate" className="block max-w-full mt-14">
           <HomepageImage
             desktop={homeImages[0].desktop}
             mobile={homeImages[0].mobile}

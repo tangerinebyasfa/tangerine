@@ -274,7 +274,7 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-3 xl:hidden">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
                 className="relative text-ink transition-colors hover:text-tangerine"
@@ -286,7 +286,7 @@ export default function Navbar() {
                     {itemCount}
                   </span>
                 )}
-              </button>
+              </button> */}
 
               <button
                 type="button"
