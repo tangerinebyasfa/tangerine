@@ -272,7 +272,7 @@ export default function ProductsPage() {
       <PageHeader
         eyebrow="Shop"
         title="Shop by Category"
-        description="Clothing and accessories for every expression of style."
+        description="Clothing and accessories for every expression of style"
       />
 
       <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-2">
