@@ -24,14 +24,17 @@ function toPlainValue(value) {
   return value;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductPage({ params }) {
-  const product = toPlainValue(await getProduct(params.id));
+  const productId = params?.id;
+  const product = productId ? toPlainValue(await getProduct(productId).catch(() => null)) : null;
   const origin = getRequestOrigin(headers());
 
   const category = product?.categorySlug ? await getSubcategory(product.categorySlug).catch(() => null) : null;
   const relatedProducts = product?.categorySlug
     ? toPlainValue(
-        (await getProducts({ category: product.categorySlug }))
+        ((await getProducts({ category: product.categorySlug }).catch(() => [])) || [])
           .filter((item) => item?.id !== product.id && item?.slug !== product.slug)
           .slice(0, 8)
       )

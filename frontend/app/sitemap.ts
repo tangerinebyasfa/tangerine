@@ -22,27 +22,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://api.tangerinefashionworld.in'
-    const [productsRes, subsRes] = await Promise.all([
-      fetch(`${apiBase}/products`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-      fetch(`${apiBase}/subcategories`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.tangerinefashionworld.in'
+    const [productsRes, subsRes] = await Promise.allSettled([
+      fetch(`${apiBase}/products`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch(`${apiBase}/subcategories`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
     ])
 
-    const products = Array.isArray(productsRes) ? productsRes : []
-    const productRoutes = products.map((p: any) => ({
-      url: `${BASE_URL}/product/${p.slug || p.id}`,
-      lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }))
+    const products = productsRes.status === 'fulfilled' && Array.isArray(productsRes.value) ? productsRes.value : []
+    const productRoutes = products
+      .map((p: any) => {
+        const identifier = p?.slug || p?.id || p?._id
+        if (!identifier) return null
+        return {
+          url: `${BASE_URL}/product/${encodeURIComponent(String(identifier))}`,
+          lastModified: p?.updatedAt ? new Date(p.updatedAt) : new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.6,
+        }
+      })
+      .filter(Boolean) as MetadataRoute.Sitemap
 
-    const subs = Array.isArray(subsRes) ? subsRes : []
-    const subRoutes = subs.map((s: any) => ({
-      url: `${BASE_URL}/products/${s.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }))
+    const subs = subsRes.status === 'fulfilled' && Array.isArray(subsRes.value) ? subsRes.value : []
+    const subRoutes = subs
+      .map((s: any) => {
+        const slug = s?.slug || s?.name
+        if (!slug) return null
+        return {
+          url: `${BASE_URL}/products/${encodeURIComponent(String(slug).toLowerCase())}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }
+      })
+      .filter(Boolean) as MetadataRoute.Sitemap
 
     return [...staticRoutes, ...subRoutes, ...productRoutes]
   } catch (e) {
