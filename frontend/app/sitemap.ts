@@ -2,6 +2,19 @@ import { MetadataRoute } from 'next'
 
 const BASE_URL = 'https://tangerinefashionworld.in'
 
+export const dynamic = 'force-dynamic'
+
+function safeDate(value: any): Date {
+  if (!value) return new Date()
+  try {
+    const date = value instanceof Date ? value : new Date(value)
+    if (isNaN(date.getTime())) return new Date()
+    return date
+  } catch {
+    return new Date()
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '',
@@ -24,8 +37,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.tangerinefashionworld.in'
     const [productsRes, subsRes] = await Promise.allSettled([
-      fetch(`${apiBase}/products`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
-      fetch(`${apiBase}/subcategories`, { next: { revalidate: 3600 } }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch(`${apiBase}/products`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch(`${apiBase}/subcategories`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
     ])
 
     const products = productsRes.status === 'fulfilled' && Array.isArray(productsRes.value) ? productsRes.value : []
@@ -35,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!identifier) return null
         return {
           url: `${BASE_URL}/product/${encodeURIComponent(String(identifier))}`,
-          lastModified: p?.updatedAt ? new Date(p.updatedAt) : new Date(),
+          lastModified: safeDate(p?.updatedAt || p?.updated_at || p?.createdAt || p?.created_at),
           changeFrequency: 'weekly' as const,
           priority: 0.6,
         }
@@ -49,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!slug) return null
         return {
           url: `${BASE_URL}/products/${encodeURIComponent(String(slug).toLowerCase())}`,
-          lastModified: new Date(),
+          lastModified: safeDate(s?.updatedAt || s?.updated_at),
           changeFrequency: 'weekly' as const,
           priority: 0.7,
         }
