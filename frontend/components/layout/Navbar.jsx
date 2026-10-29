@@ -47,7 +47,7 @@ function getActiveLinkHref(pathname, links) {
 const mobileFeatureCards = [
   { href: "/products/all", label: "All Products", image: "/Images/HomePage/corporate-dress-mob-new.jpeg" },
   { href: "/products/outlet", label: "All Outlet", image: "/Images/contact/shop-contact.png" },
-  { href: "/gallery", label: "Gallery", image: "/Images/HomePage/3mobile.png" },
+  // { href: "/gallery", label: "Gallery", image: "/Images/HomePage/3mobile.png" },
 ];
 
 export default function Navbar() {
