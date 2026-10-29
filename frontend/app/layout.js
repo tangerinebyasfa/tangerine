@@ -29,11 +29,11 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Tangerine | Considered Clothing",
+  title: "Tangerine Fashion World",
   icons: {
     icon: "/Images/favicon.png",
   },
-  description: "A fashion house for clothing that moves with you — shop new arrivals, curated edits, and timeless staples.",
+  description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
 };
 
 export default function RootLayout({ children }) {

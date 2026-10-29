@@ -3,7 +3,7 @@ import { isGoogleDriveImageUrl, normalizeImageUrl } from "../../lib/image";
 import TeamSection from "../../components/about/TeamSection";
 
 export const metadata = {
-  title: "Brand Story | Tangerine",
+  title: "About | Tangerine",
   description: "Discover Tangerine, the student-run in-house store at Atharva University, Mumbai, where fashion, learning, and entrepreneurship come together.",
 };
 
