@@ -29,7 +29,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Tangerine Fashion World | Clothing in Mumbai & Ratnagiri",
+  title: "Tangerine Fashion World",
   description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
   keywords: [
     "Tangerine",

@@ -165,7 +165,8 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: packageError });
     }
 
-    const code = normalizeText(body.code) || slugify(name);
+    const internalCode = normalizeText(body.internalCode);
+    const code = normalizeText(body.code) || internalCode || slugify(name);
     const existing = await findByCode(code);
     if (existing) {
       return res.status(409).json({ error: "Product code already exists" });
@@ -174,6 +175,7 @@ exports.createProduct = async (req, res) => {
     const product = {
       name,
       code,
+      internalCode: internalCode || code,
       slug: slugify(body.slug || name || code),
       description: normalizeText(body.description),
       sizeGuide: normalizeText(body.sizeGuide),
