@@ -144,6 +144,7 @@ export default function HomePage() {
   return (
     <div className="w-full">
       <div className="flex flex-col">
+        <h1 className="sr-only">Tangerine Fashion World - Clothing Store in Mumbai and Ratnagiri</h1>
         <section className="relative w-full max-w-[100vw] overflow-hidden  mb-5 md:mb-10">
           <Swiper
             modules={[Pagination]}

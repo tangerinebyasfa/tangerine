@@ -2,7 +2,8 @@ export function createWebsiteSchema(origin) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Tangerine",
+    name: "Tangerine Fashion World",
+    alternateName: "Tangerine",
     url: origin,
     potentialAction: {
       "@type": "SearchAction",

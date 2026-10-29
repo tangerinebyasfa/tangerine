@@ -246,8 +246,7 @@ export default function Footer() {
                 className="mx-auto h-14 w-auto object-contain"
               />
               <p className="mx-auto mt-5 max-w-[18rem] text-sm leading-7 text-paper/78">
-                Tangerine brings together considered clothing, clean silhouettes, and a warm brand
-                language designed for everyday dressing with confidence.
+                Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.
               </p>
             </div>
 

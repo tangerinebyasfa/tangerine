@@ -29,11 +29,33 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Tangerine Fashion World",
+  title: "Tangerine Fashion World | Clothing in Mumbai & Ratnagiri",
+  description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
+  keywords: [
+    "Tangerine",
+    "Tangerine Fashion World",
+    "Tangerine World",
+    "Tangerine clothing",
+    "Tangerine clothes",
+    "Tangerine brand",
+    "Tangerine shop",
+    "Tangerine shopping",
+    "Tangerine Mumbai",
+    "Tangerine AUM",
+    "Tangerine Atharva University Mumbai",
+    "Tangerine Atharva University",
+    "Tangerine Blue Ocean Resort",
+    "Tangerine Ratnagiri",
+    "Tangerine Blue Ocean The Fern Resort & Spa",
+    "Atharva University Mumbai",
+    "Atharva University",
+    "AUM",
+    "Blue Ocean Resort",
+    "Blue Ocean The Fern Resort & Spa",
+  ],
   icons: {
     icon: "/Images/favicon.png",
   },
-  description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
 };
 
 export default function RootLayout({ children }) {
