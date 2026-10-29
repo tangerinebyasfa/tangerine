@@ -19,7 +19,7 @@ const MAIN_TYPES = ["accessories", "clothes", "footwear"];
 const TYPE_COPY = {
   accessories: {
     title: "Accessories",
-    // description: "Browse all accessories from the current edit.",
+    description: "The cherry on top? Our accessories!",
   },
   clothes: {
     title: "Clothes",
@@ -32,10 +32,10 @@ const TYPE_COPY = {
 };
 
 const SUBCATEGORY_DESCRIPTIONS = {
-  indian: "Wear your perspective",
-  western: "Wear your perspective",
-  casual: "Wear your perspective",
-  corporate: "Wear your perspective",
+  indian: "Set your festive scene with Tangerine",
+  western: "Tangy by nature, Chic by choice",
+  casual: "Too zest-y to be basic",
+  corporate: "Step out of the ordinary and into Tangerine",
 };
 
 const OUTLET_LOCATIONS = [
@@ -259,12 +259,12 @@ export default function CategoryPage() {
       : isOutlet
         ? "Explore our two locations with details for your next visit!"
         : isAll
-          ? "Browse the full range from this edit."
+          ? "They’ll be looking anyway, Give them a good reason to with Tangerine"
           : SUBCATEGORY_DESCRIPTIONS[categorySlug]
             ? SUBCATEGORY_DESCRIPTIONS[categorySlug]
             : categorySlug === "accessories"
               ? categoryInfo?.description || typeCopy?.description || ""
-              : categoryInfo?.description || typeCopy?.description || "Browse the full range from this edit.";
+              : categoryInfo?.description || typeCopy?.description || "They’ll be looking anyway, Give them a good reason to with Tangerine";
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16">
