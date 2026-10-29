@@ -259,7 +259,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <Link href="/products/casual" className="block max-w-full">
+        <Link href="/products/western" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[3].desktop}
             mobile={homeImages[3].mobile}
