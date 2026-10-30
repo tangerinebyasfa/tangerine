@@ -278,7 +278,7 @@ export default function ProductForm({ initialProduct = null }) {
           />
           <Input
             label="Slug"
-            placeholder="auto-generated from name if left blank"
+            placeholder="auto-generated from name"
             value={form.slug}
             onChange={(e) => handleChange("slug", e.target.value)}
           />
@@ -294,6 +294,7 @@ export default function ProductForm({ initialProduct = null }) {
             textarea
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
+            required
           />
           <Input
             label="Image URLs"
@@ -392,6 +393,7 @@ export default function ProductForm({ initialProduct = null }) {
                 value={form.productType}
                 onChange={(e) => handleChange("productType", e.target.value)}
                 className="input-field"
+                required
               >
                 <option value="">Product Type</option>
                 {PRODUCT_TYPES.map((type) => (
@@ -407,6 +409,7 @@ export default function ProductForm({ initialProduct = null }) {
                 value={form.categorySlug}
                 onChange={(e) => handleChange("categorySlug", e.target.value)}
                 className="input-field"
+                required
               >
                 <option value="">Subtype</option>
                 {subtypeOptions.map((subtype) => (
@@ -423,6 +426,7 @@ export default function ProductForm({ initialProduct = null }) {
             placeholder="XS, S, M, L, XL"
             value={form.sizes}
             onChange={(e) => handleChange("sizes", e.target.value)}
+            required
           />
           <Input
             label="Colors"
@@ -447,6 +451,7 @@ export default function ProductForm({ initialProduct = null }) {
             textarea
             value={form.materials}
             onChange={(e) => handleChange("materials", e.target.value)}
+            required
           />
           <Input
             label="Wash Care"
@@ -454,6 +459,7 @@ export default function ProductForm({ initialProduct = null }) {
             textarea
             value={form.washCare}
             onChange={(e) => handleChange("washCare", e.target.value)}
+            required
           />
           <Input
             label="Delivery Info"
@@ -469,6 +475,7 @@ export default function ProductForm({ initialProduct = null }) {
             placeholder="Enter any other relevant details"
             value={form.additionalInfo}
             onChange={(e) => handleChange("additionalInfo", e.target.value)}
+            required
           />
 
           <div className="flex gap-3">
