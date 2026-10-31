@@ -1,4 +1,4 @@
-import { Fraunces, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
@@ -15,17 +15,27 @@ import { getRequestOrigin } from "../SEO/schemaUtils";
 import { createOrganizationSchema } from "../SEO/organizationSchema";
 import { createWebsiteSchema } from "../SEO/websiteSchema";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
+const fraunces = localFont({
+  src: [
+    {
+      path: "./fonts/fraunces-latin.woff2",
+      weight: "400 600",
+      style: "normal",
+    },
+    {
+      path: "./fonts/fraunces-italic-latin.woff2",
+      weight: "400 600",
+      style: "italic",
+    },
+  ],
   variable: "--font-fraunces",
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "./fonts/inter-latin.woff2",
   variable: "--font-inter",
-  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata = {
