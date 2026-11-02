@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import Script from "next/script";
 import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
@@ -38,6 +39,8 @@ const inter = localFont({
   display: "swap",
 });
 
+const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
+
 export const metadata = {
   title: "Tangerine Fashion World",
   description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
@@ -74,6 +77,24 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
+      <head>
+        {gtmId ? (
+          <>
+            <Script
+              async
+              src={`https://www.googletagmanager.com/gtm.js?id=${gtmId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-tag-manager" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+              `}
+            </Script>
+          </>
+        ) : null}
+      </head>
       <body>
         <StructuredData schema={createOrganizationSchema(origin)} />
         <StructuredData schema={createWebsiteSchema(origin)} />
