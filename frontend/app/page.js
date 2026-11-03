@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination } from "swiper/modules";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import { api } from "../lib/api";
@@ -167,7 +167,10 @@ export default function HomePage() {
         <h1 className="sr-only">Tangerine</h1>
         <section className="relative w-full max-w-[100vw] overflow-hidden  mb-5 md:mb-10">
           <Swiper
-            modules={[Pagination]}
+            modules={[Autoplay, Navigation, Pagination]}
+            navigation={{ prevEl: ".home-hero-prev", nextEl: ".home-hero-next" }}
+            autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
+            speed={900}
             pagination={{ clickable: true }}
             grabCursor
             simulateTouch
@@ -202,7 +205,25 @@ export default function HomePage() {
             ))}
           </Swiper>
 
+          {/* <button
+            type="button"
+            aria-label="Previous slide"
+            className="home-hero-prev absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next slide"
+            className="home-hero-next absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur transition hover:bg-black/55 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button> */}
+
           <style jsx global>{`
+            .home-hero-swiper {
+              --swiper-wrapper-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+            }
             .home-hero-swiper .swiper-pagination {
               bottom: 16px;
             }

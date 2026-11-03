@@ -18,6 +18,7 @@ import { useAuth } from "../../../context/AuthContext";
 import Button from "../../../components/ui/Button";
 import Spinner from "../../../components/ui/Spinner";
 import ProductCard from "../../../components/product/ProductCard";
+import ImageZoom from "../../../components/product/ImageZoom";
 import WishlistButton from "../../../components/wishlist/WishlistButton";
 import { Bell, Check, Copy, Headset, Star } from "lucide-react";
 import { addProductNotification } from "../../../lib/notifications";
@@ -790,7 +791,10 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
               )}
 
               <div className="order-1 md:order-2 relative flex-1">
-                <div className="relative aspect-[3/4] bg-sand overflow-hidden">
+                <ImageZoom
+                  src={displayImages[activeImage] || displayImages[0]}
+                  className="aspect-[3/4] bg-sand overflow-hidden"
+                >
                   <Image
                     src={displayImages[activeImage] || displayImages[0]}
                     alt={product.name}
@@ -806,7 +810,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                         type="button"
                         onClick={goToPreviousImage}
                         aria-label="Previous image"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-paper"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-paper"
                       >
                         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]">
                           <path d="M15 18l-6-6 6-6" />
@@ -816,7 +820,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                         type="button"
                         onClick={goToNextImage}
                         aria-label="Next image"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-paper"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-paper/90 text-ink shadow-sm transition-colors hover:bg-paper"
                       >
                         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]">
                           <path d="M9 6l6 6-6 6" />
@@ -824,7 +828,7 @@ export default function ProductDetailClient({ initialProduct = null, relatedProd
                       </button>
                     </>
                   )}
-                </div>
+                </ImageZoom>
               </div>
             </div>
 
