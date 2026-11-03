@@ -26,6 +26,11 @@ export default function ProductResults({ products, categoryOptions = [], default
     return [...choices.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [facets.categories, categoryOptions]);
   const visible = filterProducts(products, effectiveFilters);
+  const categoryTotal = useMemo(() => {
+    const wanted = effectiveFilters.categoryFilter.trim().toLowerCase();
+    if (!wanted) return products.length;
+    return products.filter(product => String(product.categorySlug || product.productType || '').trim().toLowerCase() === wanted).length;
+  }, [products, effectiveFilters.categoryFilter]);
   const invalidRange = filters.minPrice && filters.maxPrice && Number(filters.minPrice) > Number(filters.maxPrice);
   const active = fields.filter(field => filters[field] && filters[field] !== ALL_CATEGORIES);
   function change(field, value) {
@@ -51,7 +56,7 @@ export default function ProductResults({ products, categoryOptions = [], default
       <div className="flex flex-wrap gap-6 text-sm"><label className="flex items-center gap-2"><input type="checkbox" checked={filters.stock === '1'} onChange={e => change('stock', e.target.checked ? '1' : '')} /> In stock only</label><label className="flex items-center gap-2"><input type="checkbox" checked={filters.sale === '1'} onChange={e => change('sale', e.target.checked ? '1' : '')} /> On sale</label></div>
       {invalidRange && <p role="alert" className="text-sm text-rose-700">Minimum price must not exceed maximum price.</p>}
     </div>}
-    {!noVisibleProducts && <p aria-live="polite" className="text-sm text-ink/65">{visible.length} of {products.length} products</p>}
+    {!noVisibleProducts && <p aria-live="polite" className="text-sm text-ink/65">{visible.length} of {categoryTotal} products</p>}
     {visible.length ? <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">{visible.map(product => <ProductCard key={product.id} product={product} />)}</div> : <div className="text-ink/50 text-md text-center"><p>{(resolvedCategoryFilter === 'corporate' || effectiveFilters.categoryFilter === 'corporate') ? 'Your boss lady look is coming soon!' : 'No products match these filters.'}</p>{(resolvedCategoryFilter === 'corporate' || effectiveFilters.categoryFilter === 'corporate') ? null : <button type="button" onClick={clear} className="mt-3 text-tangerine underline">Clear filters and try again</button>}</div>}
   </section>;
 }
