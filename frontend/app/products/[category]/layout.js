@@ -1,9 +1,20 @@
+const CATEGORY_TITLES = {
+  indian: "Indian",
+  casual: "Casual",
+  western: "Western",
+  corporate: "Corporate",
+  outlet: "Outlet",
+};
+
 export function generateMetadata({ params }) {
-  if (params.category !== "outlet") return {};
+  const categoryTitle = CATEGORY_TITLES[params.category];
+  if (!categoryTitle) return {};
 
   return {
-    title: "Outlet | Tangerine",
-    description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
+    title: `${categoryTitle} | Tangerine`,
+    ...(params.category === "outlet" && {
+      description: "Tangerine brings a refined perspective to everyday dressing, defined by clean silhouettes, considered details, and an understated warmth that feels distinctly its own.",
+    }),
   };
 }
 
