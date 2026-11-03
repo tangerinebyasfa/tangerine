@@ -224,8 +224,7 @@ export default function ProductForm({ initialProduct = null }) {
         throw new Error("Please enter a valid stock amount.");
       }
 
-      // Parcel fields are required so Shiprocket can create a shipment for the
-      // order without staff touching the dispatch panel.
+      // Parcel fields are required for fulfilling the order.
       for (const field of ["weight", "length", "breadth", "height"]) {
         if (!(payload[field] > 0)) {
           throw new Error(`Please enter a ${field === "weight" ? "weight" : `${field} dimension`} greater than 0.`);
@@ -347,7 +346,7 @@ export default function ProductForm({ initialProduct = null }) {
             </label>
           </div>
 
-          <p className="text-sm text-ink/55 mb-2">Parcel (used to create the Shiprocket shipment)</p>
+          <p className="text-sm text-ink/55 mb-2">Parcel dimensions</p>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Weight (kg)"

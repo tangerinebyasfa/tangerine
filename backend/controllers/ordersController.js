@@ -1,6 +1,5 @@
 const { db } = require("../config/firebaseAdmin");
-const { orderService: service, shipmentService, applyTrackingStatus, shiprocket } = require("../config/services");
-const razorpay = require("../lib/razorpay");
+const { orderService: service } = require("../config/services");
 const ordersRef = db.collection("orders");
 
 function failure(res, err) {
@@ -29,8 +28,6 @@ function serializeOrder(doc) {
         }))
       : [],
     displayOrderId: data.orderId || doc.id,
-    // Public key id, so the browser can open Checkout without a second env var.
-    razorpayKeyId: razorpay.keyId() || null,
   };
 }
 
@@ -49,16 +46,6 @@ exports.createOrder = async (req, res) => {
   try { res.status(201).json(serializeOrder(await service.create(req.body || {}, req.user))); }
   catch (err) { failure(res, err); }
 };
-exports.verifyPayment = async (req, res) => {
-  try {
-    const { razorpayPaymentId, razorpaySignature } = req.body || {};
-    res.json(serializeOrder(await service.markPaid(req.params.id, { razorpayOrderId: null, razorpayPaymentId, razorpaySignature, source: "checkout" }, req.user)));
-  } catch (err) { failure(res, err); }
-};
-exports.releaseUnpaidOrder = async (req, res) => {
-  try { res.json(serializeOrder(await service.releaseUnpaid(req.params.id, req.user))); }
-  catch (err) { failure(res, err); }
-};
 exports.updateOrderStatus = async (req, res) => {
   try { res.json(serializeOrder(await service.update(req.params.id, req.body || {}, req.user))); }
   catch (err) { failure(res, err); }
@@ -68,47 +55,6 @@ exports.cancelOrder = async (req, res) => {
   catch (err) { failure(res, err); }
 };
 exports.deleteOrder = async (req, res) => res.status(405).json({ error: "Orders are retained for inventory and payment records. Cancel an eligible order instead." });
-
-// GET /api/orders/pickup-options (admin)
-// The pickup addresses registered on the Shiprocket account, so warehouse staff
-// can choose which one an order ships from.
-exports.getPickupOptions = async (req, res) => {
-  try {
-    const options = await shiprocket.listPickupLocations();
-    const defaultPickup = shiprocket.pickupLocation();
-    res.json({ options, default: defaultPickup });
-  } catch (err) {
-    if (err.status === 503) {
-      // Shiprocket not configured: the env default is still a valid option.
-      return res.json({ options: [{ code: shiprocket.pickupLocation() }], default: shiprocket.pickupLocation() });
-    }
-    failure(res, err);
-  }
-};
-
-// PUT /api/orders/:id/pickup (admin)
-exports.updateOrderPickup = async (req, res) => {
-  try {
-    const order = await shipmentService.changePickup(req.params.id, req.body?.pickupLocation);
-    res.json(serializeOrder(order));
-  } catch (err) { failure(res, err); }
-};
-
-// POST /api/orders/:id/tracking/refresh (owner or admin)
-// Pulls live tracking from Shiprocket on demand, throttled server-side.
-exports.refreshOrderTracking = async (req, res) => {
-  try {
-    const doc = await ordersRef.doc(req.params.id).get();
-    if (!doc.exists) return res.status(404).json({ error: "Order not found" });
-    const data = doc.data();
-    if (req.user.role !== "admin" && data.userId !== req.user.uid) {
-      return res.status(403).json({ error: "Not authorized" });
-    }
-    const result = await shipmentService.refreshTracking(req.params.id);
-    const updated = (await applyTrackingStatus(req.params.id, result.suggestedStatus)) || result.order;
-    res.json(serializeOrder(updated));
-  } catch (err) { failure(res, err); }
-};
 
 // GET /api/orders/mine (logged-in user's own orders)
 exports.getMyOrders = async (req, res) => {

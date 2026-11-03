@@ -75,11 +75,10 @@ export default function OrderDetailPage() {
         ) : order ? (
           <OrderDetailsView
             order={order}
-            onOrderUpdated={(updated) => setOrder(updated)}
             title="Order Details"
             subtitle="This is the full receipt for your purchase, including shipping and item breakdown."
             actions={[
-              ["pending", "processing"].includes(order.status) ? <button key="cancel" type="button" disabled={cancelling} onClick={cancelOrder} className="border border-rose-200 px-4 py-2 text-sm text-rose-700 disabled:opacity-50">{cancelling ? "Cancelling?" : "Cancel order"}</button> : null,
+              order.paymentMethod === "cod" && ["pending", "processing"].includes(order.status) ? <button key="cancel" type="button" disabled={cancelling} onClick={cancelOrder} className="border border-rose-200 px-4 py-2 text-sm text-rose-700 disabled:opacity-50">{cancelling ? "Cancelling?" : "Cancel order"}</button> : null,
               <Link key="back" href="/profile#orders" className="inline-flex items-center gap-2 border border-ink/10 bg-white px-4 py-2 text-sm text-ink transition-colors hover:bg-sand">
                 <ArrowLeft className="h-4 w-4" />
                 Back to profile

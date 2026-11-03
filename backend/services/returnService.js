@@ -1,5 +1,4 @@
 const { fail, text, hash, money } = require('../lib/cod');
-const gatewayErrors = require('../lib/razorpay');
 
 const RETURN_DAYS = 7;
 const states = {
@@ -42,7 +41,7 @@ function validateExchange(product, replacement, original) {
   if (replacement.size === (original.size || '') && replacement.color === (original.color || '')) fail('Choose a different size or colour for an exchange.');
 }
 
-function createReturnService({ db, razorpay }) {
+function createReturnService({ db }) {
   const orders = db.collection('orders');
   const requests = db.collection('returnRequests');
   const products = db.collection('products');
@@ -111,8 +110,6 @@ function createReturnService({ db, razorpay }) {
     const note = text(payload.note);
     if (note.length > 1000) fail('Keep the update within 1,000 characters.');
     const ref = requests.doc(id);
-    // Scoped outside the transaction: a gateway call must never run inside one.
-    let gatewayRefund = null;
     await db.runTransaction(async tx => {
       const snap = await tx.get(ref);
       if (!snap.exists) fail('Request not found.', 404);
@@ -157,44 +154,21 @@ function createReturnService({ db, razorpay }) {
         const order = orderSnap.data();
         const refundedAmount = money((order.refundedAmount || 0) + request.refundAmount);
         if (!Number.isFinite(refundedAmount) || refundedAmount > order.total) fail('Refund exceeds the remaining order balance.', 409);
-        // Prepaid orders refund through Razorpay; the reference comes from the API.
-        const needsGateway = Boolean(order.razorpayPaymentId);
-        if (needsGateway && !razorpay?.isConfigured()) fail('Refunds are not configured yet.', 503);
-        if (!needsGateway && (!text(payload.refundReference) || text(payload.refundReference).length > 200)) fail('Enter the manual refund reference for this order.');
-        tx.update(orderRef, { refundedAmount, paymentStatus: refundedAmount >= order.total ? 'refunded' : 'partially_refunded', updatedAt: now });
-        if (needsGateway) gatewayRefund = { orderRef, order, amount: request.refundAmount, reference: text(payload.refundReference) };
-        Object.assign(updates, { refundReference: text(payload.refundReference) || null, refundedAt: now, refundedBy: user.uid });
+        if (!text(payload.refundReference) || text(payload.refundReference).length > 200) fail('Enter the manual refund reference for this order.');
+        tx.update(orderRef, { refundedAmount, paymentStatus: refundedAmount >= order.total ? 'refunded' : 'partially_refunded', refundPending: false, updatedAt: now });
+        Object.assign(updates, { refundReference: text(payload.refundReference), refundedAt: now, refundedBy: user.uid });
       }
       if (next === 'completed' && request.type === 'exchange' && payload.deliveryConfirmed !== true) fail('Confirm that the replacement was delivered.');
       tx.update(ref, { ...updates, status: next, updatedAt: now,
         history: [...request.history, { status: next, at: now, by: user.uid, note: note || `Request ${next.replaceAll('_', ' ')}.` }],
       });
     });
-    if (gatewayRefund) {
-      try {
-        const receipt = await razorpay.refundPayment({
-          paymentId: gatewayRefund.order.razorpayPaymentId,
-          amount: gatewayRefund.amount,
-          notes: { orderId: gatewayRefund.order.orderId, returnId: request.id || ref.id },
-        });
-        await gatewayRefund.orderRef.update({ razorpayRefundId: receipt.id, refundPending: false, refundError: null, updatedAt: new Date() });
-        await ref.update({ refundReference: receipt.id, updatedAt: new Date() });
-      } catch (err) {
-        // Keep the return completed but flag it so staff can refund manually.
-        await gatewayRefund.orderRef.update({ refundPending: true, refundError: gatewayErrors.describeGatewayError(err), updatedAt: new Date() });
-      }
-    }
     return serialize(await ref.get());
   }
 
   async function listAll(user) {
     if (user.role !== 'admin') fail('Admin access required.', 403);
-    // Flag prepaid orders so the admin form can explain that Razorpay refunds
-    // them automatically instead of asking staff for a manual reference.
-    const listed = (await requests.get()).docs.map(serialize).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    const orderSnaps = await Promise.all([...new Set(listed.map(item => item.orderId))].map(id => orders.doc(id).get()));
-    const modes = new Map(orderSnaps.map(snap => [snap.id, snap.exists && Boolean(snap.data().razorpayPaymentId) ? 'gateway' : 'manual']));
-    return listed.map(item => ({ ...item, refundMode: modes.get(item.orderId) || 'manual' }));
+    return (await requests.get()).docs.map(serialize).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   return { create, update, listForOrder, listAll };
 }

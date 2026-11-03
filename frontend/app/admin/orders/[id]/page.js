@@ -27,24 +27,6 @@ export default function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("pending");
-  const [pickupOptions, setPickupOptions] = useState([]);
-  const [pickupDefault, setPickupDefault] = useState("");
-  const [pickup, setPickup] = useState("");
-  const [pickupSaving, setPickupSaving] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    api.getOrderPickupOptions().then((data) => {
-      if (!active) return;
-      setPickupOptions(Array.isArray(data?.options) ? data.options : []);
-      setPickupDefault(data?.default || "");
-    }).catch(() => {
-      if (active) setPickupOptions([]);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -59,7 +41,6 @@ export default function AdminOrderDetailPage() {
         if (!active) return;
         setOrder(data);
         setStatus(normalizeOrderStatus(data?.status));
-        setPickup((current) => current || data?.pickupLocation || data?.shiprocket?.pickupLocation || "");
       } catch (err) {
         if (active) {
           setError(err?.message || "Unable to load order");
@@ -78,31 +59,6 @@ export default function AdminOrderDetailPage() {
   }, [orderId]);
 
   const dirty = useMemo(() => normalizeOrderStatus(order?.status) !== normalizeOrderStatus(status), [order?.status, status]);
-
-  const storedPickup = useMemo(() => order?.pickupLocation || order?.shiprocket?.pickupLocation || pickupDefault || "", [order, pickupDefault]);
-  const effectivePickup = pickup || storedPickup || pickupOptions[0]?.code || "";
-  const pickupDirty = useMemo(() => Boolean(pickup) && pickup !== storedPickup, [pickup, storedPickup]);
-  const pickupLocked = useMemo(() => ["shipped", "delivered", "cancelled"].includes(normalizeOrderStatus(order?.status)), [order?.status]);
-
-  function handlePickupLabel(option) {
-    const bits = [option?.code, option?.city, option?.pinCode].filter(Boolean);
-    return bits.join(" · ");
-  }
-
-  async function handleSavePickup() {
-    if (!order?.id || !pickupDirty) return;
-
-    setPickupSaving(true);
-    try {
-      const updated = await api.updateOrderPickup(order.id, pickup);
-      setOrder(updated);
-      toast.success("Pickup location updated");
-    } catch (err) {
-      toast.error(err?.message || "Unable to update pickup location");
-    } finally {
-      setPickupSaving(false);
-    }
-  }
 
   async function handleSaveStatus() {
     if (!order?.id || !dirty) return;
@@ -171,7 +127,7 @@ export default function AdminOrderDetailPage() {
           <section><div class="orange">Ship To</div><div class="muted">${escapeHtml(summarizeShippingAddress(shippingAddress) || "No address available.")}</div></section></div>
         <table><thead><tr><th>Product</th><th>Size / Color</th><th>Qty</th><th class="amount">Price</th></tr></thead><tbody>${itemRows}</tbody></table>
         <div class="totals"><div><span>Subtotal</span><span>${escapeHtml(formatINR(Number(order.subtotal || 0)))}</span></div>${order.couponCode || order.discountCode ? `<div><span>Coupon Code</span><span>${escapeHtml(order.couponCode || order.discountCode)}</span></div><div><span>Coupon Discount</span><span>- ${escapeHtml(formatINR(Number(order.couponDiscountAmount ?? order.discount ?? 0)))}</span></div>` : `<div><span>Discount</span><span>- ${escapeHtml(formatINR(Number(order.discount || 0)))}</span></div>`}<div><span>Shipping</span><span>${escapeHtml(formatINR(Number(order.shipping || 0)))}</span></div><div class="total"><span>Final Total</span><span>${escapeHtml(formatINR(Number(order.total || 0)))}</span></div></div>
-        <footer>Payment method: ${escapeHtml(order.paymentMethod === "cod" ? "Cash on Delivery" : String(order.paymentMethod || "razorpay").toUpperCase())} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}${order.paymentMethod === "cod" && order.paymentStatus === "pending" ? " (pay on delivery)" : ""}</footer>
+        <footer>Payment method: ${escapeHtml(order.paymentMethod === "cod" || !order.paymentMethod ? "Cash on Delivery" : "Online Payment")} | Payment status: ${escapeHtml(order.paymentStatus || "pending")}${order.paymentMethod === "cod" && order.paymentStatus === "pending" ? " (pay on delivery)" : ""}</footer>
       </main><script>window.onload = function () { window.print(); };</script></body></html>`);
     invoiceWindow.document.close();
   }
@@ -232,28 +188,6 @@ export default function AdminOrderDetailPage() {
                     </select>
                   </label>
 
-                  <label className="block">
-                    <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-ink/40">Ship from</span>
-                    <select
-                      value={effectivePickup}
-                      onChange={(event) => setPickup(event.target.value)}
-                      disabled={pickupLocked}
-                      className="min-w-[220px] border border-ink/15 bg-white px-4 py-3 text-sm text-ink outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {pickupOptions.length ? (
-                        pickupOptions.map((option) => (
-                          <option key={option.code} value={option.code}>
-                            {handlePickupLabel(option)}
-                          </option>
-                        ))
-                      ) : (
-                        <option value={pickupDefault || ""}>{pickupDefault ? `${pickupDefault} · default` : "No pickup options loaded"}</option>
-                      )}
-                    </select>
-                    {pickupLocked ? (
-                      <span className="mt-1 block text-xs text-ink/50">Pickup is locked once the order ships.</span>
-                    ) : null}
-                  </label>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -267,29 +201,18 @@ export default function AdminOrderDetailPage() {
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     Save Status
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleSavePickup}
-                    disabled={pickupSaving || !pickupDirty || pickupLocked}
-                    className="inline-flex items-center justify-center gap-2 border border-tangerine bg-white px-5 py-3 text-sm font-medium text-tangerine transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {pickupSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    Save Pickup
-                  </button>
-
-                 
                 </div>
               </div>
             </div>
           </div>
 
           <Link href="/admin/returns" className="inline-block text-sm text-tangerine underline">Manage returns and exchanges</Link>
-          <OrderDetailsView order={order} onOrderUpdated={(updated) => setOrder(updated)} title="Full Order" subtitle="Complete customer, delivery, payment, and product information." showCustomer />
+          <OrderDetailsView order={order} title="Full Order" subtitle="Complete customer, delivery, payment, and product information." showCustomer />
 
           <div className="border border-ink/10 bg-white p-4 sm:p-6">
             <p className="font-display text-2xl text-ink">Admin Notes</p>
             <p className="mt-2 text-sm leading-6 text-ink/60">
-              Move orders forward as they are fulfilled. Cancel only before shipment; cancelling a paid order issues a refund to the original payment method automatically. Completed orders are retained for your records.
+              Move orders forward as they are fulfilled. Cancel only before shipment. Any refund for a historical prepaid order must be handled manually. Completed orders are retained for your records.
             </p>
           </div>
         </div>

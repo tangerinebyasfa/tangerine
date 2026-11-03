@@ -1,7 +1,6 @@
 const { db } = require('../config/firebaseAdmin');
 const { createReturnService } = require('../services/returnService');
-const razorpay = require('../lib/razorpay');
-const service = createReturnService({ db, razorpay });
+const service = createReturnService({ db });
 const handle = fn => async (req, res) => {
   try { res.json(await fn(req)); }
   catch (error) { res.status(error.status || 500).json({ error: error.status ? error.message : 'Return service unavailable. Please retry.' }); }

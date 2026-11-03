@@ -1,9 +1,3 @@
 {
-  "regions": ["bom1"],
-  "crons": [
-    {
-      "path": "/api/cron/shipment-sweep",
-      "schedule": "0 1 * * *"
-    }
-  ]
+  "regions": ["bom1"]
 }

@@ -62,6 +62,8 @@ test('return approval, inspection and refund completion are guarded and idempote
   await Promise.all([service.update(created.id, { status: 'received', inspected: true, restock: true }, admin), service.update(created.id, { status: 'received', inspected: true, restock: true }, admin)]);
   assert.equal(db.data.get('products/dress').stock, 5);
   await assert.rejects(service.update(created.id, { status: 'completed', refundConfirmed: true, refundAmount: 9999, refundReference: 'REF-1' }, admin), { status: 400 });
+  // Every refund is manual now, so a reference is required.
+  await assert.rejects(service.update(created.id, { status: 'completed', refundConfirmed: true, refundAmount: 180 }, admin), { status: 400 });
   const completion = { status: 'completed', refundConfirmed: true, refundAmount: 180, refundReference: 'REF-1' };
   await Promise.all([service.update(created.id, completion, admin), service.update(created.id, completion, admin)]);
   assert.equal(db.data.get('orders/order-1').refundedAmount, 180);

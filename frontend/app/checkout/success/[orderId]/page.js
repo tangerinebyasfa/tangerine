@@ -10,7 +10,6 @@ import {
   Loader2,
   MapPin,
   Package2,
-  ShieldCheck,
   ShoppingBag,
   Truck,
   Wallet,
@@ -84,12 +83,7 @@ export default function OrderSuccessPage() {
   const discount = Number(order?.discount || 0);
   const total = Number(order?.total || 0);
   const isCod = order?.paymentMethod === "cod";
-  const paymentMethod = isCod ? "Cash on Delivery" : "Online Payment";
-  const paymentDetails = isCod
-    ? "Cash on Delivery"
-    : order?.paymentProvider
-      ? `${paymentMethod} (${order.paymentProvider})`
-      : paymentMethod;
+  const paymentDetails = isCod ? "Cash on Delivery" : "Online Payment";
   const shippingMethod = shipping > 0 ? "Standard Delivery" : "Free Shipping";
   const shippingEta = shipping > 0 ? "3 - 5 business days" : "Free";
 
@@ -140,7 +134,7 @@ export default function OrderSuccessPage() {
                   <p className="max-w-2xl text-sm leading-7 text-ink/70 sm:text-base">
                     {isCod
                       ? "Your cash-on-delivery order is confirmed. Pay the confirmed total when it arrives. View your order details for status updates or cancellation before shipment."
-                      : "Your payment is received and your order is confirmed. View your order details for status updates or cancellation before shipment."}
+                      : "Your order is confirmed. View your order details for status updates, or contact support for help with this historical order."}
                   </p>
                 </div>
 
@@ -270,10 +264,10 @@ export default function OrderSuccessPage() {
                           </>
                         ) : (
                           <>
-                            <ShieldCheck className="mt-0.5 h-5 w-5 text-tangerine" />
+                            <Wallet className="mt-0.5 h-5 w-5 text-tangerine" />
                             <div>
-                              <p className="font-medium text-ink">Paid Online</p>
-                              <p className="mt-1 text-sm leading-6 text-ink/60">Paid securely via Razorpay. Refunds go back to the same payment method.</p>
+                              <p className="font-medium text-ink">Online Payment</p>
+                              <p className="mt-1 text-sm leading-6 text-ink/60">This is a historical prepaid order. Contact support if you need refund assistance.</p>
                             </div>
                           </>
                         )}

@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
           title: "Sharing Information",
           paragraphs: [
             "Your privacy matters to us. Tangerine does not sell or rent your personal information.",
-            "We may share necessary information with trusted partners who help us operate our business, such as payment processors, delivery partners, technology providers, and customer-support services. These partners receive only the information required to perform their services.",
+            "We may share necessary information with trusted partners who help us operate our business, such as delivery partners, technology providers, and customer-support services. These partners receive only the information required to perform their services.",
             "We may also disclose information when required by law or when necessary to protect our customers, business, or legal rights."
           ],
         },

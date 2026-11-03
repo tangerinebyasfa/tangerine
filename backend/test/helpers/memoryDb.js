@@ -15,8 +15,8 @@ class MemoryDb {
       },
     };
   }
-  // Mirrors DocumentReference: reads and non-transactional updates, like the
-  // gateway-order and refund writes the payment flow performs after a commit.
+  // Mirrors DocumentReference: reads and non-transactional updates performed
+  // outside a transaction.
   ref(path) {
     return {
       path,

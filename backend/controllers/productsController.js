@@ -40,8 +40,7 @@ function normalizeNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-// Parcel dimensions every product must carry: Shiprocket refuses an order
-// without weight/dimensions, and defaults only exist for legacy records.
+// Every product must carry valid parcel weight and dimensions.
 function readPackageDimension(body, field) {
   const value = normalizeNumber(body[field]);
   if (value === null || value <= 0) return null;

@@ -54,9 +54,9 @@ export default function TermsAndConditionsPage() {
         {
           title: "Payments",
           paragraphs: [
-            "Tangerine accepts the payment methods displayed at checkout, which may include cards, UPI, net banking, wallets and other available payment options.",
-            "Payments may be processed through third-party payment providers. Your payment information may therefore be subject to the terms and privacy policies of those providers.",
-            "You confirm that you are authorised to use the payment method used for your purchase."
+            "Tangerine currently accepts Cash on Delivery. The confirmed order total must be paid in cash when the order is delivered.",
+            "No card, UPI, or banking details are required to place a cash-on-delivery order.",
+            "You are responsible for providing accurate order and delivery information and ensuring that payment is available when your order arrives."
           ],
         },
         {
@@ -110,7 +110,7 @@ export default function TermsAndConditionsPage() {
         {
           title: "Third-Party Services",
           paragraphs: [
-            "Our website may use third-party services including payment gateways, delivery partners, analytics providers and other technology services.",
+            "Our website may use third-party services including delivery partners, analytics providers and other technology services.",
             "These services may operate under their own terms and privacy policies.",
             "Tangerine is not responsible for the independent practices, content or policies of third-party websites and services."
           ],

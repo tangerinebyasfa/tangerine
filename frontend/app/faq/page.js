@@ -13,7 +13,7 @@ export default function FaqPage() {
           title: "ORDERS & SHOPPING",
           paragraphs: [
             "How can I place an order?" ,
-            "Browse our collection, select your preferred size, and add the product to your cart. Proceed to checkout, enter your delivery details, and complete the payment to place your order.",
+            "Browse our collection, select your preferred size, and add the product to your cart. Proceed to checkout, enter your delivery details, and place your cash-on-delivery order.",
             "Do I need an account to place an order?",
             "No. You can shop using guest checkout. Creating an account simply makes it easier to manage your orders and personal details.",
             "Can I cancel or modify my order?",
@@ -53,11 +53,11 @@ export default function FaqPage() {
           title: "PAYMENTS",
           paragraphs: [
             "What payment methods do you accept?",
-            "Available payment methods will be displayed at checkout and may include UPI, credit/debit cards, net banking and other supported options.",
-            "Is my payment information secure?",
-            "Yes. Payments are processed through secure payment gateways. Tangerine does not directly store your complete card or banking details.",
-            "What if my payment was deducted but my order was not confirmed?",
-            "Please allow some time for the payment status to update. If your order remains unconfirmed, contact our support team with your transaction details."
+            "We currently accept Cash on Delivery. Pay the confirmed order total in cash when your order arrives.",
+            "Do I need to share card or banking details?",
+            "No. Cash on Delivery does not require you to share card, UPI, or banking details during checkout.",
+            "When is my order confirmed?",
+            "Your order is confirmed as soon as it is placed successfully. No online payment is required before delivery."
           ],
         },
          {

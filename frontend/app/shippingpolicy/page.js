@@ -11,7 +11,7 @@ export default function ShippingPolicyPage() {
         {
           title: "Order Processing",
           paragraphs: [
-            "Orders are typically processed after payment confirmation and stock verification.",
+            "Orders are typically processed after order confirmation and stock verification.",
             "You will receive updates when your order is packed, dispatched, or out for delivery where supported.",
           ],
         },
