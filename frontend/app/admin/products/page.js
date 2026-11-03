@@ -221,7 +221,7 @@ export default function AdminProductsPage() {
             setCurrentPage(1);
           }}
           placeholder="Search by name, code, type, or category"
-          className="w-full max-w-md border border-ink/20 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink/40 focus:border-burgundy"
+          className="w-full max-w-md border border-ink/20 bg-white px-3 py-3 text-sm text-ink outline-none transition-colors placeholder:text-[11px] placeholder:text-ink/40 focus:border-burgundy sm:px-4 sm:placeholder:text-sm [&::-webkit-search-cancel-button]:brightness-0"
         />
       </div>
 
