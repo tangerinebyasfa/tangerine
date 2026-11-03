@@ -21,6 +21,8 @@ const PRODUCT_TYPES = [
   // { value: "footwear", label: "Footwear" },
 ];
 
+const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL"];
+
 const emptyForm = {
   name: "",
   slug: "",
@@ -63,6 +65,26 @@ function toCommaList(value) {
     .filter(Boolean);
 }
 
+// Keep only letters, commas and spaces while typing so invalid characters
+// can never be entered, and mirror lowercase input to uppercase.
+function sanitizeSizesInput(value) {
+  return String(value || "")
+    .replace(/[^a-zA-Z,\s]/g, "")
+    .toUpperCase();
+}
+
+// Keep only the allowed sizes, upper-cased and de-duplicated.
+function normalizeSizes(value) {
+  const seen = new Set();
+  return toCommaList(value)
+    .map((size) => size.toUpperCase())
+    .filter((size) => {
+      if (!SIZE_OPTIONS.includes(size) || seen.has(size)) return false;
+      seen.add(size);
+      return true;
+    });
+}
+
 function toTextValue(value) {
   if (Array.isArray(value)) {
     return value
@@ -97,7 +119,9 @@ function normalizeForm(product = null) {
     stock: Number(product.stock ?? 0),
     productType: product.productType || product.categoryParentType || "",
     categorySlug: product.categorySlug || "",
-    sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
+    sizes: normalizeSizes(
+      Array.isArray(product.sizes) ? product.sizes.join(", ") : product.sizes
+    ).join(", "),
     colors: Array.isArray(product.colors) ? product.colors.join(", ") : "",
     sizeGuide: toTextValue(product.sizeGuide),
     returnEligible: product.returnEligible !== false,
@@ -163,7 +187,7 @@ export default function ProductForm({ initialProduct = null }) {
   function buildPayload() {
     if (parseSizeGuide(form.sizeGuide).error) throw new Error(parseSizeGuide(form.sizeGuide).error);
     const images = toCommaList(form.images).map((image) => normalizeImageUrl(image)).filter(Boolean);
-    const sizes = toCommaList(form.sizes);
+    const sizes = normalizeSizes(form.sizes);
     const colors = toCommaList(form.colors);
     const additionalInfo = parseAdditionalInfoText(form.additionalInfo);
 
@@ -214,6 +238,18 @@ export default function ProductForm({ initialProduct = null }) {
 
       if (!payload.images.length) {
         throw new Error("Please add at least one product image URL.");
+      }
+
+      const invalidSizes = toCommaList(form.sizes).filter(
+        (size) => !SIZE_OPTIONS.includes(size.toUpperCase())
+      );
+      if (invalidSizes.length) {
+        throw new Error(
+          `Sizes must be chosen from ${SIZE_OPTIONS.join(", ")}. Remove: ${invalidSizes.join(", ")}.`
+        );
+      }
+      if (!payload.sizes.length) {
+        throw new Error("Please add at least one size.");
       }
 
       if (Number.isNaN(payload.price) || payload.price < 0) {
@@ -425,7 +461,8 @@ export default function ProductForm({ initialProduct = null }) {
             label="Sizes"
             placeholder="XS, S, M, L, XL"
             value={form.sizes}
-            onChange={(e) => handleChange("sizes", e.target.value)}
+            onChange={(e) => handleChange("sizes", sanitizeSizesInput(e.target.value))}
+            onBlur={(e) => handleChange("sizes", normalizeSizes(e.target.value).join(", "))}
             required
           />
           <Input
