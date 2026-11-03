@@ -278,12 +278,13 @@ export default function ProductForm({ initialProduct = null }) {
           />
           <Input
             label="Slug"
-            placeholder="auto-generated from name"
+            placeholder="Auto-generated from name"
             value={form.slug}
             onChange={(e) => handleChange("slug", e.target.value)}
           />
           <Input
             label="Internal Code"
+            required
             placeholder="SKU / product code"
             value={form.internalCode}
             onChange={(e) => handleChange("internalCode", e.target.value)}

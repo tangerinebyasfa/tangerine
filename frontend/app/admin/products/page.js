@@ -8,6 +8,8 @@ import Spinner from "../../../components/ui/Spinner";
 import Button from "../../../components/ui/Button";
 import { formatINR } from "../../../lib/currency";
 
+const PRODUCTS_PER_PAGE = 20;
+
 function ProductCardMobile({ product, stockValue, saving, onStockChange, onStockShift, onStockSave, onDelete }) {
   return (
     <article className="border border-ink/10 bg-white p-4">
@@ -100,8 +102,24 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [stockDrafts, setStockDrafts] = useState({});
   const [savingStockIds, setSavingStockIds] = useState(() => new Set());
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const productsById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return products;
+
+    return products.filter((product) =>
+      [product.name, product.internalCode, product.productType || product.categoryParentType, product.categorySlug]
+        .some((value) => String(value || "").toLowerCase().includes(query))
+    );
+  }, [products, search]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
 
   async function load() {
     setLoading(true);
@@ -121,6 +139,10 @@ export default function AdminProductsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   async function handleDelete(id) {
     if (!confirm("Delete this product? This cannot be undone.")) return;
@@ -188,14 +210,31 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
+      <div className="mb-6">
+        <label htmlFor="product-search" className="sr-only">Search products</label>
+        <input
+          id="product-search"
+          type="search"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setCurrentPage(1);
+          }}
+          placeholder="Search by name, code, type, or category"
+          className="w-full max-w-md border border-ink/20 bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink/40 focus:border-burgundy"
+        />
+      </div>
+
       {loading ? (
         <Spinner />
       ) : products.length === 0 ? (
         <p className="text-ink/50 text-sm">No products yet. Add your first one.</p>
+      ) : filteredProducts.length === 0 ? (
+        <p className="text-ink/50 text-sm">No products match your search.</p>
       ) : (
         <>
           <div className="space-y-3 lg:hidden">
-            {products.map((p) => (
+            {paginatedProducts.map((p) => (
               <ProductCardMobile
                 key={p.id}
                 product={p}
@@ -224,7 +263,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
-                {products.map((p) => (
+                {paginatedProducts.map((p) => (
                   <tr key={p.id}>
                     <td className="py-3 pr-4">{p.name}</td>
                     <td className="py-3 pr-4 font-mono text-xs text-ink/60">{p.internalCode || "—"}</td>
@@ -286,6 +325,31 @@ export default function AdminProductsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
+            <p className="text-sm text-ink/60">
+              Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="border border-ink/20 px-4 py-2 text-sm transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-ink/60">Page {currentPage} of {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={currentPage === totalPages}
+                className="border border-ink/20 px-4 py-2 text-sm transition-colors hover:bg-sand disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </>
       )}
