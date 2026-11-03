@@ -93,8 +93,10 @@ function HomepageImage({ desktop, mobile, alt, priority = false }) {
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [westernProducts, setWesternProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const featuredScrollRef = useRef(null);
+  const westernScrollRef = useRef(null);
 
   const homepageCategories = categories
     .filter((category) => HOMEPAGE_CATEGORY_SLUGS.includes(String(category.slug || "").trim().toLowerCase()))
@@ -112,6 +114,14 @@ export default function HomePage() {
     node.scrollBy({ left: amount * direction, behavior: "smooth" });
   }
 
+  function scrollWestern(direction) {
+    const node = westernScrollRef.current;
+    if (!node) return;
+
+    const amount = Math.max(320, Math.round(node.clientWidth * 0.72));
+    node.scrollBy({ left: amount * direction, behavior: "smooth" });
+  }
+
   useEffect(() => {
     let active = true;
 
@@ -123,6 +133,16 @@ export default function HomePage() {
       .catch((error) => {
         console.error(error);
         if (active) setFeaturedProducts([]);
+      });
+
+    api
+      .getProducts({ featured: "true", category: "western" })
+      .then((products) => {
+        if (active) setWesternProducts(Array.isArray(products) ? products : []);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) setWesternProducts([]);
       });
 
     api
@@ -211,11 +231,11 @@ export default function HomePage() {
           />
         </Link> */}
 
-        {/* {featuredProducts.length > 0 && (
+        {featuredProducts.length > 0 && (
           <section className="mx-auto w-[96%] py-14 md:w-5/5">
             <div className="mb-4 flex items-center justify-end gap-4">
               <Link
-                href="/products/all"
+                href="/products/indian"
                 className="ml-auto inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
               >
                 View All
@@ -258,9 +278,9 @@ export default function HomePage() {
               </div>
             </div>
           </section>
-        )} */}
+        )}
 
-        <Link href="/products/western" className="block max-w-full mt-8">
+        <Link href="/products/western" className="block max-w-full">
           <HomepageImage
             desktop={homeImages[3].desktop}
             mobile={homeImages[3].mobile}
@@ -269,12 +289,11 @@ export default function HomePage() {
         </Link>
 
 
-        {console.log("Featured Products:", featuredProducts)}
-        {featuredProducts.length > 0 && (
+        {westernProducts.length > 0 && (
           <section className="mx-auto w-[96%] py-14 md:w-5/5">
             <div className="mb-4 flex items-center justify-end gap-4">
               <Link
-                href="/products/all"
+                href="/products/western"
                 className="ml-auto inline-flex items-center text-[11px] uppercase tracking-[0.16em] text-ink transition-colors hover:text-tangerine md:text-sm"
               >
                 View All
@@ -284,8 +303,8 @@ export default function HomePage() {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => scrollFeatured(-1)}
-                aria-label="Scroll featured products left"
+                onClick={() => scrollWestern(-1)}
+                aria-label="Scroll western products left"
                 className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:flex"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -293,19 +312,19 @@ export default function HomePage() {
 
               <button
                 type="button"
-                onClick={() => scrollFeatured(1)}
-                aria-label="Scroll featured products right"
+                onClick={() => scrollWestern(1)}
+                aria-label="Scroll western products right"
                 className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-ink/10 bg-white text-ink shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-colors hover:border-tangerine hover:text-tangerine md:flex"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
 
               <div
-                ref={featuredScrollRef}
+                ref={westernScrollRef}
                 className="-mx-[5vw] overflow-x-auto px-[5vw] pb-2 md:mx-0 md:px-0 md:pb-4 no-scrollbar"
               >
                 <div className="flex snap-x snap-mandatory gap-4 md:gap-6 lg:gap-8">
-                  {featuredProducts.map((product) => (
+                  {westernProducts.map((product) => (
                     <div
                       key={product.id}
                       className="w-[78vw] shrink-0 snap-start sm:w-[58vw] md:w-[34vw] lg:w-[26vw] xl:w-[17.7vw]"
