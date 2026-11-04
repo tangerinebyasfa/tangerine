@@ -168,7 +168,14 @@ export const api = {
   getProducts: async (params = {}) => {
     const searchTerm = normalizeSearchTerm(params.search);
     if (db) {
-      const products = await readCollection("products");
+      const constraints = [];
+      if (params.category) constraints.push(fsWhere("categorySlug", "==", params.category));
+      if (params.featured === "true") constraints.push(fsWhere("featured", "==", true));
+
+      const productsRef = collection(db, "products");
+      const queryRef = constraints.length > 0 ? fsQuery(productsRef, ...constraints) : productsRef;
+      const snapshot = await fsGetDocs(queryRef);
+      const products = snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 
       return products
         .filter((product) => {
