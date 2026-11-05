@@ -4,6 +4,7 @@ const morgan = require("morgan");
 require("dotenv").config();
 
 const productsRoutes = require("./routes/products");
+const { globalLimiter } = require("./middleware/rateLimit");
 const categoriesRoutes = require("./routes/categories");
 const subcategoriesRoutes = require("./routes/subcategories");
 const ordersRoutes = require("./routes/orders");
@@ -14,6 +15,10 @@ const wishlistRoutes = require("./routes/wishlist");
 const couponsRoutes = require("./routes/coupons");
 
 const app = express();
+
+// Hostinger (and most hosts) proxy requests; trust the first proxy hop so
+// rate limiters and req.ip see the real client IP.
+app.set("trust proxy", 1);
 
 const allowedOrigins = [
   ...(process.env.CLIENT_URLS || "").split(","),
@@ -40,6 +45,7 @@ app.use(
 );
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(globalLimiter);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
